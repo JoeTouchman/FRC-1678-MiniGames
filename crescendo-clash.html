@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRESCENDO CLASH — Team 1678</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --citrus: #FF6B00;
+    --citrus-light: #FFB347;
+    --blue: #0066FF;
+    --blue-light: #44AAFF;
+    --amp: #CC44FF;
+    --amp-light: #FF88FF;
+  }
+
+  body {
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Rajdhani', sans-serif;
+    overflow: hidden;
+    color: white;
+  }
+
+  #game-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #hud {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 900px;
+    padding: 0 4px;
+  }
+
+  .player-hud {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 270px;
+  }
+
+  .player-hud.p1 { align-items: flex-start; }
+  .player-hud.p2 { align-items: flex-end; }
+
+  .player-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .p1 .player-name { color: var(--citrus); }
+  .p2 .player-name { color: var(--blue-light); }
+
+  .score-bar-wrap {
+    width: 100%;
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .score-bar { height: 100%; border-radius: 5px; transition: width 0.3s ease; width: 0%; }
+  .p1 .score-bar { background: linear-gradient(90deg, var(--citrus), var(--citrus-light)); }
+  .p2 .score-bar { background: linear-gradient(90deg, var(--blue), var(--blue-light)); }
+
+  .score-row { display: flex; align-items: baseline; gap: 8px; }
+  .score-num {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 30px;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .p1 .score-num { color: var(--citrus-light); }
+  .p2 .score-num { color: var(--blue-light); }
+
+  .amp-badge {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--amp-light);
+    background: rgba(204,68,255,0.2);
+    border: 1px solid var(--amp);
+    border-radius: 4px;
+    padding: 2px 6px;
+    letter-spacing: 1px;
+    display: none;
+    animation: ampPulse 0.6s ease infinite alternate;
+  }
+  .amp-badge.active { display: inline-block; }
+  @keyframes ampPulse {
+    from { opacity: 1; box-shadow: 0 0 6px var(--amp); }
+    to   { opacity: 0.6; box-shadow: 0 0 14px var(--amp); }
+  }
+
+  .status-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+  }
+  .carrying-indicator { opacity: 0.6; }
+  .shoot-cd { color: rgba(255,255,255,0.35); }
+
+  #center-hud {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  #team-logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.25);
+    text-transform: uppercase;
+  }
+  #timer {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 38px;
+    font-weight: 900;
+    color: white;
+    line-height: 1;
+    text-shadow: 0 0 20px rgba(255,255,255,0.4);
+  }
+  #timer.urgent { color: #FF3333; animation: pulse 0.5s ease infinite alternate; }
+  @keyframes pulse { from { opacity: 1; } to { opacity: 0.4; } }
+
+  #stage-hud {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--amp-light);
+    letter-spacing: 1px;
+    min-height: 14px;
+  }
+
+  #canvas-container {
+    position: relative;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(255,107,0,0.15), 0 0 60px rgba(0,102,255,0.15);
+  }
+  canvas { display: block; }
+
+  #overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.9);
+    z-index: 10;
+    gap: 16px;
+    backdrop-filter: blur(4px);
+  }
+  #overlay.hidden { display: none; }
+
+  #overlay-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 46px;
+    font-weight: 900;
+    background: linear-gradient(90deg, var(--citrus), #fff, var(--blue-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+    line-height: 1.1;
+    white-space: pre-line;
+  }
+  #overlay-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    line-height: 1.9;
+    max-width: 560px;
+  }
+  #overlay-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    max-width: 560px;
+    width: 100%;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+  }
+  .ctrl-box {
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    padding: 12px 16px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .ctrl-box.p1 { border-color: rgba(255,107,0,0.35); }
+  .ctrl-box.p2 { border-color: rgba(0,102,255,0.35); }
+  .ctrl-box h3 { margin-bottom: 7px; font-size: 13px; }
+  .p1 h3 { color: var(--citrus); }
+  .p2 h3 { color: var(--blue-light); }
+  .ctrl-box p { color: rgba(255,255,255,0.55); line-height: 1.8; }
+  .amp-box { grid-column: 1 / -1; border-color: rgba(204,68,255,0.4); background: rgba(204,68,255,0.05); }
+  .amp-box h3 { color: var(--amp-light); }
+  .amp-box p { text-align: center; }
+
+  #start-btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    padding: 14px 44px;
+    background: linear-gradient(135deg, var(--citrus), #FF9500);
+    border: none;
+    border-radius: 6px;
+    color: #000;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 24px rgba(255,107,0,0.4);
+  }
+  #start-btn:hover { transform: scale(1.04); box-shadow: 0 6px 32px rgba(255,107,0,0.6); }
+
+  #winner-text { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 700; text-align: center; }
+
+  #controls-hint {
+    display: flex;
+    gap: 28px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.2);
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+<div id="game-wrapper">
+  <div id="hud">
+    <div class="player-hud p1">
+      <span class="player-name">🍊 Citrus Alpha</span>
+      <div class="score-row">
+        <span class="score-num" id="p1-score">0</span>
+        <span class="amp-badge" id="p1-amp">⚡ AMPED</span>
+      </div>
+      <div class="score-bar-wrap"><div class="score-bar" id="p1-bar"></div></div>
+      <div class="status-row">
+        <span class="carrying-indicator" id="p1-carry">○ EMPTY</span>
+        <span class="shoot-cd" id="p1-shoot-cd"></span>
+      </div>
+    </div>
+    <div id="center-hud">
+      <div id="team-logo">Team 1678 · Crescendo Clash</div>
+      <div id="timer">2:00</div>
+      <div id="stage-hud"></div>
+    </div>
+    <div class="player-hud p2">
+      <span class="player-name">Citrus Beta 🍊</span>
+      <div class="score-row" style="flex-direction:row-reverse">
+        <span class="score-num" id="p2-score">0</span>
+        <span class="amp-badge" id="p2-amp">⚡ AMPED</span>
+      </div>
+      <div class="score-bar-wrap"><div class="score-bar" id="p2-bar"></div></div>
+      <div class="status-row" style="flex-direction:row-reverse">
+        <span class="carrying-indicator" id="p2-carry">○ EMPTY</span>
+        <span class="shoot-cd" id="p2-shoot-cd"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="canvas-container">
+    <canvas id="canvas" width="900" height="540"></canvas>
+    <div id="overlay">
+      <div id="overlay-title">CRESCENDO
+CLASH</div>
+      <div id="overlay-sub">
+        Pick up glowing NOTE rings and carry them to your GOAL ZONE to score.<br>
+        Shoot notes to reposition them — but you can only score by <em>entering</em> your goal carrying one.<br>
+        Contest the <strong style="color:#CC44FF">⬡ STAGE ZONE</strong> to charge ⚡ AMP MODE — your next goal counts <strong>double!</strong>
+      </div>
+      <div id="overlay-controls">
+        <div class="ctrl-box p1">
+          <h3>PLAYER 1 — WASD</h3>
+          <p>W/A/S/D — Move<br>Left Shift — Boost dash<br>F — Shoot note<br>Score: ORANGE zone</p>
+        </div>
+        <div class="ctrl-box p2">
+          <h3>PLAYER 2 — ARROWS</h3>
+          <p>↑/←/↓/→ — Move<br>/ (numpad or slash) — Boost<br>. (period) — Shoot note<br>Score: BLUE zone</p>
+        </div>
+        <div class="ctrl-box amp-box">
+          <h3>⚡ AMP MODE — STAGE MECHANIC</h3>
+          <p>Stand on the purple STAGE ZONE while carrying a note and hold your position for 3 sec.<br>Next score = <strong>4 pts</strong>. Lose your note or get bumped and you lose the charge!</p>
+        </div>
+      </div>
+      <div id="winner-text" style="display:none"></div>
+      <button id="start-btn">START MATCH</button>
+    </div>
+  </div>
+
+  <div id="controls-hint">
+    <span>P1: WASD · LShift=Boost · F=Shoot</span>
+    <span>P2: Arrows · /=Boost · .=Shoot</span>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const WIN_SCORE = 20;
+const MATCH_TIME = 120;
+
+// ── INPUT using e.code (layout-independent, no stuck keys) ──────────────────
+const heldKeys = new Set();
+const justPressed = new Set();
+window.addEventListener('keydown', e => {
+  if (!heldKeys.has(e.code)) justPressed.add(e.code);
+  heldKeys.add(e.code);
+  const noScroll = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyF','Slash','Period','ShiftLeft','ShiftRight'];
+  if (noScroll.includes(e.code)) e.preventDefault();
+});
+window.addEventListener('keyup',  e => heldKeys.delete(e.code));
+// Clear all held keys whenever the window loses focus so nothing gets stuck
+window.addEventListener('blur',   () => { heldKeys.clear(); justPressed.clear(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { heldKeys.clear(); justPressed.clear(); } });
+
+// ── CONSTANTS ────────────────────────────────────────────────────────────────
+const PLAYER_SIZE    = 22;
+const NOTE_RADIUS    = 11;
+const GOAL_ZONE      = { w: 80, h: 130 };
+const BOOST_SPEED    = 6.5;
+const NORMAL_SPEED   = 3.2;
+const BOOST_DURATION = 18;
+const BOOST_COOLDOWN = 90;
+const SHOOT_SPEED    = 9;
+const SHOOT_COOLDOWN = 60;
+const STAGE_RADIUS   = 52;
+const STAGE_CHARGE_TIME  = 180; // 3 sec @ 60fps
+const STAGE_ACTIVE_TIME  = 420;
+const STAGE_COOLDOWN_TIME= 360;
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let state = 'menu';
+let timeLeft = MATCH_TIME;
+let timerInterval = null;
+let particles = [], floatingTexts = [];
+let noteSpawnTimer = 0;
+let p1, p2, notes;
+let stageState = 'active', stageTimer = STAGE_ACTIVE_TIME, stageFlash = 0;
+const stageX = W / 2, stageY = H / 2;
+
+const goals = {
+  p1: { x: 0,          y: H/2 - GOAL_ZONE.h/2, w: GOAL_ZONE.w, h: GOAL_ZONE.h, color: '#FF6B00' },
+  p2: { x: W-GOAL_ZONE.w, y: H/2 - GOAL_ZONE.h/2, w: GOAL_ZONE.w, h: GOAL_ZONE.h, color: '#0066FF' },
+};
+
+const NOTE_SPAWN_ZONES = [
+  {x:220,y:110},{x:450,y:85},{x:680,y:110},
+  {x:220,y:430},{x:450,y:455},{x:680,y:430},
+  {x:270,y:270},{x:630,y:270},
+];
+
+// ── FACTORIES ────────────────────────────────────────────────────────────────
+function makePlayer(id, x, y, color, accent, controls) {
+  return {
+    id, x, y, color, accent,
+    score: 0, carrying: null,
+    boostTimer: 0, boostCooldown: 0,
+    shootCooldown: 0,
+    pickupImmunity: 0,   // frames after shooting before you can pick up again
+    bumpCooldown: 0,
+    knockVx: 0, knockVy: 0, // knockback velocity from being bumped
+    controls,
+    angle: id === 1 ? 0 : Math.PI,
+    trail: [],
+    amped: false,
+    stageCharge: 0, onStage: false,
+  };
+}
+function makeNote(x, y) {
+  return { x, y, vx: 0, vy: 0, carried: null, bob: Math.random() * Math.PI * 2 };
+}
+
+function resetGame() {
+  p1 = makePlayer(1, 140, H/2, '#FF6B00', '#FFB347',
+    { up:'KeyW', down:'KeyS', left:'KeyA', right:'KeyD', boost:'ShiftLeft', shoot:'KeyF' });
+  p2 = makePlayer(2, W-140, H/2, '#0066FF', '#44AAFF',
+    { up:'ArrowUp', down:'ArrowDown', left:'ArrowLeft', right:'ArrowRight', boost:'Slash', shoot:'Period' });
+  notes = [];
+  particles = []; floatingTexts = [];
+  noteSpawnTimer = 0;
+  timeLeft = MATCH_TIME;
+  stageState = 'active'; stageTimer = STAGE_ACTIVE_TIME; stageFlash = 0;
+  for (let i = 0; i < 5; i++) spawnNote();
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function spawnNote() {
+  if (notes.length >= 7) return;
+  const z = NOTE_SPAWN_ZONES[Math.floor(Math.random() * NOTE_SPAWN_ZONES.length)];
+  const x = Math.max(95, Math.min(W-95, z.x + (Math.random()-.5)*50));
+  const y = Math.max(40, Math.min(H-40, z.y + (Math.random()-.5)*50));
+  notes.push(makeNote(x, y));
+}
+
+function addParticles(x, y, color, count=12, spd=3) {
+  for (let i = 0; i < count; i++) {
+    const a = Math.PI*2*i/count + Math.random()*.5;
+    const s = spd*(0.5+Math.random());
+    particles.push({ x, y, vx:Math.cos(a)*s, vy:Math.sin(a)*s,
+      life:1, decay:0.02+Math.random()*.03, size:3+Math.random()*5, color });
+  }
+}
+function addFloat(x, y, text, color, size=18) {
+  floatingTexts.push({ x, y, text, color, life:1, vy:-1.5, size });
+}
+
+// ── UPDATE PLAYER ────────────────────────────────────────────────────────────
+function updatePlayer(p) {
+  const c = p.controls;
+  let dx = 0, dy = 0;
+  if (heldKeys.has(c.up))    dy -= 1;
+  if (heldKeys.has(c.down))  dy += 1;
+  if (heldKeys.has(c.left))  dx -= 1;
+  if (heldKeys.has(c.right)) dx += 1;
+
+  if (dx || dy) {
+    const m = Math.hypot(dx, dy);
+    dx /= m; dy /= m;
+    p.angle = Math.atan2(dy, dx);
+  }
+
+  // Boost
+  if (p.boostCooldown > 0) p.boostCooldown--;
+  if (p.boostTimer > 0) p.boostTimer--;
+  if (heldKeys.has(c.boost) && p.boostCooldown === 0 && (dx||dy) && p.boostTimer === 0) {
+    p.boostTimer = BOOST_DURATION;
+    p.boostCooldown = BOOST_COOLDOWN;
+  }
+
+  const spd = p.boostTimer > 0 ? BOOST_SPEED : NORMAL_SPEED;
+  p.x += dx * spd + p.knockVx;
+  p.y += dy * spd + p.knockVy;
+  p.knockVx *= 0.75;
+  p.knockVy *= 0.75;
+  if (Math.abs(p.knockVx) < 0.1) p.knockVx = 0;
+  if (Math.abs(p.knockVy) < 0.1) p.knockVy = 0;
+  p.x = Math.max(PLAYER_SIZE, Math.min(W-PLAYER_SIZE, p.x));
+  p.y = Math.max(PLAYER_SIZE, Math.min(H-PLAYER_SIZE, p.y));
+
+  // Trail
+  if (p.boostTimer > 0 && (dx||dy)) {
+    p.trail.push({x:p.x, y:p.y, life:1});
+    if (p.trail.length > 12) p.trail.shift();
+  }
+  p.trail.forEach(t => t.life -= 0.1);
+  p.trail = p.trail.filter(t => t.life > 0);
+
+  if (p.bumpCooldown > 0) p.bumpCooldown--;
+  if (p.shootCooldown > 0) p.shootCooldown--;
+  if (p.pickupImmunity > 0) p.pickupImmunity--;
+
+  // Shoot — fires once per keypress using justPressed
+  if (justPressed.has(c.shoot) && p.shootCooldown === 0 && p.carrying) {
+    shootNote(p);
+  }
+
+  // Stage charge
+  if (stageState === 'active') {
+    const onS = Math.hypot(p.x - stageX, p.y - stageY) < STAGE_RADIUS - 8;
+    p.onStage = onS;
+    if (onS && p.carrying && !p.amped) {
+      p.stageCharge++;
+      if (p.stageCharge >= STAGE_CHARGE_TIME) {
+        p.amped = true;
+        p.stageCharge = 0;
+        addParticles(p.x, p.y, '#CC44FF', 24, 5);
+        addFloat(p.x, p.y - 40, '⚡ AMPED!', '#CC44FF', 22);
+        stageFlash = 40;
+      }
+    } else if (!onS) {
+      p.stageCharge = Math.max(0, p.stageCharge - 1);
+    }
+  } else {
+    p.onStage = false;
+    p.stageCharge = Math.max(0, p.stageCharge - 1);
+  }
+}
+
+function shootNote(p) {
+  const n = p.carrying;
+  p.carrying = null;
+  n.carried = null;
+  // Spawn the note a bit in front of the player so it clears collision range
+  n.x = p.x + Math.cos(p.angle) * (PLAYER_SIZE + NOTE_RADIUS + 4);
+  n.y = p.y + Math.sin(p.angle) * (PLAYER_SIZE + NOTE_RADIUS + 4);
+  n.vx = Math.cos(p.angle) * SHOOT_SPEED;
+  n.vy = Math.sin(p.angle) * SHOOT_SPEED;
+  p.shootCooldown = SHOOT_COOLDOWN;
+  p.pickupImmunity = 30; // 0.5 sec immunity after shooting
+  addParticles(p.x, p.y, '#FFD600', 8, 4);
+}
+
+// ── GOAL SCORE ───────────────────────────────────────────────────────────────
+function checkGoalScore(p, goal) {
+  if (!p.carrying) return;
+  if (p.x > goal.x && p.x < goal.x+goal.w && p.y > goal.y && p.y < goal.y+goal.h) {
+    const pts = p.amped ? 4 : 1;
+    p.score += pts;
+    const lbl = p.amped ? '+4 ⚡ AMP!' : '+1';
+    const col = p.amped ? '#CC44FF' : goal.color;
+    addParticles(p.x, p.y, col, p.amped ? 30 : 16, p.amped ? 5 : 3);
+    addFloat(p.x, p.y-35, lbl, col, p.amped ? 22 : 18);
+    if (p.amped) { p.amped = false; stageFlash = 20; }
+    notes = notes.filter(n => n !== p.carrying);
+    p.carrying = null;
+    spawnNote();
+    updateHUD();
+    if (p.score >= WIN_SCORE) endGame();
+  }
+}
+
+// ── PICKUP ───────────────────────────────────────────────────────────────────
+function checkNotePickup(p) {
+  if (p.carrying || p.pickupImmunity > 0) return;
+  for (const n of notes) {
+    if (n.carried) continue;
+    if (Math.hypot(p.x - n.x, p.y - n.y) < PLAYER_SIZE + NOTE_RADIUS - 4) {
+      n.carried = p; p.carrying = n;
+      addParticles(n.x, n.y, '#FFE066', 6, 2);
+      break;
+    }
+  }
+}
+
+// ── BUMP ─────────────────────────────────────────────────────────────────────
+function checkBump(a, b) {
+  if (a.bumpCooldown > 0 || b.bumpCooldown > 0) return;
+  const dx = a.x-b.x, dy = a.y-b.y, dist = Math.hypot(dx, dy);
+  if (dist > 0 && dist < PLAYER_SIZE * 2.2) {
+    const nx = dx/dist, ny = dy/dist;
+    const aB = a.boostTimer > 0, bB = b.boostTimer > 0;
+
+    // Note stealing logic
+    if (aB && b.carrying) {
+      const n = b.carrying; b.carrying = null; n.carried = null;
+      n.vx = nx*7; n.vy = ny*7;
+      if (b.amped) { b.amped = false; addFloat(b.x, b.y-50, '⚡ LOST!', '#FF4444'); }
+      addParticles(b.x, b.y, b.color, 16); addFloat(b.x, b.y-30, 'STOLEN!', a.color);
+    } else if (bB && a.carrying) {
+      const n = a.carrying; a.carrying = null; n.carried = null;
+      n.vx = -nx*7; n.vy = -ny*7;
+      if (a.amped) { a.amped = false; addFloat(a.x, a.y-50, '⚡ LOST!', '#FF4444'); }
+      addParticles(a.x, a.y, a.color, 16); addFloat(a.x, a.y-30, 'STOLEN!', b.color);
+    } else {
+      // Regular bump — drop notes
+      if (a.carrying) { const n=a.carrying; a.carrying=null; n.carried=null; n.vx=nx*3; n.vy=ny*3; }
+      if (b.carrying) { const n=b.carrying; b.carrying=null; n.carried=null; n.vx=-nx*3; n.vy=-ny*3; }
+    }
+
+    // Always push both players apart with velocity knockback
+    // Boosting player pushes the opponent harder
+    const aForce = aB ? 14 : 7;
+    const bForce = bB ? 14 : 7;
+    a.knockVx += nx * bForce;
+    a.knockVy += ny * bForce;
+    b.knockVx -= nx * aForce;
+    b.knockVy -= ny * aForce;
+
+    // Separate positions so they don't overlap
+    const overlap = PLAYER_SIZE * 2.2 - dist;
+    a.x += nx * overlap * 0.5;
+    a.y += ny * overlap * 0.5;
+    b.x -= nx * overlap * 0.5;
+    b.y -= ny * overlap * 0.5;
+
+    a.bumpCooldown = 25; b.bumpCooldown = 25;
+    addParticles((a.x+b.x)/2, (a.y+b.y)/2, '#ffffff', 6, 3);
+  }
+}
+
+// ── NOTES ────────────────────────────────────────────────────────────────────
+function updateNotes() {
+  for (const n of notes) {
+    if (n.carried) { n.x = n.carried.x; n.y = n.carried.y - PLAYER_SIZE - 4; }
+    else {
+      n.x += n.vx; n.y += n.vy;
+      n.vx *= 0.87; n.vy *= 0.87;
+      if (n.x < 95)   { n.x = 95;   n.vx *= -0.6; }
+      if (n.x > W-95) { n.x = W-95; n.vx *= -0.6; }
+      if (n.y < 40)   { n.y = 40;   n.vy *= -0.6; }
+      if (n.y > H-40) { n.y = H-40; n.vy *= -0.6; }
+    }
+    n.bob += 0.05;
+  }
+}
+
+// ── STAGE ────────────────────────────────────────────────────────────────────
+function updateStage() {
+  // Don't tick down the active timer if someone is actually on the stage
+  const anyoneOnStage = (stageState === 'active') &&
+    (Math.hypot(p1.x - stageX, p1.y - stageY) < STAGE_RADIUS ||
+     Math.hypot(p2.x - stageX, p2.y - stageY) < STAGE_RADIUS);
+
+  if (!anyoneOnStage) stageTimer--;
+
+  if (stageTimer <= 0) {
+    if (stageState === 'active') {
+      stageState = 'cooldown'; stageTimer = STAGE_COOLDOWN_TIME;
+      p1.stageCharge = 0; p2.stageCharge = 0;
+    } else {
+      stageState = 'active'; stageTimer = STAGE_ACTIVE_TIME;
+      addParticles(stageX, stageY, '#CC44FF', 20, 4);
+      stageFlash = 40;
+    }
+  }
+  if (stageFlash > 0) stageFlash--;
+}
+
+// ── HUD ──────────────────────────────────────────────────────────────────────
+function updateHUD() {
+  document.getElementById('p1-score').textContent = p1.score;
+  document.getElementById('p2-score').textContent = p2.score;
+  document.getElementById('p1-bar').style.width = Math.min(100,(p1.score/WIN_SCORE)*100)+'%';
+  document.getElementById('p2-bar').style.width = Math.min(100,(p2.score/WIN_SCORE)*100)+'%';
+  document.getElementById('p1-carry').textContent = p1.carrying ? '● CARRYING' : '○ EMPTY';
+  document.getElementById('p2-carry').textContent = p2.carrying ? '● CARRYING' : '○ EMPTY';
+  document.getElementById('p1-amp').classList.toggle('active', p1.amped);
+  document.getElementById('p2-amp').classList.toggle('active', p2.amped);
+  document.getElementById('p1-shoot-cd').textContent =
+    p1.shootCooldown > 0 ? `SHOOT ${(p1.shootCooldown/60).toFixed(1)}s` : 'SHOOT RDY';
+  document.getElementById('p2-shoot-cd').textContent =
+    p2.shootCooldown > 0 ? `SHOOT ${(p2.shootCooldown/60).toFixed(1)}s` : 'SHOOT RDY';
+
+  const sh = document.getElementById('stage-hud');
+  if (stageState === 'active') {
+    sh.textContent = `⬡ STAGE OPEN ${Math.ceil(stageTimer/60)}s`;
+    sh.style.color = '#FF88FF';
+  } else {
+    sh.textContent = `⬡ STAGE RECHARGE ${Math.ceil(stageTimer/60)}s`;
+    sh.style.color = 'rgba(204,68,255,0.35)';
+  }
+}
+
+// ── DRAW ─────────────────────────────────────────────────────────────────────
+function drawField() {
+  ctx.fillStyle = '#111a11'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1;
+  for (let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for (let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 2;
+  ctx.setLineDash([10,10]);
+  ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke();
+  ctx.setLineDash([]);
+
+  drawStage();
+
+  ctx.save();
+  ctx.globalAlpha = 0.05; ctx.fillStyle='white';
+  ctx.font='bold 60px Orbitron,monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('1678', W/2, H/2);
+  ctx.restore();
+
+  drawGoal(goals.p1, p1);
+  drawGoal(goals.p2, p2);
+}
+
+function drawStage() {
+  if (stageState === 'cooldown') {
+    ctx.globalAlpha = 0.07 + 0.04*Math.sin(Date.now()*0.002);
+    ctx.strokeStyle = '#CC44FF'; ctx.lineWidth = 2; ctx.setLineDash([6,6]);
+    ctx.beginPath(); ctx.arc(stageX, stageY, STAGE_RADIUS, 0, Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1; return;
+  }
+  const t = Date.now()*0.001;
+  const f = stageFlash/40;
+  ctx.save();
+  ctx.globalAlpha = 0.13 + 0.08*Math.sin(t*2) + f*0.4;
+  ctx.fillStyle = '#CC44FF';
+  ctx.beginPath(); ctx.arc(stageX, stageY, STAGE_RADIUS, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1;
+  for (let i=0;i<6;i++) {
+    const a=Math.PI/3*i+t, a2=a+Math.PI/3-0.1;
+    ctx.beginPath(); ctx.arc(stageX, stageY, STAGE_RADIUS, a, a2);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = `rgba(204,68,255,${0.5+0.5*Math.sin(t*3+i)})`;
+    ctx.stroke();
+  }
+  ctx.fillStyle='#CC44FF'; ctx.globalAlpha=0.6+0.4*Math.sin(t*2);
+  ctx.font='bold 18px Orbitron'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('⬡', stageX, stageY);
+  ctx.globalAlpha=1;
+  // Charge arcs
+  [p1,p2].forEach(p => {
+    if (!p.onStage || p.amped || p.stageCharge<=0) return;
+    const pct = p.stageCharge/STAGE_CHARGE_TIME;
+    ctx.lineWidth=5; ctx.strokeStyle=p.color; ctx.shadowColor=p.color; ctx.shadowBlur=10;
+    ctx.beginPath(); ctx.arc(stageX, stageY, STAGE_RADIUS+8, -Math.PI/2, -Math.PI/2+pct*Math.PI*2);
+    ctx.stroke(); ctx.shadowBlur=0;
+  });
+  ctx.restore();
+}
+
+function drawGoal(goal, player) {
+  const inZone = player.carrying &&
+    player.x>goal.x && player.x<goal.x+goal.w &&
+    player.y>goal.y && player.y<goal.y+goal.h;
+  ctx.fillStyle = goal.color;
+  ctx.globalAlpha = inZone ? 0.38+0.28*Math.sin(Date.now()*0.01) : 0.12;
+  ctx.fillRect(goal.x, goal.y, goal.w, goal.h);
+  ctx.globalAlpha=1;
+  ctx.strokeStyle=goal.color; ctx.lineWidth=3;
+  ctx.shadowColor=goal.color; ctx.shadowBlur=14;
+  ctx.strokeRect(goal.x, goal.y, goal.w, goal.h);
+  ctx.shadowBlur=0;
+  ctx.fillStyle=goal.color; ctx.font='bold 11px Rajdhani'; ctx.textAlign='center';
+  ctx.fillText('GOAL', goal.x+goal.w/2, goal.y-7);
+}
+
+function drawPlayer(p) {
+  // Trail
+  for (const t of p.trail) {
+    ctx.globalAlpha = t.life*0.3; ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(t.x, t.y, PLAYER_SIZE*t.life*0.7, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  ctx.save();
+  ctx.translate(p.x, p.y); ctx.rotate(p.angle + Math.PI/4);
+  if (p.amped)          { ctx.shadowColor='#CC44FF'; ctx.shadowBlur=22; }
+  else if (p.boostTimer>0) { ctx.shadowColor=p.accent; ctx.shadowBlur=18; }
+  else if (p.bumpCooldown>0){ ctx.shadowColor='#fff';  ctx.shadowBlur=12; }
+
+  const s = PLAYER_SIZE;
+  ctx.fillStyle=p.color; ctx.beginPath(); ctx.roundRect(-s,-s,s*2,s*2,4); ctx.fill();
+  ctx.fillStyle=p.amped ? '#CC44FF' : p.accent;
+  ctx.beginPath(); ctx.roundRect(-s*.5,-s*.5,s,s,2); ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(-s,-s,s*2,5);
+  ctx.shadowBlur=0; ctx.restore();
+
+  ctx.fillStyle='rgba(255,255,255,0.85)'; ctx.font='bold 10px Share Tech Mono';
+  ctx.textAlign='center'; ctx.fillText(`P${p.id}`, p.x, p.y+3);
+
+  // Boost cooldown arc
+  if (p.boostCooldown>0) {
+    const pct = 1-(p.boostCooldown/BOOST_COOLDOWN);
+    ctx.strokeStyle=p.accent; ctx.lineWidth=2; ctx.globalAlpha=0.5;
+    ctx.beginPath(); ctx.arc(p.x,p.y,PLAYER_SIZE+7,-Math.PI/2,-Math.PI/2+pct*Math.PI*2); ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+  // Shoot cooldown arc
+  if (p.shootCooldown>0) {
+    const pct = 1-(p.shootCooldown/SHOOT_COOLDOWN);
+    ctx.strokeStyle='#FFD600'; ctx.lineWidth=2; ctx.globalAlpha=0.4;
+    ctx.beginPath(); ctx.arc(p.x,p.y,PLAYER_SIZE+13,-Math.PI/2,-Math.PI/2+pct*Math.PI*2); ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+  // Amp sparkle
+  if (p.amped) {
+    const t = Date.now()*0.005;
+    for (let i=0;i<4;i++) {
+      const a = t+Math.PI/2*i, r=PLAYER_SIZE+15;
+      ctx.fillStyle='#CC44FF'; ctx.globalAlpha=0.7+0.3*Math.sin(t*3+i);
+      ctx.beginPath(); ctx.arc(p.x+Math.cos(a)*r, p.y+Math.sin(a)*r, 3, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+  }
+}
+
+function drawNote(n) {
+  const bob = Math.sin(n.bob)*3;
+  const x=n.x, y=n.y+(n.carried?0:bob);
+  const spd = Math.hypot(n.vx, n.vy);
+  ctx.save(); ctx.translate(x,y);
+  if (spd>2) {
+    ctx.globalAlpha=0.3; ctx.strokeStyle='#FFD600'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-n.vx*4,-n.vy*4); ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+  const g = ctx.createRadialGradient(0,0,2,0,0,NOTE_RADIUS);
+  g.addColorStop(0,'#FFF9AA'); g.addColorStop(.5,'#FFD600'); g.addColorStop(1,'#FF8800');
+  ctx.shadowColor='#FFD600'; ctx.shadowBlur=spd>3?22:12;
+  ctx.lineWidth=5; ctx.strokeStyle=g;
+  ctx.beginPath(); ctx.arc(0,0,NOTE_RADIUS-2,0,Math.PI*2); ctx.stroke();
+  ctx.globalAlpha=0.35; ctx.fillStyle='#FFD600';
+  ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1; ctx.shadowBlur=0; ctx.restore();
+}
+
+function drawParticles() {
+  for (const p of particles) {
+    ctx.globalAlpha=p.life; ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2); ctx.fill();
+    p.x+=p.vx; p.y+=p.vy; p.vx*=0.92; p.vy*=0.92; p.life-=p.decay;
+  }
+  particles = particles.filter(p=>p.life>0); ctx.globalAlpha=1;
+}
+
+function drawFloatTexts() {
+  for (const ft of floatingTexts) {
+    ctx.globalAlpha=ft.life; ctx.fillStyle=ft.color;
+    ctx.font=`bold ${ft.size}px Orbitron`; ctx.textAlign='center';
+    ctx.fillText(ft.text, ft.x, ft.y);
+    ft.y+=ft.vy; ft.life-=0.018;
+  }
+  floatingTexts=floatingTexts.filter(ft=>ft.life>0); ctx.globalAlpha=1;
+}
+
+function draw() {
+  ctx.clearRect(0,0,W,H);
+  drawField();
+  notes.forEach(drawNote);
+  drawPlayer(p1); drawPlayer(p2);
+  drawParticles(); drawFloatTexts();
+}
+
+// ── GAME LOOP ────────────────────────────────────────────────────────────────
+function gameLoop() {
+  if (state !== 'playing') return;
+  updatePlayer(p1); updatePlayer(p2);
+  checkBump(p1, p2);
+  checkNotePickup(p1); checkNotePickup(p2);
+  checkGoalScore(p1, goals.p1); checkGoalScore(p2, goals.p2);
+  updateNotes(); updateStage();
+  noteSpawnTimer++;
+  if (noteSpawnTimer>200) { spawnNote(); noteSpawnTimer=0; }
+  updateHUD(); draw();
+  justPressed.clear(); // clear after processing so each keypress fires exactly once
+  requestAnimationFrame(gameLoop);
+}
+
+function startGame() {
+  resetGame(); state='playing';
+  document.getElementById('overlay').classList.add('hidden');
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    const m=Math.floor(timeLeft/60), s=timeLeft%60;
+    const el=document.getElementById('timer');
+    el.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    el.classList.toggle('urgent', timeLeft<=20);
+    if (timeLeft<=0) endGame();
+  }, 1000);
+  gameLoop();
+}
+
+function endGame() {
+  if (state==='ended') return;
+  state='ended'; clearInterval(timerInterval);
+  const overlay=document.getElementById('overlay');
+  overlay.classList.remove('hidden');
+  document.getElementById('overlay-sub').style.display='none';
+  const title=document.getElementById('overlay-title');
+  const winner=document.getElementById('winner-text');
+  winner.style.display='block';
+  if (p1.score>p2.score) {
+    title.textContent='P1 WINS!';
+    title.style.background='linear-gradient(90deg,#FF6B00,#FFB347)';
+    title.style.webkitBackgroundClip='text'; winner.style.color='#FF6B00';
+  } else if (p2.score>p1.score) {
+    title.textContent='P2 WINS!';
+    title.style.background='linear-gradient(90deg,#0066FF,#44AAFF)';
+    title.style.webkitBackgroundClip='text'; winner.style.color='#44AAFF';
+  } else {
+    title.textContent='TIE GAME!'; winner.style.color='white';
+  }
+  winner.textContent=`Final Score: ${p1.score} — ${p2.score}`;
+  document.getElementById('start-btn').textContent='PLAY AGAIN';
+  document.getElementById('overlay-controls').style.display='grid';
+}
+
+document.getElementById('start-btn').addEventListener('click', () => {
+  document.getElementById('overlay-sub').style.display='';
+  document.getElementById('overlay-controls').style.display='';
+  document.getElementById('winner-text').style.display='none';
+  const t=document.getElementById('overlay-title');
+  t.textContent='CRESCENDO\nCLASH';
+  t.style.background='linear-gradient(90deg,#FF6B00,#fff,#44AAFF)';
+  t.style.webkitBackgroundClip='text';
+  startGame();
+});
+
+resetGame(); draw();
+</script>
+</body>
+</html>
