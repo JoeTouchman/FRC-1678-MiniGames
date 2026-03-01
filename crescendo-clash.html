@@ -244,10 +244,24 @@
     color: rgba(255,255,255,0.2);
     letter-spacing: 1px;
   }
+
+  #home-link {
+    position: absolute;
+    top: 2px;
+    left: 0;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.25);
+    text-decoration: none;
+    letter-spacing: 1px;
+    transition: color 0.2s;
+  }
+  #home-link:hover { color: rgba(255,255,255,0.7); }
 </style>
 </head>
 <body>
 <div id="game-wrapper">
+  <a href="index.html" id="home-link">← HOME</a>
   <div id="hud">
     <div class="player-hud p1">
       <span class="player-name">🍊 Citrus Alpha</span>

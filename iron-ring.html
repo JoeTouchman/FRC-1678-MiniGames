@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRON RING — Team 1678</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --citrus: #FF6B00;
+    --citrus-light: #FFB347;
+    --blue: #0066FF;
+    --blue-light: #44AAFF;
+    --gold: #FFD600;
+    --gold-light: #FFF59D;
+    --danger: #FF2222;
+    --station: #CC44FF;
+  }
+
+  body {
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Rajdhani', sans-serif;
+    overflow: hidden;
+    color: white;
+  }
+
+  #game-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #hud {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 900px;
+    padding: 0 4px;
+  }
+
+  .player-hud {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 270px;
+  }
+  .player-hud.p1 { align-items: flex-start; }
+  .player-hud.p2 { align-items: flex-end; }
+
+  .player-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .p1 .player-name { color: var(--citrus); }
+  .p2 .player-name { color: var(--blue-light); }
+
+  .lives-row {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+  .life-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    transition: all 0.2s;
+  }
+  .p1 .life-alive { background: var(--citrus); box-shadow: 0 0 8px var(--citrus); }
+  .p2 .life-alive { background: var(--blue); box-shadow: 0 0 8px var(--blue); }
+  .life-dead { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); }
+
+  .charge-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 1px;
+  }
+  .charge-bar-track {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .charge-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.1s;
+    background: linear-gradient(90deg, #FFB300, #FFD700);
+    width: 0%;
+  }
+  .charge-bar-fill.full {
+    background: linear-gradient(90deg, #FFD600, #FFF59D);
+    animation: chargeGlow 0.4s ease infinite alternate;
+  }
+  @keyframes chargeGlow {
+    from { box-shadow: 0 0 4px #FFD600; }
+    to   { box-shadow: 0 0 14px #FFD600, 0 0 6px #FFF; }
+  }
+
+  .charged-badge {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gold);
+    background: rgba(255,214,0,0.15);
+    border: 1px solid var(--gold);
+    border-radius: 4px;
+    padding: 2px 7px;
+    letter-spacing: 1px;
+    display: none;
+    animation: chargePulse 0.5s ease infinite alternate;
+  }
+  .charged-badge.active { display: inline-block; }
+  @keyframes chargePulse {
+    from { opacity: 1; box-shadow: 0 0 6px var(--gold); }
+    to   { opacity: 0.6; box-shadow: 0 0 18px var(--gold); }
+  }
+
+  .status-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+  }
+  .boost-cd { color: rgba(255,255,255,0.35); }
+  .station-indicator { color: var(--station); }
+
+  #center-hud {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  #team-logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.25);
+    text-transform: uppercase;
+  }
+  #game-title-hud {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 24px;
+    font-weight: 900;
+    color: white;
+    line-height: 1;
+    letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(255,255,255,0.3);
+  }
+  #sudden-death-banner {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--danger);
+    letter-spacing: 2px;
+    display: none;
+    animation: sdPulse 0.4s ease infinite alternate;
+  }
+  #sudden-death-banner.active { display: block; }
+  @keyframes sdPulse {
+    from { opacity: 1; text-shadow: 0 0 8px var(--danger); }
+    to   { opacity: 0.3; text-shadow: 0 0 20px var(--danger); }
+  }
+  #ring-info {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 1px;
+    min-height: 14px;
+  }
+
+  #canvas-container {
+    position: relative;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(255,107,0,0.15), 0 0 60px rgba(0,102,255,0.15);
+  }
+  canvas { display: block; }
+
+  #overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background: rgba(0,0,0,0.92);
+    z-index: 10;
+    gap: 12px;
+    backdrop-filter: blur(4px);
+    overflow-y: auto;
+    padding: 20px 16px 24px;
+  }
+  #overlay.hidden { display: none; }
+  #overlay::-webkit-scrollbar { width: 5px; }
+  #overlay::-webkit-scrollbar-track { background: transparent; }
+  #overlay::-webkit-scrollbar-thumb { background: rgba(255,107,0,0.35); border-radius: 3px; }
+
+  #overlay-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 42px;
+    font-weight: 900;
+    background: linear-gradient(90deg, var(--citrus), #fff, var(--blue-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+    line-height: 1;
+  }
+  #overlay-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    line-height: 1.8;
+    max-width: 560px;
+  }
+  #overlay-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    max-width: 580px;
+    width: 100%;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+  }
+  .ctrl-box {
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    padding: 12px 16px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .ctrl-box.p1 { border-color: rgba(255,107,0,0.35); }
+  .ctrl-box.p2 { border-color: rgba(0,102,255,0.35); }
+  .ctrl-box.charge-box { border-color: rgba(255,214,0,0.4); background: rgba(255,214,0,0.04); }
+  .ctrl-box.sd-box { grid-column: 1/-1; border-color: rgba(255,34,34,0.4); background: rgba(255,34,34,0.04); }
+  .ctrl-box h3 { margin-bottom: 7px; font-size: 13px; }
+  .p1 h3 { color: var(--citrus); }
+  .p2 h3 { color: var(--blue-light); }
+  .charge-box h3 { color: var(--gold); }
+  .sd-box h3 { color: var(--danger); }
+  .ctrl-box p { color: rgba(255,255,255,0.55); line-height: 1.8; }
+  .sd-box p { text-align: center; }
+
+  #start-btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    padding: 14px 44px;
+    background: linear-gradient(135deg, var(--citrus), #FF9500);
+    border: none;
+    border-radius: 6px;
+    color: #000;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 24px rgba(255,107,0,0.4);
+  }
+  #start-btn:hover { transform: scale(1.04); box-shadow: 0 6px 32px rgba(255,107,0,0.6); }
+
+  #winner-text { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 700; text-align: center; }
+
+  #controls-hint {
+    display: flex;
+    gap: 28px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.2);
+    letter-spacing: 1px;
+  }
+
+  #home-link {
+    position: absolute;
+    top: 2px;
+    left: 0;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.25);
+    text-decoration: none;
+    letter-spacing: 1px;
+    transition: color 0.2s;
+  }
+  #home-link:hover { color: rgba(255,255,255,0.7); }
+</style>
+</head>
+<body>
+<div id="game-wrapper">
+  <a href="index.html" id="home-link">← HOME</a>
+
+  <div id="hud">
+    <div class="player-hud p1">
+      <span class="player-name">🍊 Citrus Alpha</span>
+      <div class="lives-row" id="p1-lives"></div>
+      <div>
+        <div class="charge-label">CHARGE</div>
+        <div class="charge-bar-track"><div class="charge-bar-fill" id="p1-charge-fill"></div></div>
+      </div>
+      <div class="status-row">
+        <span class="charged-badge" id="p1-charged">⚡ SUPERCHARGED</span>
+        <span class="boost-cd" id="p1-boost-cd"></span>
+        <span class="station-indicator" id="p1-station"></span>
+      </div>
+    </div>
+
+    <div id="center-hud">
+      <div id="team-logo">Team 1678 · Iron Ring</div>
+      <div id="game-title-hud">⬡ IRON RING</div>
+      <div id="sudden-death-banner">⚡ SUDDEN DEATH ⚡</div>
+      <div id="ring-info"></div>
+    </div>
+
+    <div class="player-hud p2">
+      <span class="player-name">Citrus Beta 🍊</span>
+      <div class="lives-row" id="p2-lives" style="flex-direction:row-reverse"></div>
+      <div style="width:100%">
+        <div class="charge-label" style="text-align:right">CHARGE</div>
+        <div class="charge-bar-track"><div class="charge-bar-fill" id="p2-charge-fill"></div></div>
+      </div>
+      <div class="status-row" style="flex-direction:row-reverse">
+        <span class="charged-badge" id="p2-charged">⚡ SUPERCHARGED</span>
+        <span class="boost-cd" id="p2-boost-cd"></span>
+        <span class="station-indicator" id="p2-station"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="canvas-container">
+    <canvas id="canvas" width="900" height="540"></canvas>
+    <div id="overlay">
+      <div id="overlay-title">IRON RING</div>
+      <div id="winner-text" style="display:none"></div>
+      <button id="start-btn">START MATCH</button>
+      <div id="overlay-sub">
+        Push your opponent <strong>OUT of the ring</strong> to take a life — first to lose all 3 loses!<br>
+        Boost-dash into them for knockback. Fill your <strong style="color:#FFD600">⚡ CHARGE BAR</strong> for a devastating SUPERCHARGED hit.<br>
+        Collect <strong style="color:#FFD600">POWER CELLS</strong> or stand on the <strong style="color:#CC44FF">⬡ CHARGE STATION</strong> to charge up fast!
+      </div>
+      <div id="overlay-controls">
+        <div class="ctrl-box p1">
+          <h3>PLAYER 1 — WASD</h3>
+          <p>W/A/S/D — Move<br>Left Shift — Boost dash<br>Knock P2 out of the ring!</p>
+        </div>
+        <div class="ctrl-box p2">
+          <h3>PLAYER 2 — ARROWS</h3>
+          <p>↑/←/↓/→ — Move<br>/ (slash) — Boost dash<br>Knock P1 out of the ring!</p>
+        </div>
+        <div class="ctrl-box charge-box">
+          <h3>⚡ CHARGE SYSTEM</h3>
+          <p>Charge fills passively — faster on the <strong>⬡ STATION</strong> or by collecting <strong>POWER CELLS</strong>.<br>
+          At 100%: SUPERCHARGED! Your next dash collision sends opponents flying!</p>
+        </div>
+        <div class="ctrl-box sd-box">
+          <h3>⚡ SUDDEN DEATH — When both players reach 1 life</h3>
+          <p>The ring begins to SHRINK and TILT — a hidden gravity pulls both robots in a shifting direction.<br>
+          Fight through the forces and RING OUT your opponent before the arena swallows you both!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="controls-hint">
+    <span>P1: WASD · LShift=Boost</span>
+    <span>P2: Arrows · /=Boost</span>
+    <span>Collect ⚡ POWER CELLS · Use ⬡ CHARGE STATION · SUPERCHARGE your dash!</span>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// ── INPUT ────────────────────────────────────────────────────────────────────
+const heldKeys = new Set();
+const justPressed = new Set();
+window.addEventListener('keydown', e => {
+  if (!heldKeys.has(e.code)) justPressed.add(e.code);
+  heldKeys.add(e.code);
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','ShiftLeft','ShiftRight','Slash'].includes(e.code)) e.preventDefault();
+});
+window.addEventListener('keyup', e => heldKeys.delete(e.code));
+window.addEventListener('blur', () => { heldKeys.clear(); justPressed.clear(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { heldKeys.clear(); justPressed.clear(); } });
+
+// ── CONSTANTS ────────────────────────────────────────────────────────────────
+const CX = W/2, CY = H/2;
+const RING_START_R   = 212;
+const RING_MIN_R     = 115;
+const SHRINK_DURATION= 2400; // ~40s to fully shrink
+const PLAYER_SIZE    = 22;
+const NORMAL_SPEED   = 3.2;
+const BOOST_SPEED    = 6.5;
+const BOOST_DURATION = 18;
+const BOOST_COOLDOWN = 90;
+const STATION_R      = 40;
+const PASSIVE_CHARGE = 0.48;  // fills in ~12s
+const STATION_CHARGE = 1.5;   // fills in ~4s on station
+const MAX_CHARGE     = 360;
+const CELL_CHARGE    = 120;   // 33% per cell
+const NUM_CELLS      = 3;
+const CELL_RESPAWN   = 480;   // 8s
+const CELL_R         = 11;
+const STARTING_LIVES = 3;
+const INVINCIBLE_F   = 180;   // 3s invincibility after respawn
+const RESPAWN_DELAY  = 110;   // ~1.8s respawn wait
+const NORMAL_FORCE   = 6;
+const BOOST_FORCE    = 13;
+const CHARGED_FORCE  = 24;
+const BUMP_COOLDOWN  = 22;
+const TILT_INTERVAL  = 600;   // change tilt every 10s in sudden death
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let state = 'menu';
+let particles = [], floatingTexts = [];
+let cells = [];
+let ringRadius = RING_START_R;
+let suddenDeath = false;
+let shrinkTimer = 0;
+let tiltAngle = 0, tiltStrength = 0, tiltChangeTimer = 0;
+let cameraShake = 0;
+let screenFlash = 0, screenFlashColor = '#fff';
+let p1, p2;
+let frame = 0;
+
+// ── FACTORIES ────────────────────────────────────────────────────────────────
+function makePlayer(id, x, y, color, accent, controls) {
+  return {
+    id, x, y, color, accent,
+    lives: STARTING_LIVES,
+    charge: 0, charged: false,
+    boostTimer: 0, boostCooldown: 0,
+    knockVx: 0, knockVy: 0,
+    bumpCooldown: 0,
+    invincible: 0,
+    dead: false, respawnTimer: 0,
+    angle: id === 1 ? 0 : Math.PI,
+    trail: [],
+    onStation: false,
+    controls,
+  };
+}
+
+function resetGame() {
+  p1 = makePlayer(1, CX-110, CY, '#FF6B00', '#FFB347',
+    { up:'KeyW', down:'KeyS', left:'KeyA', right:'KeyD', boost:'ShiftLeft' });
+  p2 = makePlayer(2, CX+110, CY, '#0066FF', '#44AAFF',
+    { up:'ArrowUp', down:'ArrowDown', left:'ArrowLeft', right:'ArrowRight', boost:'Slash' });
+
+  particles = []; floatingTexts = [];
+  ringRadius = RING_START_R;
+  suddenDeath = false; shrinkTimer = 0;
+  tiltAngle = Math.random() * Math.PI * 2;
+  tiltStrength = 0; tiltChangeTimer = 0;
+  cameraShake = 0; screenFlash = 0; frame = 0;
+
+  cells = [];
+  for (let i = 0; i < NUM_CELLS; i++) cells.push(spawnCell());
+}
+
+function spawnCell() {
+  const angle = Math.random() * Math.PI * 2;
+  const r = (0.38 + Math.random() * 0.46) * RING_START_R;
+  return {
+    x: CX + Math.cos(angle) * r,
+    y: CY + Math.sin(angle) * r,
+    bob: Math.random() * Math.PI * 2,
+    alive: true,
+    respawnTimer: 0,
+  };
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function dist(ax, ay, bx, by) { return Math.hypot(ax-bx, ay-by); }
+function addParticles(x, y, color, count=12, spd=3) {
+  for (let i = 0; i < count; i++) {
+    const a = Math.PI*2*i/count + Math.random()*0.5;
+    const s = spd*(0.5+Math.random());
+    particles.push({ x, y, vx:Math.cos(a)*s, vy:Math.sin(a)*s,
+      life:1, decay:0.02+Math.random()*0.025, size:3+Math.random()*4, color });
+  }
+}
+function addFloat(x, y, text, color, size=18) {
+  floatingTexts.push({ x, y, text, color, life:1, vy:-1.4, size });
+}
+
+// ── UPDATE PLAYER ────────────────────────────────────────────────────────────
+function updatePlayer(p) {
+  if (p.dead) {
+    p.respawnTimer--;
+    if (p.respawnTimer <= 0) respawnPlayer(p);
+    return;
+  }
+  if (p.invincible > 0) p.invincible--;
+  if (p.bumpCooldown > 0) p.bumpCooldown--;
+  if (p.boostCooldown > 0) p.boostCooldown--;
+  if (p.boostTimer > 0) p.boostTimer--;
+
+  const c = p.controls;
+  let dx = 0, dy = 0;
+  if (heldKeys.has(c.up))    dy -= 1;
+  if (heldKeys.has(c.down))  dy += 1;
+  if (heldKeys.has(c.left))  dx -= 1;
+  if (heldKeys.has(c.right)) dx += 1;
+  const moving = !!(dx || dy);
+  if (moving) { const m = Math.hypot(dx,dy); dx/=m; dy/=m; p.angle = Math.atan2(dy,dx); }
+
+  // Boost trigger
+  if (heldKeys.has(c.boost) && p.boostCooldown===0 && moving && p.boostTimer===0) {
+    p.boostTimer = BOOST_DURATION;
+    p.boostCooldown = BOOST_COOLDOWN;
+    addParticles(p.x, p.y, p.accent, 8, 3);
+  }
+
+  const spd = p.boostTimer > 0 ? BOOST_SPEED : NORMAL_SPEED;
+
+  // Self-movement with ring wall constraint
+  if (moving) {
+    const mx = dx*spd, my = dy*spd;
+    const tx = p.x + mx, ty = p.y + my;
+    const td = dist(tx, ty, CX, CY);
+    if (td + PLAYER_SIZE < ringRadius) {
+      p.x = tx; p.y = ty;
+    } else {
+      // Slide along ring wall
+      const d = dist(p.x, p.y, CX, CY) || 1;
+      const nx = (p.x-CX)/d, ny = (p.y-CY)/d;
+      const dot = mx*nx + my*ny;
+      const sx = p.x + mx - nx*dot;
+      const sy = p.y + my - ny*dot;
+      if (dist(sx, sy, CX, CY) + PLAYER_SIZE < ringRadius) { p.x=sx; p.y=sy; }
+    }
+  }
+
+  // Tilt force (sudden death) added to knockback velocity
+  if (suddenDeath && tiltStrength > 0) {
+    p.knockVx += Math.cos(tiltAngle) * tiltStrength;
+    p.knockVy += Math.sin(tiltAngle) * tiltStrength;
+  }
+
+  // Apply knockback (can push out of ring)
+  p.x += p.knockVx;
+  p.y += p.knockVy;
+  p.knockVx *= 0.86;
+  p.knockVy *= 0.86;
+  if (Math.abs(p.knockVx) < 0.04) p.knockVx = 0;
+  if (Math.abs(p.knockVy) < 0.04) p.knockVy = 0;
+
+  // Trail
+  if (p.boostTimer > 0 && moving) {
+    p.trail.push({x:p.x, y:p.y, life:1});
+    if (p.trail.length > 14) p.trail.shift();
+  }
+  p.trail.forEach(t => t.life -= 0.1);
+  p.trail = p.trail.filter(t => t.life > 0);
+
+  // Station check
+  p.onStation = dist(p.x, p.y, CX, CY) < STATION_R - PLAYER_SIZE/2;
+
+  // Charge accumulation
+  if (!p.charged) {
+    const rate = p.onStation ? STATION_CHARGE : PASSIVE_CHARGE;
+    p.charge = Math.min(MAX_CHARGE, p.charge + rate);
+    if (p.charge >= MAX_CHARGE) {
+      p.charged = true;
+      addFloat(p.x, p.y-35, '⚡ SUPERCHARGED!', '#FFD600', 20);
+      addParticles(p.x, p.y, '#FFD600', 18, 4);
+    }
+  }
+}
+
+function respawnPlayer(p) {
+  p.dead = false;
+  p.x = CX + (p.id===1 ? -90 : 90); p.y = CY;
+  p.knockVx = 0; p.knockVy = 0;
+  p.invincible = INVINCIBLE_F;
+  p.boostTimer = 0; p.boostCooldown = 40;
+  p.trail = [];
+  addParticles(p.x, p.y, p.color, 14, 4);
+}
+
+// ── COLLISION ────────────────────────────────────────────────────────────────
+function checkCollision() {
+  if (p1.dead || p2.dead) return;
+  if (p1.bumpCooldown > 0 || p2.bumpCooldown > 0) return;
+  if (p1.invincible > 0 || p2.invincible > 0) return;
+
+  const dx = p1.x-p2.x, dy = p1.y-p2.y;
+  const d = Math.hypot(dx, dy);
+  if (d >= PLAYER_SIZE * 2.2) return;
+
+  const nx = dx/d, ny = dy/d;
+
+  // Separate
+  const overlap = PLAYER_SIZE*2.2 - d;
+  p1.x += nx*overlap*0.5; p1.y += ny*overlap*0.5;
+  p2.x -= nx*overlap*0.5; p2.y -= ny*overlap*0.5;
+
+  const p1B = p1.boostTimer > 0, p2B = p2.boostTimer > 0;
+  let f1 = NORMAL_FORCE, f2 = NORMAL_FORCE; // f1 = how hard p1 hits p2, f2 vice versa
+
+  if (p1.charged) {
+    f1 = CHARGED_FORCE;
+    p1.charged = false; p1.charge = 0;
+    addFloat(p2.x, p2.y-40, '⚡ SUPERCHARGED HIT!', '#FFD600', 22);
+    addParticles((p1.x+p2.x)/2,(p1.y+p2.y)/2, '#FFD600', 32, 7);
+    screenFlash = 12; screenFlashColor = '#FFD600';
+    cameraShake = 22;
+  } else if (p1B) { f1 = BOOST_FORCE; }
+
+  if (p2.charged) {
+    f2 = CHARGED_FORCE;
+    p2.charged = false; p2.charge = 0;
+    addFloat(p1.x, p1.y-40, '⚡ SUPERCHARGED HIT!', '#FFD600', 22);
+    addParticles((p1.x+p2.x)/2,(p1.y+p2.y)/2, '#FFD600', 32, 7);
+    screenFlash = 12; screenFlashColor = '#FFD600';
+    cameraShake = 22;
+  } else if (p2B) { f2 = BOOST_FORCE; }
+
+  // Dual boost clash
+  if (p1B && p2B && !p1.charged && !p2.charged) {
+    addFloat((p1.x+p2.x)/2,(p1.y+p2.y)/2-30, 'CLASH!', '#fff', 24);
+    addParticles((p1.x+p2.x)/2,(p1.y+p2.y)/2, '#ffffff', 20, 6);
+    cameraShake = Math.max(cameraShake, 14);
+  }
+
+  // p1 pushed along +nx, p2 pushed along -nx
+  p1.knockVx += nx*f2; p1.knockVy += ny*f2;
+  p2.knockVx -= nx*f1; p2.knockVy -= ny*f1;
+
+  p1.bumpCooldown = BUMP_COOLDOWN;
+  p2.bumpCooldown = BUMP_COOLDOWN;
+
+  addParticles((p1.x+p2.x)/2,(p1.y+p2.y)/2, '#ffffff', 8, 4);
+  if (cameraShake < 8) cameraShake = 8;
+}
+
+// ── RING OUT ─────────────────────────────────────────────────────────────────
+function checkRingOut(p) {
+  if (p.dead || p.invincible > 0) return;
+  if (dist(p.x, p.y, CX, CY) + PLAYER_SIZE > ringRadius) ringOut(p);
+}
+
+function ringOut(p) {
+  p.lives--;
+  p.dead = true;
+  p.respawnTimer = RESPAWN_DELAY;
+  p.knockVx = 0; p.knockVy = 0;
+  p.charge = 0; p.charged = false;
+  p.trail = [];
+
+  addParticles(p.x, p.y, p.color, 30, 7);
+  addFloat(p.x, p.y-25, 'RING OUT!', p.color, 26);
+  screenFlash = 20;
+  screenFlashColor = p.color;
+  cameraShake = 28;
+
+  if (p.lives <= 0) { endGame(); return; }
+
+  // Trigger sudden death when both reach 1 life
+  if (!suddenDeath && p1.lives <= 1 && p2.lives <= 1) activateSuddenDeath();
+  updateHUD();
+}
+
+function activateSuddenDeath() {
+  suddenDeath = true;
+  shrinkTimer = 0;
+  tiltAngle = Math.random() * Math.PI * 2;
+  tiltStrength = 0;
+  tiltChangeTimer = 0;
+  addFloat(CX, CY-30, '⚡ SUDDEN DEATH ⚡', '#FF2222', 28);
+  addParticles(CX, CY, '#FF2222', 40, 9);
+  screenFlash = 30; screenFlashColor = '#FF2222';
+  cameraShake = 35;
+  document.getElementById('sudden-death-banner').classList.add('active');
+}
+
+// ── CELLS ────────────────────────────────────────────────────────────────────
+function updateCells() {
+  for (const cell of cells) {
+    if (cell.alive) {
+      cell.bob += 0.05;
+      // Hide if outside shrinking ring
+      if (dist(cell.x, cell.y, CX, CY) + CELL_R > ringRadius - 10) {
+        cell.alive = false; cell.respawnTimer = CELL_RESPAWN;
+      }
+    } else {
+      cell.respawnTimer--;
+      if (cell.respawnTimer <= 0) {
+        const angle = Math.random() * Math.PI * 2;
+        const r = (0.35 + Math.random() * 0.45) * Math.min(ringRadius, RING_START_R);
+        cell.x = CX + Math.cos(angle) * r;
+        cell.y = CY + Math.sin(angle) * r;
+        cell.alive = true;
+        cell.bob = Math.random() * Math.PI * 2;
+      }
+    }
+  }
+}
+
+function checkCellPickup(p) {
+  if (p.dead || p.charged) return;
+  for (const cell of cells) {
+    if (!cell.alive) continue;
+    if (dist(p.x, p.y, cell.x, cell.y) < PLAYER_SIZE + CELL_R) {
+      cell.alive = false;
+      cell.respawnTimer = CELL_RESPAWN;
+      p.charge = Math.min(MAX_CHARGE, p.charge + CELL_CHARGE);
+      if (p.charge >= MAX_CHARGE && !p.charged) {
+        p.charged = true;
+        addFloat(p.x, p.y-35, '⚡ SUPERCHARGED!', '#FFD600', 20);
+        addParticles(p.x, p.y, '#FFD600', 18, 4);
+      } else {
+        addFloat(cell.x, cell.y-18, '+CHARGE', '#FFD600', 15);
+      }
+      addParticles(cell.x, cell.y, '#FFD600', 14, 4);
+    }
+  }
+}
+
+// ── HUD ──────────────────────────────────────────────────────────────────────
+function buildLives(player, elId) {
+  const el = document.getElementById(elId);
+  el.innerHTML = '';
+  for (let i = 0; i < STARTING_LIVES; i++) {
+    const d = document.createElement('div');
+    d.className = 'life-icon ' + (i < player.lives ? 'life-alive' : 'life-dead');
+    el.appendChild(d);
+  }
+}
+
+function updateHUD() {
+  buildLives(p1, 'p1-lives');
+  buildLives(p2, 'p2-lives');
+
+  const p1pct = Math.min(100, (p1.charge/MAX_CHARGE)*100);
+  const p2pct = Math.min(100, (p2.charge/MAX_CHARGE)*100);
+  const p1fill = document.getElementById('p1-charge-fill');
+  const p2fill = document.getElementById('p2-charge-fill');
+  p1fill.style.width = p1pct + '%';
+  p2fill.style.width = p2pct + '%';
+  p1fill.classList.toggle('full', p1.charged);
+  p2fill.classList.toggle('full', p2.charged);
+
+  document.getElementById('p1-charged').classList.toggle('active', p1.charged);
+  document.getElementById('p2-charged').classList.toggle('active', p2.charged);
+
+  document.getElementById('p1-boost-cd').textContent =
+    p1.boostCooldown > 0 ? `BOOST ${(p1.boostCooldown/60).toFixed(1)}s` : 'BOOST RDY';
+  document.getElementById('p2-boost-cd').textContent =
+    p2.boostCooldown > 0 ? `BOOST ${(p2.boostCooldown/60).toFixed(1)}s` : 'BOOST RDY';
+
+  document.getElementById('p1-station').textContent = p1.onStation ? '⬡ ON STATION' : '';
+  document.getElementById('p2-station').textContent = p2.onStation ? '⬡ ON STATION' : '';
+
+  const ri = document.getElementById('ring-info');
+  if (suddenDeath) {
+    const pct = Math.round((1 - (ringRadius - RING_MIN_R)/(RING_START_R - RING_MIN_R)) * 100);
+    ri.textContent = `RING ${100-pct}% · TILT ACTIVE`;
+    ri.style.color = 'rgba(255,80,80,0.6)';
+  } else {
+    ri.textContent = '';
+  }
+}
+
+// ── DRAW FIELD ───────────────────────────────────────────────────────────────
+function drawField() {
+  // Dark outer background
+  ctx.fillStyle = '#07100a';
+  ctx.fillRect(0, 0, W, H);
+
+  // Clip to ring
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(CX, CY, ringRadius, 0, Math.PI*2);
+  ctx.clip();
+
+  // Field floor
+  ctx.fillStyle = '#111a11';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1;
+  for (let x = 0; x < W; x+=40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y = 0; y < H; y+=40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // Tilt gradient in sudden death
+  if (suddenDeath && tiltStrength > 0.01) {
+    const gdx = Math.cos(tiltAngle), gdy = Math.sin(tiltAngle);
+    const grd = ctx.createLinearGradient(
+      CX - gdx*ringRadius, CY - gdy*ringRadius,
+      CX + gdx*ringRadius, CY + gdy*ringRadius
+    );
+    grd.addColorStop(0, 'rgba(255,60,0,0.10)');
+    grd.addColorStop(0.5, 'transparent');
+    grd.addColorStop(1, 'rgba(0,80,255,0.10)');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Inner ring decoration at 65%
+  ctx.beginPath();
+  ctx.arc(CX, CY, ringRadius * 0.66, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Cardinal tick marks
+  ctx.strokeStyle = 'rgba(255,107,0,0.15)'; ctx.lineWidth = 2;
+  for (let i = 0; i < 4; i++) {
+    const a = i * Math.PI / 2;
+    const r1 = ringRadius * 0.80, r2 = ringRadius * 0.92;
+    ctx.beginPath();
+    ctx.moveTo(CX + Math.cos(a)*r1, CY + Math.sin(a)*r1);
+    ctx.lineTo(CX + Math.cos(a)*r2, CY + Math.sin(a)*r2);
+    ctx.stroke();
+  }
+
+  // 1678 watermark
+  ctx.save();
+  ctx.globalAlpha = 0.05; ctx.fillStyle = '#FF6B00';
+  ctx.font = "bold 80px 'Orbitron',monospace";
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('1678', CX, CY);
+  ctx.restore();
+
+  ctx.restore(); // remove ring clip
+
+  // Ring boundary glow
+  const t = Date.now() * 0.001;
+  if (suddenDeath) {
+    // Pulsing red ring when shrinking
+    ctx.beginPath();
+    ctx.arc(CX, CY, ringRadius, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(255,30,30,${0.5 + 0.4*Math.sin(t*4)})`;
+    ctx.lineWidth = 5;
+    ctx.shadowColor = '#FF2222';
+    ctx.shadowBlur = 20 + 10*Math.sin(t*3);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+  ctx.beginPath();
+  ctx.arc(CX, CY, ringRadius, 0, Math.PI*2);
+  ctx.strokeStyle = suddenDeath ? 'rgba(255,100,100,0.8)' : 'rgba(255,255,255,0.85)';
+  ctx.lineWidth = 4;
+  ctx.shadowColor = suddenDeath ? '#FF4444' : '#ffffff';
+  ctx.shadowBlur = 14;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  drawChargeStation();
+
+  // Tilt direction arrow in sudden death
+  if (suddenDeath && tiltStrength > 0.01) {
+    const arrowR = ringRadius - 28;
+    const ax = CX + Math.cos(tiltAngle) * arrowR;
+    const ay = CY + Math.sin(tiltAngle) * arrowR;
+    ctx.save();
+    ctx.translate(ax, ay);
+    ctx.rotate(tiltAngle);
+    const alpha = 0.5 + 0.35*Math.sin(t*4);
+    ctx.fillStyle = `rgba(255,150,30,${alpha})`;
+    ctx.shadowColor = '#FF6600';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.moveTo(-7, -5); ctx.lineTo(14, 0); ctx.lineTo(-7, 5);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.font = "bold 9px 'Share Tech Mono'";
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = `rgba(255,140,30,${alpha * 0.8})`;
+    ctx.fillText('TILT', CX + Math.cos(tiltAngle)*(arrowR+22), CY + Math.sin(tiltAngle)*(arrowR+22));
+    ctx.restore();
+    ctx.shadowBlur = 0;
+  }
+}
+
+function drawChargeStation() {
+  const t = Date.now() * 0.001;
+  const pulse = 0.7 + 0.3*Math.sin(t*2);
+
+  ctx.save();
+  ctx.translate(CX, CY);
+
+  // Hex fill
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const a = (i * Math.PI/3) - Math.PI/6;
+    const x = Math.cos(a)*STATION_R, y = Math.sin(a)*STATION_R;
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(150,40,255,0.18)';
+  ctx.strokeStyle = `rgba(180,70,255,${pulse})`;
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = '#aa44ff';
+  ctx.shadowBlur = 18 * pulse;
+  ctx.fill(); ctx.stroke();
+
+  // Rotating accent arcs
+  for (let i = 0; i < 3; i++) {
+    const a = t*1.2 + i*(Math.PI*2/3);
+    ctx.beginPath();
+    ctx.arc(0, 0, STATION_R+10, a, a+0.8);
+    ctx.strokeStyle = `rgba(200,80,255,${0.35+0.25*Math.sin(t*2+i)})`;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  // Bolt symbol
+  ctx.fillStyle = `rgba(200,100,255,${pulse})`;
+  ctx.font = "bold 20px 'Share Tech Mono'";
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.shadowColor = '#cc44ff'; ctx.shadowBlur = 10;
+  ctx.fillText('⚡', 0, 0);
+
+  // Label
+  ctx.font = "bold 9px 'Share Tech Mono'";
+  ctx.fillStyle = 'rgba(180,80,255,0.65)';
+  ctx.shadowBlur = 0;
+  ctx.fillText('STATION', 0, STATION_R + 13);
+
+  ctx.restore();
+}
+
+// ── DRAW CELLS ───────────────────────────────────────────────────────────────
+function drawCells() {
+  const t = Date.now() * 0.001;
+  for (const cell of cells) {
+    if (!cell.alive) continue;
+    const bob = Math.sin(cell.bob) * 3;
+    const cx2 = cell.x, cy2 = cell.y + bob;
+
+    ctx.save();
+    ctx.translate(cx2, cy2);
+    const g = ctx.createRadialGradient(0,0,2,0,0,CELL_R);
+    g.addColorStop(0,'#FFFF99');
+    g.addColorStop(0.45,'#FFD600');
+    g.addColorStop(1,'#FF9900');
+    ctx.shadowColor = '#FFD600';
+    ctx.shadowBlur = 12 + 6*Math.sin(t*3 + cell.bob);
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(0,0,CELL_R-2,0,Math.PI*2); ctx.stroke();
+    ctx.globalAlpha = 0.4; ctx.fillStyle='#FFD600';
+    ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1; ctx.shadowBlur=0;
+    ctx.restore();
+  }
+}
+
+// ── DRAW PLAYER ──────────────────────────────────────────────────────────────
+function drawPlayer(p) {
+  if (p.dead) return;
+  // Flicker when invincible
+  if (p.invincible > 0 && Math.floor(p.invincible/5) % 2 === 0) return;
+
+  // Trail
+  for (const t of p.trail) {
+    ctx.globalAlpha = t.life * 0.28;
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(t.x, t.y, PLAYER_SIZE*t.life*0.75, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Ring edge proximity warning
+  const dFromCenter = dist(p.x, p.y, CX, CY);
+  const edgeProx = Math.max(0, (dFromCenter - (ringRadius - PLAYER_SIZE - 35)) / 35);
+
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(p.angle + Math.PI/4);
+
+  if (p.charged) {
+    ctx.shadowColor = '#FFD600'; ctx.shadowBlur = 28;
+  } else if (p.boostTimer > 0) {
+    ctx.shadowColor = p.accent; ctx.shadowBlur = 18;
+  } else if (p.bumpCooldown > 0) {
+    ctx.shadowColor = '#fff'; ctx.shadowBlur = 12;
+  } else if (edgeProx > 0) {
+    ctx.shadowColor = '#FF2222'; ctx.shadowBlur = 20 * edgeProx;
+  }
+
+  const s = PLAYER_SIZE;
+  ctx.fillStyle = p.color;
+  ctx.beginPath(); ctx.roundRect(-s,-s,s*2,s*2,4); ctx.fill();
+  ctx.fillStyle = p.charged ? '#FFD600' : p.accent;
+  ctx.beginPath(); ctx.roundRect(-s*.5,-s*.5,s,s,2); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fillRect(-s,-s,s*2,5);
+  ctx.shadowBlur = 0; ctx.restore();
+
+  // P label
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.font = "bold 10px 'Share Tech Mono'";
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(`P${p.id}`, p.x, p.y+3);
+
+  // Boost cooldown arc
+  if (p.boostCooldown > 0) {
+    const pct = 1 - p.boostCooldown/BOOST_COOLDOWN;
+    ctx.strokeStyle = p.accent; ctx.lineWidth = 2; ctx.globalAlpha = 0.5;
+    ctx.beginPath(); ctx.arc(p.x,p.y,PLAYER_SIZE+7,-Math.PI/2,-Math.PI/2+pct*Math.PI*2);
+    ctx.stroke(); ctx.globalAlpha=1;
+  }
+
+  // Charge fill arc
+  if (!p.charged && p.charge > 0) {
+    const pct = p.charge/MAX_CHARGE;
+    ctx.strokeStyle = '#FFD600'; ctx.lineWidth = 3; ctx.globalAlpha = 0.55;
+    ctx.shadowColor='#FFD600'; ctx.shadowBlur=6;
+    ctx.beginPath(); ctx.arc(p.x,p.y,PLAYER_SIZE+16,-Math.PI/2,-Math.PI/2+pct*Math.PI*2);
+    ctx.stroke(); ctx.globalAlpha=1; ctx.shadowBlur=0;
+  }
+
+  // Supercharged orbiting sparks
+  if (p.charged) {
+    const t = Date.now()*0.006;
+    for (let i=0;i<5;i++) {
+      const a = t + i*(Math.PI*2/5);
+      const r = PLAYER_SIZE+18;
+      ctx.fillStyle='#FFD600'; ctx.globalAlpha=0.7+0.3*Math.sin(t*3+i);
+      ctx.beginPath(); ctx.arc(p.x+Math.cos(a)*r, p.y+Math.sin(a)*r, 3,0,Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+  }
+}
+
+// ── PARTICLES & FLOAT TEXT ───────────────────────────────────────────────────
+function drawParticles() {
+  for (const p of particles) {
+    ctx.globalAlpha=p.life; ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2); ctx.fill();
+    p.x+=p.vx; p.y+=p.vy; p.vx*=0.92; p.vy*=0.92; p.life-=p.decay;
+  }
+  particles = particles.filter(p=>p.life>0); ctx.globalAlpha=1;
+}
+
+function drawFloatTexts() {
+  for (const ft of floatingTexts) {
+    ctx.globalAlpha=ft.life; ctx.fillStyle=ft.color;
+    ctx.font=`bold ${ft.size}px 'Orbitron',monospace`; ctx.textAlign='center';
+    ctx.fillText(ft.text, ft.x, ft.y);
+    ft.y+=ft.vy; ft.life-=0.016;
+  }
+  floatingTexts=floatingTexts.filter(ft=>ft.life>0); ctx.globalAlpha=1;
+}
+
+// ── DRAW ─────────────────────────────────────────────────────────────────────
+function draw() {
+  ctx.save();
+
+  // Camera shake
+  if (cameraShake > 0) {
+    ctx.translate((Math.random()-0.5)*cameraShake*0.7, (Math.random()-0.5)*cameraShake*0.7);
+    cameraShake--;
+  }
+
+  ctx.clearRect(0, 0, W, H);
+  drawField();
+  drawCells();
+  drawPlayer(p1);
+  drawPlayer(p2);
+  drawParticles();
+  drawFloatTexts();
+
+  // Screen flash
+  if (screenFlash > 0) {
+    ctx.globalAlpha = (screenFlash/20)*0.45;
+    ctx.fillStyle = screenFlashColor;
+    ctx.fillRect(0,0,W,H);
+    ctx.globalAlpha=1;
+    screenFlash--;
+  }
+
+  ctx.restore();
+}
+
+// ── GAME LOOP ────────────────────────────────────────────────────────────────
+function gameLoop() {
+  if (state !== 'playing') return;
+  frame++;
+
+  updatePlayer(p1);
+  updatePlayer(p2);
+  checkCollision();
+  checkRingOut(p1);
+  checkRingOut(p2);
+  updateCells();
+  checkCellPickup(p1);
+  checkCellPickup(p2);
+
+  // Sudden death ring shrink & tilt
+  if (suddenDeath) {
+    shrinkTimer = Math.min(shrinkTimer+1, SHRINK_DURATION);
+    ringRadius = Math.max(RING_MIN_R, RING_START_R - (shrinkTimer/SHRINK_DURATION)*(RING_START_R-RING_MIN_R));
+    tiltStrength = 0.02 + (shrinkTimer/SHRINK_DURATION)*0.07;
+
+    tiltChangeTimer++;
+    if (tiltChangeTimer >= TILT_INTERVAL) {
+      tiltAngle = Math.random() * Math.PI*2;
+      tiltChangeTimer = 0;
+      addFloat(CX, CY-50, '↺ TILT SHIFT!', '#FF9900', 20);
+      addParticles(CX, CY, '#FF9900', 20, 5);
+    }
+  }
+
+  updateHUD();
+  draw();
+  justPressed.clear();
+  requestAnimationFrame(gameLoop);
+}
+
+// ── GAME START/END ───────────────────────────────────────────────────────────
+function startGame() {
+  resetGame(); state = 'playing';
+  document.getElementById('overlay').classList.add('hidden');
+  updateHUD();
+  gameLoop();
+}
+
+function endGame() {
+  if (state==='ended') return;
+  state='ended';
+  const overlay = document.getElementById('overlay');
+  overlay.classList.remove('hidden');
+  document.getElementById('overlay-sub').style.display='none';
+  document.getElementById('overlay-controls').style.display='none';
+
+  const title = document.getElementById('overlay-title');
+  const winner = document.getElementById('winner-text');
+  winner.style.display='block';
+
+  const p1Survives = p1.lives > 0;
+  if (p1Survives) {
+    title.textContent='P1 WINS!';
+    title.style.background='linear-gradient(90deg,#FF6B00,#FFB347)';
+    title.style.webkitBackgroundClip='text'; winner.style.color='#FF6B00';
+    winner.textContent=`Citrus Alpha survives with ${p1.lives} ${p1.lives===1?'life':'lives'} remaining!`;
+  } else {
+    title.textContent='P2 WINS!';
+    title.style.background='linear-gradient(90deg,#0066FF,#44AAFF)';
+    title.style.webkitBackgroundClip='text'; winner.style.color='#44AAFF';
+    winner.textContent=`Citrus Beta survives with ${p2.lives} ${p2.lives===1?'life':'lives'} remaining!`;
+  }
+  document.getElementById('start-btn').textContent='PLAY AGAIN';
+}
+
+document.getElementById('start-btn').addEventListener('click', () => {
+  document.getElementById('sudden-death-banner').classList.remove('active');
+  document.getElementById('overlay-sub').style.display='';
+  document.getElementById('overlay-controls').style.display='';
+  document.getElementById('winner-text').style.display='none';
+  const t=document.getElementById('overlay-title');
+  t.textContent='IRON RING';
+  t.style.background='linear-gradient(90deg,#FF6B00,#fff,#44AAFF)';
+  t.style.webkitBackgroundClip='text';
+  startGame();
+});
+
+// Initial render
+resetGame(); draw(); updateHUD();
+</script>
+</body>
+</html>
