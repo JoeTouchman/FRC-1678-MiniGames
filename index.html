@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CITRUS ARCADE — Team 1678</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --citrus: #FF6B00;
+    --citrus-light: #FFB347;
+    --blue: #0066FF;
+    --blue-light: #44AAFF;
+  }
+
+  body {
+    background: #080d08;
+    color: white;
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  #bg-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .team-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: rgba(255,107,0,0.6);
+    text-transform: uppercase;
+  }
+
+  .arcade-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 64px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, var(--citrus) 0%, #fff 45%, var(--blue-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+    text-shadow: none;
+  }
+
+  .arcade-subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+  }
+
+  .games-grid {
+    display: flex;
+    gap: 24px;
+    align-items: stretch;
+  }
+
+  .game-card {
+    width: 280px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 12px;
+    padding: 32px 24px;
+    text-decoration: none;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, background 0.2s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .game-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+    border-radius: 12px;
+  }
+
+  .card-orange::before {
+    background: radial-gradient(ellipse at 50% 0%, rgba(255,107,0,0.12) 0%, transparent 70%);
+  }
+  .card-blue::before {
+    background: radial-gradient(ellipse at 50% 0%, rgba(0,102,255,0.12) 0%, transparent 70%);
+  }
+
+  .game-card:hover::before { opacity: 1; }
+  .card-orange:hover {
+    border-color: rgba(255,107,0,0.5);
+    box-shadow: 0 0 40px rgba(255,107,0,0.2), 0 8px 32px rgba(0,0,0,0.4);
+    transform: translateY(-4px);
+  }
+  .card-blue:hover {
+    border-color: rgba(0,102,255,0.5);
+    box-shadow: 0 0 40px rgba(0,102,255,0.2), 0 8px 32px rgba(0,0,0,0.4);
+    transform: translateY(-4px);
+  }
+
+  .card-icon {
+    font-size: 40px;
+    line-height: 1;
+  }
+
+  .card-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-align: center;
+  }
+  .card-orange .card-title { color: var(--citrus-light); }
+  .card-blue   .card-title { color: var(--blue-light); }
+
+  .card-desc {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .card-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 4px;
+  }
+  .card-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+  .card-orange .card-tag { background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.3); color: var(--citrus-light); }
+  .card-blue   .card-tag { background: rgba(0,102,255,0.15); border: 1px solid rgba(0,102,255,0.3); color: var(--blue-light); }
+
+  .card-cta {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 10px 24px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    margin-top: 4px;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .card-orange .card-cta {
+    background: linear-gradient(135deg, var(--citrus), #FF9500);
+    color: #000;
+    box-shadow: 0 4px 16px rgba(255,107,0,0.3);
+  }
+  .card-blue .card-cta {
+    background: linear-gradient(135deg, var(--blue), #0099FF);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(0,102,255,0.3);
+  }
+  .game-card:hover .card-cta { transform: scale(1.05); }
+  .card-orange:hover .card-cta { box-shadow: 0 6px 24px rgba(255,107,0,0.5); }
+  .card-blue:hover   .card-cta { box-shadow: 0 6px 24px rgba(0,102,255,0.5); }
+
+  .footer {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.12);
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<div class="content">
+  <div class="header">
+    <div class="team-badge">Team 1678 · Citrus Robotics</div>
+    <div class="arcade-title">CITRUS ARCADE</div>
+    <div class="arcade-subtitle">FRC Minigames Collection</div>
+  </div>
+
+  <div class="games-grid">
+    <a href="crescendo-clash.html" class="game-card card-orange">
+      <div class="card-icon">🎵</div>
+      <div class="card-title">CRESCENDO CLASH</div>
+      <div class="card-desc">
+        Race to collect glowing notes and score in your goal zone.<br>
+        Contest the AMP Stage for quadruple points!
+      </div>
+      <div class="card-tags">
+        <span class="card-tag">2 Players</span>
+        <span class="card-tag">Score Attack</span>
+        <span class="card-tag">AMP Mode</span>
+      </div>
+      <div class="card-cta">PLAY NOW</div>
+    </a>
+
+    <a href="iron-ring.html" class="game-card card-blue">
+      <div class="card-icon">🤖</div>
+      <div class="card-title">IRON RING</div>
+      <div class="card-desc">
+        Push your opponent out of the sumo ring to win!<br>
+        Charge up for a devastating SUPERCHARGED hit!
+      </div>
+      <div class="card-tags">
+        <span class="card-tag">2 Players</span>
+        <span class="card-tag">Sumo</span>
+        <span class="card-tag">Sudden Death</span>
+      </div>
+      <div class="card-cta">PLAY NOW</div>
+    </a>
+  </div>
+
+  <div class="footer">WASD vs Arrow Keys · Best with two players</div>
+</div>
+
+<script>
+// Animated background — grid with drifting particles
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const GRID = 50;
+const particles = [];
+
+for (let i = 0; i < 60; i++) {
+  particles.push({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    vx: (Math.random()-0.5)*0.4,
+    vy: (Math.random()-0.5)*0.4,
+    size: 1 + Math.random() * 2,
+    alpha: 0.05 + Math.random() * 0.15,
+    color: Math.random() < 0.5 ? '#FF6B00' : '#0066FF',
+  });
+}
+
+function loop() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += GRID) {
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+  }
+  for (let y = 0; y < H; y += GRID) {
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  }
+
+  // Subtle center radial glow
+  const grd = ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.min(W,H)*0.6);
+  grd.addColorStop(0,'rgba(255,107,0,0.04)');
+  grd.addColorStop(0.5,'rgba(0,102,255,0.02)');
+  grd.addColorStop(1,'transparent');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0,0,W,H);
+
+  // Floating particles
+  for (const p of particles) {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+    if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+    ctx.globalAlpha = p.alpha;
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
