@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIRCUIT BREAKER — Team 1678</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --citrus: #FF6B00;
+    --citrus-light: #FFB347;
+    --blue: #0066FF;
+    --blue-light: #44AAFF;
+    --gold: #FFD600;
+    --danger: #FF2222;
+    --station: #CC44FF;
+    --volt: #00FFCC;
+  }
+
+  body {
+    background: #0a0a0f;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Rajdhani', sans-serif;
+    overflow: hidden;
+    color: white;
+  }
+
+  #game-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #hud {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 900px;
+    padding: 0 4px;
+  }
+
+  .player-hud {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 270px;
+  }
+  .player-hud.p1 { align-items: flex-start; }
+  .player-hud.p2 { align-items: flex-end; }
+
+  .player-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .p1 .player-name { color: var(--citrus); }
+  .p2 .player-name { color: var(--blue-light); }
+
+  .score-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .score-pip {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    transition: all 0.2s;
+  }
+  .p1 .score-pip.active { background: var(--citrus); box-shadow: 0 0 8px var(--citrus); }
+  .p2 .score-pip.active { background: var(--blue); box-shadow: 0 0 8px var(--blue); }
+  .score-pip.inactive { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); }
+
+  .battery-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 1px;
+  }
+  .battery-bar-track {
+    width: 100%;
+    height: 8px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .battery-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.05s;
+    background: linear-gradient(90deg, #22CC55, #88FF88);
+    width: 80%;
+  }
+  .battery-bar-fill.low {
+    background: linear-gradient(90deg, #FF4444, #FF8888);
+    animation: batteryLow 0.3s ease infinite alternate;
+  }
+  .battery-bar-fill.overcharged {
+    background: linear-gradient(90deg, var(--citrus), var(--gold));
+    animation: overchargeGlow 0.35s ease infinite alternate;
+  }
+  .p2 .battery-bar-fill.overcharged {
+    background: linear-gradient(90deg, var(--blue), var(--volt));
+    animation: overchargeGlowBlue 0.35s ease infinite alternate;
+  }
+  @keyframes batteryLow {
+    from { box-shadow: 0 0 4px #FF4444; }
+    to   { box-shadow: 0 0 14px #FF4444, 0 0 6px #FF0000; }
+  }
+  @keyframes overchargeGlow {
+    from { box-shadow: 0 0 6px var(--gold); }
+    to   { box-shadow: 0 0 20px var(--gold), 0 0 8px #FFF; }
+  }
+  @keyframes overchargeGlowBlue {
+    from { box-shadow: 0 0 6px var(--volt); }
+    to   { box-shadow: 0 0 20px var(--volt), 0 0 8px #FFF; }
+  }
+
+  .battery-pct {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.3);
+    margin-top: -1px;
+  }
+
+  .status-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+  }
+  .boost-cd { color: rgba(255,255,255,0.35); }
+  .station-ind { color: var(--station); }
+
+  .overcharge-badge {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gold);
+    background: rgba(255,214,0,0.15);
+    border: 1px solid var(--gold);
+    border-radius: 4px;
+    padding: 2px 7px;
+    letter-spacing: 1px;
+    display: none;
+    animation: chargePulse 0.45s ease infinite alternate;
+  }
+  .overcharge-badge.active { display: inline-block; }
+  .p2 .overcharge-badge { color: var(--volt); background: rgba(0,255,200,0.12); border-color: var(--volt); }
+  @keyframes chargePulse {
+    from { opacity: 1; box-shadow: 0 0 6px currentColor; }
+    to   { opacity: 0.5; box-shadow: 0 0 20px currentColor; }
+  }
+
+  .disabled-badge {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--danger);
+    background: rgba(255,34,34,0.15);
+    border: 1px solid var(--danger);
+    border-radius: 4px;
+    padding: 2px 7px;
+    letter-spacing: 1px;
+    display: none;
+    animation: disabledPulse 0.35s ease infinite alternate;
+  }
+  .disabled-badge.active { display: inline-block; }
+  @keyframes disabledPulse {
+    from { opacity: 1; }
+    to   { opacity: 0.3; }
+  }
+
+  #center-hud {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  #team-logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.2);
+    text-transform: uppercase;
+  }
+  #game-title-hud {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: white;
+    line-height: 1;
+    letter-spacing: 2px;
+    text-shadow: 0 0 16px rgba(0,255,200,0.5);
+  }
+  #game-timer {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 26px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 3px;
+    text-shadow: 0 0 12px rgba(255,255,255,0.25);
+    line-height: 1;
+    margin-top: 2px;
+  }
+  #game-timer.low { color: var(--danger); text-shadow: 0 0 14px rgba(255,34,34,0.8); animation: timerLow 0.5s ease infinite alternate; }
+  @keyframes timerLow { from { opacity: 1; } to { opacity: 0.5; } }
+
+  #sudden-death-banner {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--danger);
+    letter-spacing: 2px;
+    display: none;
+    animation: sdPulse 0.4s ease infinite alternate;
+  }
+  #sudden-death-banner.active { display: block; }
+  @keyframes sdPulse {
+    from { opacity: 1; text-shadow: 0 0 8px var(--danger); }
+    to   { opacity: 0.25; text-shadow: 0 0 22px var(--danger); }
+  }
+
+  #canvas-container {
+    position: relative;
+    border: 2px solid rgba(0,255,200,0.12);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 50px rgba(0,255,200,0.08), 0 0 50px rgba(255,107,0,0.07), 0 0 50px rgba(0,102,255,0.07);
+  }
+  canvas { display: block; }
+
+  #overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background: rgba(0,0,0,0.93);
+    z-index: 10;
+    gap: 11px;
+    backdrop-filter: blur(4px);
+    overflow-y: auto;
+    padding: 18px 16px 22px;
+  }
+  #overlay.hidden { display: none; }
+  #overlay::-webkit-scrollbar { width: 5px; }
+  #overlay::-webkit-scrollbar-track { background: transparent; }
+  #overlay::-webkit-scrollbar-thumb { background: rgba(0,255,200,0.3); border-radius: 3px; }
+
+  #overlay-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 40px;
+    font-weight: 900;
+    background: linear-gradient(90deg, var(--citrus), #00FFCC, var(--blue-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+    line-height: 1;
+    letter-spacing: 1px;
+  }
+  #overlay-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    line-height: 1.9;
+    max-width: 600px;
+  }
+  #overlay-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    max-width: 620px;
+    width: 100%;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+  }
+  .ctrl-box {
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    padding: 12px 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .ctrl-box.p1 { border-color: rgba(255,107,0,0.35); }
+  .ctrl-box.p2 { border-color: rgba(0,102,255,0.35); }
+  .ctrl-box.volt-box { border-color: rgba(0,255,200,0.38); background: rgba(0,255,200,0.03); }
+  .ctrl-box.sd-box { grid-column: 1/-1; border-color: rgba(255,34,34,0.38); background: rgba(255,34,34,0.03); }
+  .ctrl-box h3 { margin-bottom: 7px; font-size: 12px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+  .p1 h3 { color: var(--citrus); }
+  .p2 h3 { color: var(--blue-light); }
+  .volt-box h3 { color: #00FFCC; }
+  .sd-box h3 { color: var(--danger); }
+  .ctrl-box p { color: rgba(255,255,255,0.5); line-height: 1.8; }
+  .sd-box p { text-align: center; }
+
+  #start-btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    padding: 13px 42px;
+    background: linear-gradient(135deg, #00BBAA, #00FFCC);
+    border: none;
+    border-radius: 6px;
+    color: #000;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 22px rgba(0,255,200,0.4);
+  }
+  #start-btn:hover { transform: scale(1.04); box-shadow: 0 6px 30px rgba(0,255,200,0.65); }
+
+  #winner-text { font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 700; text-align: center; line-height: 1.5; }
+
+  #controls-hint {
+    display: flex;
+    gap: 28px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.18);
+    letter-spacing: 1px;
+  }
+
+  #home-link {
+    position: absolute;
+    top: 2px;
+    left: 0;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.22);
+    text-decoration: none;
+    letter-spacing: 1px;
+    transition: color 0.2s;
+  }
+  #home-link:hover { color: rgba(255,255,255,0.7); }
+</style>
+</head>
+<body>
+<div id="game-wrapper">
+  <a href="index.html" id="home-link">← HOME</a>
+
+  <div id="hud">
+    <div class="player-hud p1">
+      <span class="player-name">⚡ Citrus Volt</span>
+      <div class="score-row" id="p1-score"></div>
+      <div style="width:100%">
+        <div class="battery-label">BATTERY</div>
+        <div class="battery-bar-track"><div class="battery-bar-fill" id="p1-bat-fill"></div></div>
+      </div>
+      <div class="battery-pct" id="p1-bat-pct">80%</div>
+      <div class="status-row">
+        <span class="overcharge-badge" id="p1-overcharge">⚡ OVERCHARGED</span>
+        <span class="disabled-badge" id="p1-disabled">💀 DISABLED</span>
+        <span class="boost-cd" id="p1-boost-cd"></span>
+        <span class="station-ind" id="p1-station"></span>
+      </div>
+    </div>
+
+    <div id="center-hud">
+      <div id="team-logo">Team 1678 · Citrus Robotics</div>
+      <div id="game-title-hud">⚡ CIRCUIT BREAKER</div>
+      <div id="game-timer">2:00</div>
+      <div id="sudden-death-banner">⚡ SUDDEN DEATH ⚡</div>
+    </div>
+
+    <div class="player-hud p2">
+      <span class="player-name">Citrus Surge ⚡</span>
+      <div class="score-row" id="p2-score" style="flex-direction:row-reverse"></div>
+      <div style="width:100%">
+        <div class="battery-label" style="text-align:right">BATTERY</div>
+        <div class="battery-bar-track"><div class="battery-bar-fill" id="p2-bat-fill"></div></div>
+      </div>
+      <div class="battery-pct" id="p2-bat-pct" style="align-self:flex-end">80%</div>
+      <div class="status-row" style="flex-direction:row-reverse">
+        <span class="overcharge-badge" id="p2-overcharge">⚡ OVERCHARGED</span>
+        <span class="disabled-badge" id="p2-disabled">💀 DISABLED</span>
+        <span class="boost-cd" id="p2-boost-cd"></span>
+        <span class="station-ind" id="p2-station"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="canvas-container">
+    <canvas id="canvas" width="900" height="540"></canvas>
+    <div id="overlay">
+      <div id="overlay-title">CIRCUIT BREAKER</div>
+      <div id="winner-text" style="display:none"></div>
+      <button id="start-btn">START MATCH</button>
+      <div id="overlay-sub">
+        Fire <strong style="color:#00FFCC">SHOCK BOLTS</strong> to drain your opponent's battery — hit 0% and they're <strong style="color:#FF2222">DISABLED!</strong><br>
+        Bolts <strong style="color:#00FFCC">BOUNCE</strong> off walls — use trick shots to catch opponents off guard!<br>
+        Boost-tackle for heavy battery damage. Fill to <strong style="color:#FFD600">100% → OVERCHARGE</strong> — your boost tackle becomes an <strong style="color:#FFD600">INSTANT DISABLE!</strong><br>
+        Recharge at the <strong style="color:#CC44FF">⬡ CHARGING STATION</strong> or collect <strong style="color:#00FFCC">⚡ BATTERY PACKS</strong> — first to <strong>5 disables</strong> wins!
+      </div>
+      <div id="overlay-controls">
+        <div class="ctrl-box p1">
+          <h3>PLAYER 1 — WASD</h3>
+          <p>W/A/S/D — Move<br>Left Shift — Boost dash<br>F — Fire Shock Bolt</p>
+        </div>
+        <div class="ctrl-box p2">
+          <h3>PLAYER 2 — ARROWS</h3>
+          <p>↑/←/↓/→ — Move<br>/ (slash) — Boost dash<br>. (period) — Fire Shock Bolt</p>
+        </div>
+        <div class="ctrl-box volt-box">
+          <h3>⚡ OVERCHARGE SYSTEM</h3>
+          <p>Battery fills passively — faster on the <strong>⬡ STATION</strong> or by grabbing <strong>BATTERY PACKS</strong>.<br>
+          At 100%: OVERCHARGED! Your next boost dash is an <strong>INSTANT DISABLE</strong> tackle!<br>
+          <strong>Double Overcharge Clash</strong> = both players knocked back hard!</p>
+        </div>
+        <div class="ctrl-box sd-box">
+          <h3>⚡ SUDDEN DEATH — Tied score at time's up</h3>
+          <p>Battery recharges 3× faster — make your overcharge count.<br>First to land a disable wins the entire match!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="controls-hint">
+    <span>P1: WASD · LShift=Boost · F=Fire Bolt</span>
+    <span>P2: Arrows · /=Boost · .=Fire Bolt</span>
+    <span>Bounce shots off walls · OVERCHARGE for instant disable!</span>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// ── INPUT ────────────────────────────────────────────────────────────────────
+const heldKeys = new Set();
+const justPressed = new Set();
+window.addEventListener('keydown', e => {
+  if (!heldKeys.has(e.code)) justPressed.add(e.code);
+  heldKeys.add(e.code);
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space',
+       'ShiftLeft','ShiftRight','Slash','Period','KeyF'].includes(e.code)) e.preventDefault();
+});
+window.addEventListener('keyup', e => heldKeys.delete(e.code));
+window.addEventListener('blur', () => { heldKeys.clear(); justPressed.clear(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { heldKeys.clear(); justPressed.clear(); }
+});
+
+// ── CONSTANTS ────────────────────────────────────────────────────────────────
+const CX = W / 2, CY = H / 2;
+const PLAYER_R      = 22;
+const NORMAL_SPD    = 3.2;
+const BOOST_SPD     = 6.5;
+const BOOST_DUR     = 18;
+const BOOST_CD      = 90;
+const BOOST_BAT_COST = 14;      // % battery to boost
+const BOLT_SPD      = 9;
+const BOLT_DMG      = 26;       // % battery damage
+const BOLT_COST     = 7;        // % battery to fire
+const BOLT_CD       = 48;       // frames between shots
+const BOLT_LIFE     = 160;      // frames before expiry
+const BOLT_R        = 7;
+const BOLT_KNOCKBACK = 3.5;
+const BOLT_MAX_BOUNCES = 2;
+const TACKLE_DMG    = 22;       // % battery from normal boost tackle
+const TACKLE_FORCE  = 7;
+const OC_TACKLE_FORCE = 12;
+const PASSIVE_REGEN = 0.10;     // % per frame
+const STATION_REGEN = 1.55;     // % per frame on station
+const PACK_RESTORE  = 35;       // % restored per battery pack
+const PACK_RESPAWN  = 480;      // frames (8s)
+const STATION_R     = 46;
+const PACK_R        = 12;
+const DISABLE_DUR   = 220;      // 3.7s disabled
+const RESPAWN_BAT   = 55;       // % battery after respawn
+const INVINCIBLE_F  = 150;      // 2.5s invincible after respawn
+const BUMP_CD       = 22;
+const WIN_SCORE     = 5;
+const GAME_TIME     = 7200;     // 120s in frames
+const SD_REGEN_MULT = 3;        // sudden death regen multiplier
+const FP            = 22;       // field padding (player boundary)
+
+// Battery pack spawn positions
+const PACK_SPAWNS = [
+  { x: 152, y: 112 }, { x: 748, y: 112 },
+  { x: 152, y: 428 }, { x: 748, y: 428 },
+];
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let state = 'menu';
+let particles = [], floatingTexts = [], bolts = [], packs = [];
+let cameraShake = 0, screenFlash = 0, screenFlashColor = '#fff';
+let p1, p2, frame = 0, gameTimer = GAME_TIME, suddenDeath = false;
+let circuitNodes = [], circuitTraces = [];
+
+// ── PCB CIRCUIT GENERATION ───────────────────────────────────────────────────
+function generateCircuit() {
+  circuitNodes = [];
+  circuitTraces = [];
+  for (let x = 70; x < W - 70; x += 95) {
+    for (let y = 55; y < H - 55; y += 95) {
+      if (Math.random() > 0.22) {
+        circuitNodes.push({
+          x: x + (Math.random() - 0.5) * 40,
+          y: y + (Math.random() - 0.5) * 40,
+        });
+      }
+    }
+  }
+  for (let i = 0; i < circuitNodes.length; i++) {
+    const a = circuitNodes[i];
+    for (let j = i + 1; j < circuitNodes.length; j++) {
+      const b = circuitNodes[j];
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (d < 145 && Math.random() > 0.55) circuitTraces.push({ a, b });
+    }
+  }
+}
+
+// ── FACTORIES ────────────────────────────────────────────────────────────────
+function makePlayer(id, x, y, color, accent, controls) {
+  return {
+    id, x, y, color, accent,
+    battery: 80, overcharged: false,
+    disabled: false, disableTimer: 0,
+    score: 0,
+    boostTimer: 0, boostCooldown: 0,
+    boltCooldown: 0,
+    knockVx: 0, knockVy: 0,
+    bumpCooldown: 0, invincible: 0,
+    angle: id === 1 ? 0 : Math.PI,
+    trail: [], onStation: false,
+    controls,
+  };
+}
+
+function resetGame() {
+  p1 = makePlayer(1, 185, CY, '#FF6B00', '#FFB347',
+    { up:'KeyW', down:'KeyS', left:'KeyA', right:'KeyD', boost:'ShiftLeft', fire:'KeyF' });
+  p2 = makePlayer(2, 715, CY, '#0066FF', '#44AAFF',
+    { up:'ArrowUp', down:'ArrowDown', left:'ArrowLeft', right:'ArrowRight', boost:'Slash', fire:'Period' });
+
+  particles = []; floatingTexts = []; bolts = [];
+  cameraShake = 0; screenFlash = 0; frame = 0;
+  gameTimer = GAME_TIME; suddenDeath = false;
+
+  document.getElementById('sudden-death-banner').classList.remove('active');
+  document.getElementById('game-timer').classList.remove('low');
+
+  packs = PACK_SPAWNS.map(pos => ({
+    x: pos.x, y: pos.y,
+    alive: true, respawnTimer: 0,
+    bob: Math.random() * Math.PI * 2,
+  }));
+
+  generateCircuit();
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function dist(ax, ay, bx, by) { return Math.hypot(ax - bx, ay - by); }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+function addParticles(x, y, color, count = 12, spd = 3) {
+  for (let i = 0; i < count; i++) {
+    const a = Math.PI * 2 * i / count + Math.random() * 0.6;
+    const s = spd * (0.5 + Math.random());
+    particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+      life: 1, decay: 0.02 + Math.random() * 0.025, size: 3 + Math.random() * 4, color });
+  }
+}
+function addFloat(x, y, text, color, size = 18) {
+  floatingTexts.push({ x, y, text, color, life: 1, vy: -1.4, size });
+}
+
+// ── DISABLE / RESPAWN ────────────────────────────────────────────────────────
+function disablePlayer(p) {
+  if (p.disabled) return;
+  p.disabled = true;
+  p.disableTimer = DISABLE_DUR;
+  p.battery = 0;
+  p.overcharged = false;
+  p.boostTimer = 0;
+  p.trail = [];
+
+  const scorer = p.id === 1 ? p2 : p1;
+  scorer.score++;
+
+  addParticles(p.x, p.y, p.color, 28, 7);
+  addParticles(p.x, p.y, '#FF4444', 18, 5);
+  addFloat(p.x, p.y - 26, '💀 DISABLED!', '#FF2222', 24);
+  addFloat(scorer.x, scorer.y - 38, '+1 DISABLE', scorer.color, 17);
+  screenFlash = 20; screenFlashColor = '#FF2222';
+  cameraShake = 26;
+
+  if (scorer.score >= WIN_SCORE) { endGame(); return; }
+  if (suddenDeath) { endGame(); return; }
+  updateHUD();
+}
+
+function respawnPlayer(p) {
+  p.disabled = false;
+  p.x = p.id === 1 ? 185 : 715;
+  p.y = CY + (Math.random() - 0.5) * 100;
+  p.knockVx = 0; p.knockVy = 0;
+  p.battery = RESPAWN_BAT;
+  p.overcharged = false;
+  p.invincible = INVINCIBLE_F;
+  p.boostTimer = 0; p.boostCooldown = 40; p.boltCooldown = 30;
+  p.trail = [];
+  addParticles(p.x, p.y, p.color, 14, 4);
+  addFloat(p.x, p.y - 22, 'ONLINE', p.color, 16);
+}
+
+// ── UPDATE PLAYER ────────────────────────────────────────────────────────────
+function updatePlayer(p) {
+  if (p.disabled) {
+    p.disableTimer--;
+    // Sparking effect while disabled
+    if (Math.random() < 0.28) {
+      addParticles(
+        p.x + (Math.random() - 0.5) * PLAYER_R * 2,
+        p.y + (Math.random() - 0.5) * PLAYER_R * 2,
+        '#FF4444', 2, 1.5
+      );
+    }
+    if (p.disableTimer <= 0) respawnPlayer(p);
+    return;
+  }
+
+  if (p.invincible > 0) p.invincible--;
+  if (p.bumpCooldown > 0) p.bumpCooldown--;
+  if (p.boostCooldown > 0) p.boostCooldown--;
+  if (p.boostTimer > 0) p.boostTimer--;
+  if (p.boltCooldown > 0) p.boltCooldown--;
+
+  const c = p.controls;
+  let dx = 0, dy = 0;
+  if (heldKeys.has(c.up))    dy -= 1;
+  if (heldKeys.has(c.down))  dy += 1;
+  if (heldKeys.has(c.left))  dx -= 1;
+  if (heldKeys.has(c.right)) dx += 1;
+  const moving = !!(dx || dy);
+  if (moving) {
+    const m = Math.hypot(dx, dy);
+    dx /= m; dy /= m;
+    p.angle = Math.atan2(dy, dx);
+  }
+
+  // Boost trigger
+  if (justPressed.has(c.boost) && p.boostCooldown === 0 && p.battery >= BOOST_BAT_COST) {
+    p.boostTimer = BOOST_DUR;
+    p.boostCooldown = BOOST_CD;
+    p.battery = Math.max(0, p.battery - BOOST_BAT_COST);
+    addParticles(p.x, p.y, p.accent, 8, 3);
+  }
+
+  // Fire bolt
+  if (justPressed.has(c.fire) && p.boltCooldown === 0 && p.battery >= BOLT_COST) {
+    p.boltCooldown = BOLT_CD;
+    p.battery = Math.max(0, p.battery - BOLT_COST);
+    const bx = p.x + Math.cos(p.angle) * (PLAYER_R + 4);
+    const by = p.y + Math.sin(p.angle) * (PLAYER_R + 4);
+    bolts.push({
+      x: bx, y: by,
+      vx: Math.cos(p.angle) * BOLT_SPD,
+      vy: Math.sin(p.angle) * BOLT_SPD,
+      owner: p.id, color: p.color, accent: p.accent,
+      life: BOLT_LIFE, bounces: 0,
+    });
+    addParticles(bx, by, p.accent, 5, 2);
+  }
+
+  const spd = (p.boostTimer > 0 ? BOOST_SPD : NORMAL_SPD) + (p.overcharged ? 0.45 : 0);
+  if (moving) { p.x += dx * spd; p.y += dy * spd; }
+
+  // Knockback
+  p.x += p.knockVx; p.y += p.knockVy;
+  p.knockVx *= 0.86; p.knockVy *= 0.86;
+  if (Math.abs(p.knockVx) < 0.04) p.knockVx = 0;
+  if (Math.abs(p.knockVy) < 0.04) p.knockVy = 0;
+
+  // Clamp to field
+  p.x = clamp(p.x, FP + PLAYER_R, W - FP - PLAYER_R);
+  p.y = clamp(p.y, FP + PLAYER_R, H - FP - PLAYER_R);
+
+  // Trail
+  if (p.boostTimer > 0) {
+    p.trail.push({ x: p.x, y: p.y, life: 1 });
+    if (p.trail.length > 14) p.trail.shift();
+  }
+  p.trail.forEach(t => t.life -= 0.1);
+  p.trail = p.trail.filter(t => t.life > 0);
+
+  // Station check
+  p.onStation = dist(p.x, p.y, CX, CY) < STATION_R - PLAYER_R / 2;
+
+  // Battery regeneration
+  if (!p.overcharged) {
+    const mult = suddenDeath ? SD_REGEN_MULT : 1;
+    const rate = p.onStation ? STATION_REGEN : PASSIVE_REGEN * mult;
+    p.battery = Math.min(100, p.battery + rate);
+    if (p.battery >= 100) {
+      p.battery = 100;
+      p.overcharged = true;
+      addFloat(p.x, p.y - 36, '⚡ OVERCHARGED!', p.id === 1 ? '#FFD600' : '#00FFCC', 20);
+      addParticles(p.x, p.y, p.id === 1 ? '#FFD600' : '#00FFCC', 20, 5);
+    }
+  }
+}
+
+// ── COLLISION ────────────────────────────────────────────────────────────────
+function checkCollision() {
+  if (p1.disabled || p2.disabled) return;
+  if (p1.bumpCooldown > 0 || p2.bumpCooldown > 0) return;
+  if (p1.invincible > 0 || p2.invincible > 0) return;
+
+  const dx = p1.x - p2.x, dy = p1.y - p2.y;
+  const d = Math.hypot(dx, dy);
+  if (d >= PLAYER_R * 2.2) return;
+
+  const nx = dx / d, ny = dy / d;
+  const overlap = PLAYER_R * 2.2 - d;
+  p1.x += nx * overlap * 0.5; p1.y += ny * overlap * 0.5;
+  p2.x -= nx * overlap * 0.5; p2.y -= ny * overlap * 0.5;
+
+  const b1 = p1.boostTimer > 0, b2 = p2.boostTimer > 0;
+
+  // Double overcharge clash — spectacular!
+  if (b1 && b2 && p1.overcharged && p2.overcharged) {
+    p1.overcharged = false; p2.overcharged = false;
+    p1.battery = Math.max(0, p1.battery - 30);
+    p2.battery = Math.max(0, p2.battery - 30);
+    p1.knockVx += nx * 10; p1.knockVy += ny * 10;
+    p2.knockVx -= nx * 10; p2.knockVy -= ny * 10;
+    addFloat(CX, CY - 50, '⚡⚡ OVERCHARGE CLASH! ⚡⚡', '#FFD600', 22);
+    addParticles((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, '#FFD600', 50, 10);
+    addParticles((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, '#00FFCC', 30, 8);
+    screenFlash = 28; screenFlashColor = '#FFD600';
+    cameraShake = 42;
+    p1.bumpCooldown = BUMP_CD; p2.bumpCooldown = BUMP_CD;
+    return;
+  }
+
+  // P1 overcharge tackle
+  if (b1 && p1.overcharged) {
+    p1.overcharged = false;
+    p2.knockVx -= nx * OC_TACKLE_FORCE; p2.knockVy -= ny * OC_TACKLE_FORCE;
+    addFloat(p2.x, p2.y - 42, '⚡ OVERCHARGE TACKLE!', '#FFD600', 21);
+    addParticles((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, '#FFD600', 38, 8);
+    screenFlash = 20; screenFlashColor = '#FFD600';
+    cameraShake = 32;
+    p1.bumpCooldown = BUMP_CD; p2.bumpCooldown = BUMP_CD;
+    disablePlayer(p2);
+    return;
+  }
+
+  // P2 overcharge tackle
+  if (b2 && p2.overcharged) {
+    p2.overcharged = false;
+    p1.knockVx += nx * OC_TACKLE_FORCE; p1.knockVy += ny * OC_TACKLE_FORCE;
+    addFloat(p1.x, p1.y - 42, '⚡ OVERCHARGE TACKLE!', '#FFD600', 21);
+    addParticles((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, '#FFD600', 38, 8);
+    screenFlash = 20; screenFlashColor = '#FFD600';
+    cameraShake = 32;
+    p1.bumpCooldown = BUMP_CD; p2.bumpCooldown = BUMP_CD;
+    disablePlayer(p1);
+    return;
+  }
+
+  // Normal / boost tackle
+  if (b1) {
+    p2.battery = Math.max(0, p2.battery - TACKLE_DMG);
+    p2.overcharged = false;
+    p2.knockVx -= nx * TACKLE_FORCE; p2.knockVy -= ny * TACKLE_FORCE;
+    addFloat(p2.x, p2.y - 30, `-${TACKLE_DMG}%`, '#FF8888', 16);
+    if (p2.battery <= 0) { disablePlayer(p2); return; }
+  }
+  if (b2) {
+    p1.battery = Math.max(0, p1.battery - TACKLE_DMG);
+    p1.overcharged = false;
+    p1.knockVx += nx * TACKLE_FORCE; p1.knockVy += ny * TACKLE_FORCE;
+    addFloat(p1.x, p1.y - 30, `-${TACKLE_DMG}%`, '#FF8888', 16);
+    if (p1.battery <= 0) { disablePlayer(p1); return; }
+  }
+
+  if (b1 && b2) {
+    addFloat((p1.x + p2.x) / 2, (p1.y + p2.y) / 2 - 30, 'CLASH!', '#fff', 22);
+    addParticles((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, '#fff', 18, 5);
+    cameraShake = Math.max(cameraShake, 15);
+  } else if (b1 || b2) {
+    addParticles((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, '#fff', 8, 3);
+    cameraShake = Math.max(cameraShake, 10);
+  } else {
+    p1.knockVx += nx * 2; p1.knockVy += ny * 2;
+    p2.knockVx -= nx * 2; p2.knockVy -= ny * 2;
+    addParticles((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, '#888', 5, 2);
+    cameraShake = Math.max(cameraShake, 5);
+  }
+
+  p1.bumpCooldown = BUMP_CD; p2.bumpCooldown = BUMP_CD;
+}
+
+// ── BOLTS ────────────────────────────────────────────────────────────────────
+function updateBolts() {
+  for (let i = bolts.length - 1; i >= 0; i--) {
+    const b = bolts[i];
+    b.x += b.vx; b.y += b.vy;
+    b.life--;
+
+    // Wall bounce
+    let bounced = false;
+    if (b.x < FP) { b.vx = Math.abs(b.vx); bounced = true; }
+    if (b.x > W - FP) { b.vx = -Math.abs(b.vx); bounced = true; }
+    if (b.y < FP) { b.vy = Math.abs(b.vy); bounced = true; }
+    if (b.y > H - FP) { b.vy = -Math.abs(b.vy); bounced = true; }
+    if (bounced) {
+      b.bounces++;
+      addParticles(b.x, b.y, b.accent, 5, 2);
+      if (b.bounces > BOLT_MAX_BOUNCES) { bolts.splice(i, 1); continue; }
+    }
+
+    if (b.life <= 0) { bolts.splice(i, 1); continue; }
+
+    // Hit check against the opponent
+    const target = b.owner === 1 ? p2 : p1;
+    if (!target.disabled && target.invincible === 0) {
+      if (dist(b.x, b.y, target.x, target.y) < BOLT_R + PLAYER_R) {
+        target.battery = Math.max(0, target.battery - BOLT_DMG);
+        target.overcharged = false;
+        const ang = Math.atan2(b.vy, b.vx);
+        target.knockVx += Math.cos(ang) * BOLT_KNOCKBACK;
+        target.knockVy += Math.sin(ang) * BOLT_KNOCKBACK;
+        addParticles(b.x, b.y, b.accent, 18, 4);
+        addParticles(target.x, target.y, '#fff', 8, 3);
+        addFloat(target.x, target.y - 30, `-${BOLT_DMG}%`, '#FF4444', 16);
+        screenFlash = 8; screenFlashColor = b.color;
+        cameraShake = Math.max(cameraShake, 8);
+        bolts.splice(i, 1);
+        if (target.battery <= 0) disablePlayer(target);
+        continue;
+      }
+    }
+  }
+}
+
+// ── BATTERY PACKS ────────────────────────────────────────────────────────────
+function updatePacks() {
+  for (const pack of packs) {
+    if (pack.alive) { pack.bob += 0.042; }
+    else {
+      pack.respawnTimer--;
+      if (pack.respawnTimer <= 0) { pack.alive = true; pack.bob = Math.random() * Math.PI * 2; }
+    }
+  }
+}
+
+function checkPackPickup(p) {
+  if (p.disabled) return;
+  for (const pack of packs) {
+    if (!pack.alive) continue;
+    if (dist(p.x, p.y, pack.x, pack.y) < PLAYER_R + PACK_R) {
+      pack.alive = false;
+      pack.respawnTimer = PACK_RESPAWN;
+      const wasOvercharged = p.overcharged;
+      p.battery = Math.min(100, p.battery + PACK_RESTORE);
+      if (p.battery >= 100 && !wasOvercharged) {
+        p.battery = 100;
+        p.overcharged = true;
+        addFloat(p.x, p.y - 36, '⚡ OVERCHARGED!', p.id === 1 ? '#FFD600' : '#00FFCC', 20);
+        addParticles(p.x, p.y, p.id === 1 ? '#FFD600' : '#00FFCC', 20, 5);
+      } else {
+        addFloat(pack.x, pack.y - 20, `+${PACK_RESTORE}%`, '#00FFCC', 14);
+      }
+      addParticles(pack.x, pack.y, '#00FFCC', 16, 4);
+    }
+  }
+}
+
+// ── HUD ──────────────────────────────────────────────────────────────────────
+function buildScore(player, elId) {
+  const el = document.getElementById(elId);
+  el.innerHTML = '';
+  for (let i = 0; i < WIN_SCORE; i++) {
+    const d = document.createElement('div');
+    d.className = 'score-pip ' + (i < player.score ? 'active' : 'inactive');
+    el.appendChild(d);
+  }
+}
+
+function updateHUD() {
+  buildScore(p1, 'p1-score');
+  buildScore(p2, 'p2-score');
+
+  const b1 = document.getElementById('p1-bat-fill');
+  const b2 = document.getElementById('p2-bat-fill');
+  b1.style.width = p1.battery + '%';
+  b2.style.width = p2.battery + '%';
+  b1.className = 'battery-bar-fill' + (p1.overcharged ? ' overcharged' : p1.battery < 25 ? ' low' : '');
+  b2.className = 'battery-bar-fill' + (p2.overcharged ? ' overcharged' : p2.battery < 25 ? ' low' : '');
+
+  document.getElementById('p1-bat-pct').textContent = Math.round(p1.battery) + '%';
+  document.getElementById('p2-bat-pct').textContent = Math.round(p2.battery) + '%';
+
+  document.getElementById('p1-overcharge').classList.toggle('active', p1.overcharged && !p1.disabled);
+  document.getElementById('p2-overcharge').classList.toggle('active', p2.overcharged && !p2.disabled);
+  document.getElementById('p1-disabled').classList.toggle('active', p1.disabled);
+  document.getElementById('p2-disabled').classList.toggle('active', p2.disabled);
+
+  const boostText = (p) =>
+    p.boostCooldown > 0 ? `BOOST ${(p.boostCooldown / 60).toFixed(1)}s` :
+    p.battery < BOOST_BAT_COST ? 'LOW BATT' : 'BOOST RDY';
+  document.getElementById('p1-boost-cd').textContent = boostText(p1);
+  document.getElementById('p2-boost-cd').textContent = boostText(p2);
+
+  document.getElementById('p1-station').textContent = p1.onStation ? '⬡ CHARGING' : '';
+  document.getElementById('p2-station').textContent = p2.onStation ? '⬡ CHARGING' : '';
+
+  const timerEl = document.getElementById('game-timer');
+  if (!suddenDeath) {
+    const secs = Math.ceil(gameTimer / 60);
+    const mm = Math.floor(secs / 60);
+    const ss = secs % 60;
+    timerEl.textContent = `${mm}:${String(ss).padStart(2, '0')}`;
+    timerEl.classList.toggle('low', secs <= 20);
+  } else {
+    timerEl.textContent = 'S.DEATH';
+    timerEl.classList.add('low');
+  }
+}
+
+// ── DRAW FIELD ───────────────────────────────────────────────────────────────
+function drawField() {
+  ctx.fillStyle = '#07090f';
+  ctx.fillRect(0, 0, W, H);
+
+  // PCB circuit traces
+  ctx.strokeStyle = 'rgba(0,255,200,0.038)';
+  ctx.lineWidth = 1;
+  for (const tr of circuitTraces) {
+    ctx.beginPath();
+    ctx.moveTo(tr.a.x, tr.a.y);
+    ctx.lineTo(tr.b.x, tr.a.y);
+    ctx.lineTo(tr.b.x, tr.b.y);
+    ctx.stroke();
+  }
+  // PCB node pads
+  for (const node of circuitNodes) {
+    ctx.fillStyle = 'rgba(0,255,200,0.055)';
+    ctx.fillRect(node.x - 3, node.y - 3, 6, 6);
+  }
+
+  // Field border
+  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(FP, FP, W - FP * 2, H - FP * 2);
+
+  // Corner accents
+  const cL = 44;
+  ctx.lineWidth = 3;
+  const drawCorner = (cx, cy, sx, sy, col) => {
+    ctx.strokeStyle = col;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + sx * cL, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy + sy * cL); ctx.stroke();
+  };
+  drawCorner(FP, FP, 1, 1, 'rgba(255,107,0,0.45)');
+  drawCorner(FP, H - FP, 1, -1, 'rgba(255,107,0,0.45)');
+  drawCorner(W - FP, FP, -1, 1, 'rgba(0,102,255,0.45)');
+  drawCorner(W - FP, H - FP, -1, -1, 'rgba(0,102,255,0.45)');
+
+  // Center divider (dashed)
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([8, 14]);
+  ctx.beginPath(); ctx.moveTo(CX, FP); ctx.lineTo(CX, H - FP); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // P1 / P2 side glows
+  const gP1 = ctx.createRadialGradient(FP + 40, CY, 0, FP + 40, CY, 140);
+  gP1.addColorStop(0, 'rgba(255,107,0,0.07)');
+  gP1.addColorStop(1, 'transparent');
+  ctx.fillStyle = gP1; ctx.fillRect(0, 0, W, H);
+
+  const gP2 = ctx.createRadialGradient(W - FP - 40, CY, 0, W - FP - 40, CY, 140);
+  gP2.addColorStop(0, 'rgba(0,102,255,0.07)');
+  gP2.addColorStop(1, 'transparent');
+  ctx.fillStyle = gP2; ctx.fillRect(0, 0, W, H);
+
+  // "1678" watermark
+  ctx.save();
+  ctx.globalAlpha = 0.04;
+  ctx.fillStyle = '#00FFCC';
+  ctx.font = "bold 80px 'Orbitron',monospace";
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('1678', CX, CY);
+  ctx.restore();
+
+  drawChargingStation();
+}
+
+function drawChargingStation() {
+  const t = Date.now() * 0.001;
+  const pulse = 0.7 + 0.3 * Math.sin(t * 2);
+
+  ctx.save();
+  ctx.translate(CX, CY);
+
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const a = (i * Math.PI / 3) - Math.PI / 6;
+    const x = Math.cos(a) * STATION_R, y = Math.sin(a) * STATION_R;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(150,40,255,0.16)';
+  ctx.strokeStyle = `rgba(180,70,255,${pulse})`;
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = '#aa44ff';
+  ctx.shadowBlur = 20 * pulse;
+  ctx.fill(); ctx.stroke();
+
+  for (let i = 0; i < 3; i++) {
+    const a = t * 1.3 + i * (Math.PI * 2 / 3);
+    ctx.beginPath();
+    ctx.arc(0, 0, STATION_R + 11, a, a + 0.75);
+    ctx.strokeStyle = `rgba(200,80,255,${0.3 + 0.25 * Math.sin(t * 2 + i)})`;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#cc44ff'; ctx.shadowBlur = 8;
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = `rgba(210,110,255,${pulse})`;
+  ctx.font = "bold 18px 'Share Tech Mono'";
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.shadowColor = '#cc44ff'; ctx.shadowBlur = 10;
+  ctx.fillText('⚡', 0, 0);
+
+  ctx.font = "bold 9px 'Share Tech Mono'";
+  ctx.fillStyle = 'rgba(180,80,255,0.6)';
+  ctx.shadowBlur = 0;
+  ctx.fillText('CHARGING', 0, STATION_R + 14);
+  ctx.restore();
+}
+
+// ── DRAW BATTERY PACKS ───────────────────────────────────────────────────────
+function drawPacks() {
+  const t = Date.now() * 0.001;
+  for (const pack of packs) {
+    if (!pack.alive) continue;
+    const by = pack.y + Math.sin(pack.bob) * 3.5;
+
+    ctx.save();
+    ctx.translate(pack.x, by);
+    ctx.rotate(Math.PI / 4);
+
+    const g = ctx.createRadialGradient(0, 0, 2, 0, 0, PACK_R);
+    g.addColorStop(0, '#CCFFEE');
+    g.addColorStop(0.4, '#00FFCC');
+    g.addColorStop(1, '#00AA88');
+    ctx.shadowColor = '#00FFCC';
+    ctx.shadowBlur = 14 + 7 * Math.sin(t * 3 + pack.bob);
+    ctx.fillStyle = g;
+    const hw = PACK_R * 0.72;
+    ctx.fillRect(-hw, -hw, hw * 2, hw * 2);
+    ctx.globalAlpha = 0.55;
+    ctx.strokeStyle = '#00FFCC';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-hw, -hw, hw * 2, hw * 2);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#00FFCC';
+    ctx.font = "bold 9px 'Share Tech Mono'";
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(`+${PACK_RESTORE}%`, pack.x, by + PACK_R + 12);
+  }
+}
+
+// ── DRAW BOLTS ───────────────────────────────────────────────────────────────
+function drawBolts() {
+  for (const b of bolts) {
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    const ang = Math.atan2(b.vy, b.vx);
+    ctx.rotate(ang);
+
+    const alpha = 0.4 + 0.6 * (b.life / BOLT_LIFE);
+
+    // Trail
+    ctx.globalAlpha = alpha * 0.5;
+    ctx.shadowColor = b.accent;
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = b.color;
+    ctx.fillRect(-BOLT_R * 2.5, -2, BOLT_R * 2.5, 4);
+
+    // Bolt head glow
+    ctx.globalAlpha = alpha;
+    ctx.shadowBlur = 20;
+    const bg = ctx.createRadialGradient(0, 0, 1, 0, 0, BOLT_R);
+    bg.addColorStop(0, '#FFFFFF');
+    bg.addColorStop(0.35, b.accent);
+    bg.addColorStop(1, b.color);
+    ctx.fillStyle = bg;
+    ctx.beginPath(); ctx.arc(0, 0, BOLT_R, 0, Math.PI * 2); ctx.fill();
+
+    // Bounced bolt marker (shows it's been ricocheted)
+    if (b.bounces > 0) {
+      ctx.globalAlpha = 0.6;
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 1.5;
+      ctx.shadowBlur = 0;
+      ctx.beginPath(); ctx.arc(0, 0, BOLT_R + 4, 0, Math.PI * 2); ctx.stroke();
+    }
+
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+}
+
+// ── DRAW PLAYER ──────────────────────────────────────────────────────────────
+function drawPlayer(p) {
+  const t = Date.now() * 0.001;
+
+  // Disabled: dimmed with sparks and countdown ring
+  if (p.disabled) {
+    ctx.save();
+    ctx.globalAlpha = 0.3;
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.angle + Math.PI / 4);
+    ctx.fillStyle = p.color;
+    const s = PLAYER_R;
+    ctx.beginPath(); ctx.roundRect(-s, -s, s * 2, s * 2, 4); ctx.fill();
+    ctx.restore();
+
+    // Countdown ring
+    const pct = 1 - p.disableTimer / DISABLE_DUR;
+    ctx.strokeStyle = '#FF4444';
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = 0.75;
+    ctx.shadowColor = '#FF4444'; ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, PLAYER_R + 12, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+
+    ctx.fillStyle = '#FF4444';
+    ctx.font = "bold 10px 'Share Tech Mono'";
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('DISABLED', p.x, p.y + PLAYER_R + 22);
+    return;
+  }
+
+  // Invincibility flicker
+  if (p.invincible > 0 && Math.floor(p.invincible / 5) % 2 === 0) return;
+
+  // Trail
+  for (const tr of p.trail) {
+    ctx.globalAlpha = tr.life * 0.28;
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(tr.x, tr.y, PLAYER_R * tr.life * 0.75, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(p.angle + Math.PI / 4);
+
+  const ocColor = p.id === 1 ? '#FFD600' : '#00FFCC';
+  if (p.overcharged) {
+    ctx.shadowColor = ocColor; ctx.shadowBlur = 35;
+  } else if (p.boostTimer > 0) {
+    ctx.shadowColor = p.accent; ctx.shadowBlur = 18;
+  } else if (p.bumpCooldown > 0) {
+    ctx.shadowColor = '#fff'; ctx.shadowBlur = 12;
+  } else if (p.battery < 25) {
+    ctx.shadowColor = '#FF2222'; ctx.shadowBlur = 12 + 8 * Math.sin(t * 8);
+  }
+
+  const s = PLAYER_R;
+  ctx.fillStyle = p.color;
+  ctx.beginPath(); ctx.roundRect(-s, -s, s * 2, s * 2, 4); ctx.fill();
+  ctx.fillStyle = p.overcharged ? ocColor : p.accent;
+  ctx.beginPath(); ctx.roundRect(-s * 0.5, -s * 0.5, s, s, 2); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fillRect(-s, -s, s * 2, 5);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+
+  // P label
+  ctx.fillStyle = p.overcharged ? ocColor : 'rgba(255,255,255,0.85)';
+  ctx.font = "bold 10px 'Share Tech Mono'";
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(`P${p.id}`, p.x, p.y + 3);
+
+  // Bolt cooldown arc (inner)
+  if (p.boltCooldown > 0) {
+    const pct = 1 - p.boltCooldown / BOLT_CD;
+    ctx.strokeStyle = p.accent; ctx.lineWidth = 2; ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, PLAYER_R + 7, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
+    ctx.stroke(); ctx.globalAlpha = 1;
+  }
+
+  // Battery arc (outer)
+  if (!p.overcharged && p.battery > 0) {
+    const pct = p.battery / 100;
+    const col = p.battery < 25 ? '#FF4444' : '#22CC55';
+    ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.globalAlpha = 0.55;
+    ctx.shadowColor = col; ctx.shadowBlur = 5;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, PLAYER_R + 16, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
+    ctx.stroke(); ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
+
+  // Overcharge orbiting sparks
+  if (p.overcharged) {
+    const orbitT = t * 2.2;
+    for (let i = 0; i < 6; i++) {
+      const a = orbitT + i * (Math.PI * 2 / 6);
+      const r = PLAYER_R + 20 + 3 * Math.sin(t * 4 + i);
+      ctx.fillStyle = ocColor;
+      ctx.globalAlpha = 0.65 + 0.35 * Math.sin(t * 4 + i);
+      ctx.shadowColor = ocColor; ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(p.x + Math.cos(a) * r, p.y + Math.sin(a) * r, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
+}
+
+// ── PARTICLES & FLOAT TEXT ───────────────────────────────────────────────────
+function drawParticles() {
+  for (const p of particles) {
+    ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2); ctx.fill();
+    p.x += p.vx; p.y += p.vy; p.vx *= 0.92; p.vy *= 0.92; p.life -= p.decay;
+  }
+  particles = particles.filter(p => p.life > 0);
+  ctx.globalAlpha = 1;
+}
+
+function drawFloatTexts() {
+  for (const ft of floatingTexts) {
+    ctx.globalAlpha = ft.life; ctx.fillStyle = ft.color;
+    ctx.font = `bold ${ft.size}px 'Orbitron',monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText(ft.text, ft.x, ft.y);
+    ft.y += ft.vy; ft.life -= 0.016;
+  }
+  floatingTexts = floatingTexts.filter(ft => ft.life > 0);
+  ctx.globalAlpha = 1;
+}
+
+// ── DRAW ─────────────────────────────────────────────────────────────────────
+function draw() {
+  ctx.save();
+  if (cameraShake > 0) {
+    ctx.translate((Math.random() - 0.5) * cameraShake * 0.7, (Math.random() - 0.5) * cameraShake * 0.7);
+    cameraShake--;
+  }
+  ctx.clearRect(0, 0, W, H);
+  drawField();
+  drawPacks();
+  drawBolts();
+  drawPlayer(p1);
+  drawPlayer(p2);
+  drawParticles();
+  drawFloatTexts();
+
+  if (screenFlash > 0) {
+    ctx.globalAlpha = (screenFlash / 20) * 0.38;
+    ctx.fillStyle = screenFlashColor;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+    screenFlash--;
+  }
+  ctx.restore();
+}
+
+// ── GAME LOOP ─────────────────────────────────────────────────────────────────
+function gameLoop() {
+  if (state !== 'playing') return;
+  frame++;
+
+  if (!suddenDeath) {
+    gameTimer--;
+    if (gameTimer <= 0) {
+      if (p1.score > p2.score || p2.score > p1.score) { endGame(); return; }
+      else activateSuddenDeath();
+    }
+  }
+
+  updatePlayer(p1);
+  updatePlayer(p2);
+  if (state !== 'playing') return;
+  checkCollision();
+  if (state !== 'playing') return;
+  updateBolts();
+  if (state !== 'playing') return;
+  updatePacks();
+  checkPackPickup(p1);
+  checkPackPickup(p2);
+
+  updateHUD();
+  draw();
+  justPressed.clear();
+  requestAnimationFrame(gameLoop);
+}
+
+// ── SUDDEN DEATH ─────────────────────────────────────────────────────────────
+function activateSuddenDeath() {
+  suddenDeath = true;
+  addFloat(CX, CY - 32, '⚡ SUDDEN DEATH ⚡', '#FF2222', 26);
+  addParticles(CX, CY, '#FF2222', 40, 9);
+  addParticles(CX, CY, '#00FFCC', 25, 6);
+  screenFlash = 30; screenFlashColor = '#FF2222';
+  cameraShake = 36;
+  document.getElementById('sudden-death-banner').classList.add('active');
+}
+
+// ── GAME START / END ─────────────────────────────────────────────────────────
+function startGame() {
+  resetGame();
+  state = 'playing';
+  document.getElementById('overlay').classList.add('hidden');
+  updateHUD();
+  gameLoop();
+}
+
+function endGame() {
+  if (state === 'ended') return;
+  state = 'ended';
+  const overlay = document.getElementById('overlay');
+  overlay.classList.remove('hidden');
+  document.getElementById('overlay-sub').style.display = 'none';
+  document.getElementById('overlay-controls').style.display = 'none';
+
+  const title = document.getElementById('overlay-title');
+  const winner = document.getElementById('winner-text');
+  winner.style.display = 'block';
+
+  const p1wins = p1.score > p2.score || (p1.score === p2.score && p2.disabled);
+  if (p1wins) {
+    title.textContent = 'P1 WINS!';
+    title.style.background = 'linear-gradient(90deg,#FF6B00,#FFD600)';
+    title.style.webkitBackgroundClip = 'text';
+    winner.style.color = '#FF6B00';
+    winner.textContent = `Citrus Volt wins with ${p1.score} disable${p1.score !== 1 ? 's' : ''}!`;
+  } else {
+    title.textContent = 'P2 WINS!';
+    title.style.background = 'linear-gradient(90deg,#0066FF,#00FFCC)';
+    title.style.webkitBackgroundClip = 'text';
+    winner.style.color = '#44AAFF';
+    winner.textContent = `Citrus Surge wins with ${p2.score} disable${p2.score !== 1 ? 's' : ''}!`;
+  }
+  document.getElementById('start-btn').textContent = 'PLAY AGAIN';
+}
+
+document.getElementById('start-btn').addEventListener('click', () => {
+  document.getElementById('sudden-death-banner').classList.remove('active');
+  document.getElementById('overlay-sub').style.display = '';
+  document.getElementById('overlay-controls').style.display = '';
+  document.getElementById('winner-text').style.display = 'none';
+  const t = document.getElementById('overlay-title');
+  t.textContent = 'CIRCUIT BREAKER';
+  t.style.background = 'linear-gradient(90deg,#FF6B00,#00FFCC,#44AAFF)';
+  t.style.webkitBackgroundClip = 'text';
+  document.getElementById('start-btn').textContent = 'START MATCH';
+  startGame();
+});
+
+// Initial render
+resetGame(); draw(); updateHUD();
+</script>
+</body>
+</html>
