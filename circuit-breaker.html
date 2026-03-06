@@ -341,17 +341,28 @@
   }
 
   #home-link {
-    position: absolute;
-    top: 2px;
-    left: 0;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 999;
     font-family: 'Share Tech Mono', monospace;
-    font-size: 10px;
-    color: rgba(255,255,255,0.22);
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
     text-decoration: none;
     letter-spacing: 1px;
-    transition: color 0.2s;
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 6px 14px;
+    border-radius: 6px;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
   }
-  #home-link:hover { color: rgba(255,255,255,0.7); }
+  #home-link:hover {
+    background: rgba(0,255,200,0.15);
+    border-color: rgba(0,255,200,0.5);
+    color: #fff;
+  }
 </style>
 </head>
 <body>
