@@ -224,9 +224,14 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 @keyframes mikeAnnoy{0%,100%{transform:rotate(0) translateX(0)}50%{transform:rotate(-2.5deg) translateX(-2px)}}
 @keyframes mikeAngry{0%,100%{transform:rotate(0)}25%{transform:rotate(-3.5deg) translateX(-3px)}75%{transform:rotate(3.5deg) translateX(3px)}}
 @keyframes mikeRage{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.06) rotate(-3deg)}}
+
+/* HOME BUTTON */
+#home-link{position:fixed;top:12px;left:12px;z-index:999;font-family:'Share Tech Mono',monospace;font-size:12px;font-weight:700;color:rgba(255,255,255,.85);text-decoration:none;letter-spacing:1px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.2);padding:6px 14px;border-radius:6px;backdrop-filter:blur(4px);transition:background .2s,border-color .2s,color .2s;}
+#home-link:hover{background:rgba(200,230,0,.2);border-color:rgba(200,230,0,.55);color:#fff;}
 </style>
 </head>
 <body>
+<a href="index.html" id="home-link">← HOME</a>
 <div id="flash"></div>
 
 <!-- ██ TITLE ██ -->
