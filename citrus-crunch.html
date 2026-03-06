@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>CITRUS CRUNCH v2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
@@ -13,7 +13,7 @@
   --text:#e8eaf0; --dim:#555570; --blue:#00d4ff; --green:#00ff66;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;height:100dvh;width:100vw;overflow:hidden;user-select:none;}
+body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;height:100dvh;width:100vw;overflow:hidden;user-select:none;touch-action:manipulation;}
 
 .screen{position:absolute;inset:0;display:none;}
 .screen.active{display:flex;}
@@ -99,18 +99,21 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 #wire-canvas{border:2px solid var(--border);border-radius:8px;background:var(--panel2);cursor:crosshair;touch-action:none;display:block;}
 
 /* SEQUENCE */
-#seq-show{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;min-height:50px;align-items:center;}
-.sp{font-size:11px;font-family:'Share Tech Mono',monospace;font-weight:700;padding:7px 11px;background:var(--panel2);border:2px solid var(--border);border-radius:8px;transition:all .2s;letter-spacing:.5px;}
+#seq-show{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;min-height:64px;align-items:center;}
+.sp{font-size:28px;padding:8px 12px;background:var(--panel2);border:2px solid var(--border);border-radius:8px;transition:all .2s;}
 .sp.lit{border-color:var(--citrus);background:#111a00;transform:scale(1.12);box-shadow:0 0 12px var(--citrus-d);}
-.sp.will-hide{border-color:var(--red);background:#1a0005;color:var(--red);}
-.sp.will-stay{border-color:var(--green);background:#001a08;color:var(--green);}
-.sp.hidden-item{border-color:var(--dim);background:var(--panel);color:var(--dim);}
+.sp.will-hide{border-color:var(--red);background:#1a0005;}
+.sp.will-stay{border-color:var(--green);background:#001a08;}
+.sp.hidden-item{border-color:var(--dim);background:var(--panel);filter:grayscale(1);opacity:.5;}
 #seq-status{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim);text-align:center;}
-#seq-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
-.seq-btn{font-size:11px;font-family:'Share Tech Mono',monospace;font-weight:700;padding:9px 13px;background:var(--panel2);border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;letter-spacing:.5px;color:var(--text);}
-.seq-btn:hover:not(:disabled){border-color:var(--citrus);background:#0d1500;color:var(--citrus);}
-.seq-btn.ok{border-color:var(--green);background:#001a08;color:var(--green);}
-.seq-btn.bad{border-color:var(--red);background:#1a0005;color:var(--red);}
+#seq-legend{display:flex;gap:12px;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:-4px;}
+.seq-legend-r{color:var(--red);}
+.seq-legend-g{color:var(--green);}
+#seq-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.seq-btn{font-size:26px;padding:10px 14px;background:var(--panel2);border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;}
+.seq-btn:hover:not(:disabled){border-color:var(--citrus);background:#0d1500;}
+.seq-btn.ok{border-color:var(--green);background:#001a08;}
+.seq-btn.bad{border-color:var(--red);background:#1a0005;}
 .seq-btn:disabled{cursor:default;opacity:.5;}
 
 /* GEAR SORT — color coded */
@@ -119,8 +122,8 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 .g-bin{width:115px;min-height:100px;border:2px solid;border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px;transition:filter .2s;}
 .g-bin.over{filter:brightness(1.4);}
 .g-bin-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;text-align:center;letter-spacing:1px;font-weight:700;}
-.g-item{font-size:10px;font-family:'Share Tech Mono',monospace;font-weight:700;width:68px;height:36px;border:2px solid #0004;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:grab;transition:transform .1s;text-align:center;padding:2px 4px;letter-spacing:.5px;}
-.g-item:hover{transform:scale(1.08);}
+.g-item{font-size:26px;width:44px;height:44px;border:2px solid #0004;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:grab;transition:transform .1s;}
+.g-item:hover{transform:scale(1.12);}
 .g-item.dragging{opacity:.35;}
 
 /* COMBO */
@@ -157,12 +160,12 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 /* ═══ ROBOT SILHOUETTE ═══ */
 #sil-area{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;justify-content:center;}
 #sil-robot{position:relative;width:160px;height:200px;flex-shrink:0;}
-.sil-part{position:absolute;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:'Share Tech Mono',monospace;font-weight:700;letter-spacing:.5px;border:2px dashed #333;border-radius:6px;transition:all .2s;cursor:default;}
+.sil-part{position:absolute;display:flex;align-items:center;justify-content:center;font-size:22px;border:2px dashed #333;border-radius:6px;transition:all .2s;cursor:default;}
 .sil-part.drop-target{border-color:var(--citrus);background:#0a1200;animation:boltPulse .7s ease-in-out infinite;}
 .sil-part.filled{border-color:var(--green);background:#001a08;border-style:solid;}
 .sil-part.wrong-drop{border-color:var(--red)!important;background:#1a0005!important;animation:boltMiss .3s ease!important;}
 #sil-parts{display:flex;flex-direction:column;gap:8px;align-items:flex-start;}
-.sil-drag{font-size:11px;font-family:'Share Tech Mono',monospace;font-weight:700;padding:8px 14px;background:var(--panel2);border:2px solid var(--border);border-radius:8px;cursor:grab;transition:transform .1s;letter-spacing:1px;color:var(--citrus);}
+.sil-drag{font-size:26px;padding:8px 12px;background:var(--panel2);border:2px solid var(--border);border-radius:8px;cursor:grab;transition:transform .1s;}
 .sil-drag:hover{border-color:var(--citrus);transform:scale(1.08);}
 .sil-drag.dragging{opacity:.35;}
 
@@ -363,6 +366,7 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
     <div class="minigame" id="mg-seq">
       <div class="mg-title">🤖 ASSEMBLY SEQUENCE</div>
       <div id="seq-show"></div>
+      <div id="seq-legend"><span class="seq-legend-r">■ HIDES</span><span class="seq-legend-g">■ STAYS</span></div>
       <div id="seq-status" class="mg-hint">Watch the order...</div>
       <div id="seq-btns"></div>
     </div>
@@ -737,7 +741,7 @@ function drawWire(win){
 //  3. ASSEMBLY SEQUENCE
 // ════════════════════════════════
 let seqSt={};
-const SEQ_ITEMS=['BOLT','WIRE','GEAR','CAM','CPU','BATT','ARM','PUMP','GYRO','MOTOR'];
+const SEQ_ITEMS=['🔩','⚙️','🔧','🔌','📡','🦾','🔋','💡','🎛️','🖥️'];
 function launchSeq(){
   const len=3+Math.floor(G.wave*.7);
   const pool=SEQ_ITEMS.slice(0,4+Math.floor(G.wave/2));
@@ -760,8 +764,7 @@ function launchSeq(){
   const ex=SEQ_ITEMS.filter(e=>!u.includes(e)).slice(0,2);
   shuffle([...u,...ex]).forEach(item=>{
     const btn=document.createElement('button');btn.className='seq-btn';
-    btn.textContent=item;btn.style.fontFamily="'Share Tech Mono',monospace";btn.style.fontSize='12px';
-    btn.onclick=()=>seqPress(item,btn);b.appendChild(btn);
+    btn.textContent=item;btn.onclick=()=>seqPress(item,btn);b.appendChild(btn);
   });
   const hasHide=seqSt.hideIndices.length>0;
   document.getElementById('seq-status').textContent=hasHide
@@ -821,23 +824,23 @@ function seqPress(item,btn){
 // Each category has a distinct color. Items get a colored background,
 // bins have the same color border+bg. No confusion about what goes where.
 const GCATS=[
-  {label:'DRIVE',   color:'#1a5cff', bg:'#0a1a44', items:['GEARBOX','CHAIN','AXLE','SPROCKET'], textColor:'#6699ff'},
-  {label:'CONTROLS',color:'#ff7700', bg:'#3a1a00', items:['ROBORIO','PDP','CAN-BUS','RELAY'],   textColor:'#ffaa44'},
-  {label:'STRUCT',  color:'#00cc55', bg:'#003318', items:['TUBE','GUSSET','PLATE','BOLT'],       textColor:'#44ff88'},
-  {label:'SENSORS', color:'#cc00ff', bg:'#220033', items:['GYRO','ENCODER','LIMELIGHT','LIMIT'], textColor:'#dd66ff'},
+  {label:'DRIVE',   color:'#1a5cff', bg:'#0a1a44', items:['⚙️','🔩','🦿','⛓️'], textColor:'#6699ff'},
+  {label:'CONTROLS',color:'#ff7700', bg:'#3a1a00', items:['🎛️','🖥️','🔌','🕹️'], textColor:'#ffaa44'},
+  {label:'STRUCT',  color:'#00cc55', bg:'#003318', items:['🔧','🏗️','📐','🪛'],  textColor:'#44ff88'},
+  {label:'SENSORS', color:'#cc00ff', bg:'#220033', items:['📡','👁️','💡','📷'],  textColor:'#dd66ff'},
 ];
 let gearSt={};
 function launchGear(){
   const nc=Math.min(4,2+Math.floor(G.wave/2)), cats=GCATS.slice(0,nc), ipc=2+Math.floor(G.wave/3);
   gearSt={items:{},correct:0,total:0,drag:null};
   const all=[];
-  cats.forEach(c=>{for(let i=0;i<ipc;i++){const id=`gi-${c.label}-${i}`;gearSt.items[id]={label:c.items[i%c.items.length],cat:c.label,color:c.color,bg:c.bg};all.push(id);}});
+  cats.forEach(c=>{for(let i=0;i<ipc;i++){const id=`gi-${c.label}-${i}`;gearSt.items[id]={emoji:c.items[i%c.items.length],cat:c.label,color:c.color,bg:c.bg};all.push(id);}});
   gearSt.total=all.length;
   const src=document.getElementById('gear-source');src.innerHTML='';
   shuffle(all).forEach(id=>{
     const item=gearSt.items[id];
     const el=document.createElement('div');el.className='g-item';
-    el.textContent=item.label;el.id='gel-'+id;el.draggable=true;
+    el.textContent=item.emoji;el.id='gel-'+id;el.draggable=true;
     el.style.background=item.bg;
     el.style.borderColor=item.color;
     el.style.boxShadow=`0 0 8px ${item.color}55`;
@@ -1101,11 +1104,11 @@ function mazeMove(dr,dc){
 // ════════════════════════════════
 // Drag robot parts onto labeled slots on the robot outline.
 const SIL_PARTS=[
-  {id:'arm',  label:'ARM',     top:'10%', left:'60%', w:'30%', h:'25%'},
-  {id:'wheel',label:'WHEEL',   top:'70%', left:'10%', w:'25%', h:'22%'},
-  {id:'cam',  label:'CAMERA',  top:'5%',  left:'15%', w:'30%', h:'20%'},
-  {id:'cpu',  label:'CPU',     top:'40%', left:'30%', w:'35%', h:'25%'},
-  {id:'bat',  label:'BATTERY', top:'70%', left:'60%', w:'28%', h:'20%'},
+  {id:'arm',  label:'ARM',    emoji:'🦾', top:'10%', left:'60%', w:'30%', h:'25%'},
+  {id:'wheel',label:'WHEEL',  emoji:'⚙️', top:'70%', left:'10%', w:'25%', h:'22%'},
+  {id:'cam',  label:'CAMERA', emoji:'📷', top:'5%',  left:'15%', w:'30%', h:'20%'},
+  {id:'cpu',  label:'CPU',    emoji:'🖥️', top:'40%', left:'30%', w:'35%', h:'25%'},
+  {id:'bat',  label:'BATTERY',emoji:'🔋', top:'70%', left:'60%', w:'28%', h:'20%'},
 ];
 let silSt={};
 function launchSil(){
@@ -1128,7 +1131,7 @@ function launchSil(){
   // Draggable parts on the right
   const src=document.getElementById('sil-parts');src.innerHTML='';
   shuffle([...parts]).forEach(p=>{
-    const d=document.createElement('div');d.className='sil-drag';d.textContent=p.label;d.dataset.partId=p.id;d.draggable=true;d.id='sil-drag-'+p.id;d.title=p.label;
+    const d=document.createElement('div');d.className='sil-drag';d.textContent=p.emoji;d.dataset.partId=p.id;d.draggable=true;d.id='sil-drag-'+p.id;d.title=p.label;
     d.ondragstart=()=>{silSt.drag=p.id;d.classList.add('dragging');};
     d.ondragend=()=>d.classList.remove('dragging');
     src.appendChild(d);
@@ -1140,7 +1143,8 @@ function silDrop(slotId){
   const slot=document.querySelector(`.sil-part[data-part-id="${slotId}"]`);
   const dragEl=document.getElementById('sil-drag-'+dragId);
   if(dragId===slotId){
-    slot.textContent=SIL_PARTS.find(p=>p.id===slotId).label;
+    slot.textContent=SIL_PARTS.find(p=>p.id===slotId).emoji;
+    slot.style.fontSize='';slot.style.color='';slot.style.fontFamily='';
     slot.classList.remove('drop-target');slot.classList.add('filled');
     if(dragEl)dragEl.remove();
     silSt.filled[slotId]=true;
