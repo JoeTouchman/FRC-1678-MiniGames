@@ -205,6 +205,33 @@
   .card-volt   .card-tag { background: rgba(0,255,200,0.12); border: 1px solid rgba(0,255,200,0.3); color: var(--volt); }
   .card-lime   .card-tag { background: rgba(200,230,0,0.12); border: 1px solid rgba(200,230,0,0.3); color: var(--lime); }
 
+  .card-devices {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 2px;
+  }
+  .device-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.5);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .device-badge.highlight {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.75);
+  }
+
   .card-cta {
     font-family: 'Orbitron', sans-serif;
     font-size: 11px;
@@ -286,6 +313,9 @@
         <span class="card-tag">Score Attack</span>
         <span class="card-tag">AMP Mode</span>
       </div>
+      <div class="card-devices">
+        <span class="device-badge highlight">&#x1F4BB; Computer</span>
+      </div>
       <div class="card-cta">PLAY NOW</div>
     </a>
 
@@ -300,6 +330,9 @@
         <span class="card-tag">2 Players</span>
         <span class="card-tag">Sumo</span>
         <span class="card-tag">Sudden Death</span>
+      </div>
+      <div class="card-devices">
+        <span class="device-badge highlight">&#x1F4BB; Computer</span>
       </div>
       <div class="card-cta">PLAY NOW</div>
     </a>
@@ -316,6 +349,9 @@
         <span class="card-tag">Ranged Combat</span>
         <span class="card-tag">Overcharge</span>
       </div>
+      <div class="card-devices">
+        <span class="device-badge highlight">&#x1F4BB; Computer</span>
+      </div>
       <div class="card-cta">PLAY NOW</div>
     </a>
 
@@ -331,11 +367,15 @@
         <span class="card-tag">Minigames</span>
         <span class="card-tag">Build Season</span>
       </div>
+      <div class="card-devices">
+        <span class="device-badge highlight">&#x1F4BB; Computer</span>
+        <span class="device-badge highlight">&#x1F4F1; Mobile</span>
+      </div>
       <div class="card-cta">PLAY NOW</div>
     </a>
   </div>
 
-  <div class="footer">WASD vs Arrow Keys · Best with two players</div>
+  <div class="footer">WASD vs Arrow Keys · Best with two players · Citrus Crunch playable on mobile</div>
 </div>
 
 <script>
