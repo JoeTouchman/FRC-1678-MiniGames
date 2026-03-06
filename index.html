@@ -29,8 +29,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    overflow-y: auto;
     position: relative;
+    padding: 32px 16px;
   }
 
   #bg-canvas {
@@ -48,6 +49,8 @@
     flex-direction: column;
     align-items: center;
     gap: 32px;
+    width: 100%;
+    max-width: 1200px;
   }
 
   .header {
@@ -67,9 +70,9 @@
 
   .arcade-title {
     font-family: 'Orbitron', sans-serif;
-    font-size: 64px;
+    font-size: clamp(28px, 8vw, 64px);
     font-weight: 900;
-    letter-spacing: 4px;
+    letter-spacing: clamp(1px, 1vw, 4px);
     background: linear-gradient(135deg, var(--citrus) 0%, #fff 45%, var(--blue-light) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -87,14 +90,15 @@
 
   .games-grid {
     display: flex;
-    gap: 24px;
+    gap: 20px;
     align-items: stretch;
     flex-wrap: wrap;
     justify-content: center;
+    width: 100%;
   }
 
   .game-card {
-    width: 280px;
+    width: clamp(240px, calc(50% - 12px), 280px);
     background: rgba(255,255,255,0.03);
     border-radius: 12px;
     padding: 32px 24px;
@@ -246,6 +250,16 @@
     letter-spacing: 2px;
     color: rgba(255,255,255,0.12);
     text-transform: uppercase;
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 24px 12px; }
+    .games-grid { gap: 14px; }
+    .game-card { width: min(320px, 100%); padding: 24px 18px; }
+    .arcade-subtitle { font-size: 11px; letter-spacing: 2px; }
+    .card-title { font-size: 15px; letter-spacing: 1px; }
+    .card-desc { font-size: 13px; }
+    .team-badge { font-size: 10px; letter-spacing: 2px; }
   }
 </style>
 </head>
