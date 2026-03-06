@@ -164,6 +164,7 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 .sil-part.drop-target{border-color:var(--citrus);background:#0a1200;animation:boltPulse .7s ease-in-out infinite;}
 .sil-part.filled{border-color:var(--green);background:#001a08;border-style:solid;}
 .sil-part.wrong-drop{border-color:var(--red)!important;background:#1a0005!important;animation:boltMiss .3s ease!important;}
+.sil-part.drag-over{border-color:var(--citrus)!important;background:#152000!important;filter:brightness(1.3);}
 #sil-parts{display:flex;flex-direction:column;gap:8px;align-items:flex-start;}
 .sil-drag{font-size:26px;padding:8px 12px;background:var(--panel2);border:2px solid var(--border);border-radius:8px;cursor:grab;transition:transform .1s;}
 .sil-drag:hover{border-color:var(--citrus);transform:scale(1.08);}
@@ -218,6 +219,13 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 #home-link{position:fixed;top:12px;left:12px;z-index:999;font-family:'Share Tech Mono',monospace;font-size:12px;font-weight:700;color:rgba(255,255,255,.85);text-decoration:none;letter-spacing:1px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.2);padding:6px 14px;border-radius:6px;backdrop-filter:blur(4px);transition:background .2s,border-color .2s,color .2s;}
 #home-link:hover{background:rgba(200,230,0,.2);border-color:rgba(200,230,0,.55);color:#fff;}
 
+/* TOUCH DRAG CLONE */
+#touch-drag-clone{
+  position:fixed;pointer-events:none;z-index:9999;
+  transform:scale(1.18) rotate(4deg);opacity:.88;
+  transition:none;will-change:transform;
+}
+
 /* MOBILE */
 @media(max-width:600px){
   #mike-zone{min-width:0;padding:6px 8px 6px 6px;}
@@ -230,20 +238,27 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
   #build-area{padding:8px;}
   .minigame{gap:8px;}
   #bolt-grid{gap:5px;}
-  .bolt-cell{width:52px;height:52px;font-size:20px;}
+  .bolt-cell{width:56px;height:56px;font-size:22px;}
   #wire-canvas{width:100%;max-width:340px;}
   #maze-canvas{width:100%;max-width:340px;}
-  #wack-grid{grid-template-columns:repeat(4,64px);gap:8px;}
-  .wack-hole{width:64px;height:64px;font-size:26px;}
-  #gear-source{padding:6px;}
-  .g-bin{width:90px;}
-  #sil-robot{width:130px;height:170px;}
+  #wack-grid{grid-template-columns:repeat(4,1fr);gap:8px;width:100%;}
+  .wack-hole{width:100%;height:72px;font-size:28px;}
+  #gear-source{padding:8px;gap:10px;}
+  .g-item{width:52px;height:52px;font-size:28px;}
+  .g-bin{width:80px;min-height:90px;}
+  #gear-bins{gap:8px;}
+  #sil-area{gap:10px;}
+  #sil-robot{width:140px;height:185px;}
+  .sil-drag{font-size:28px;padding:10px 14px;}
   #bal-track{max-width:300px;}
   #bal-hold-bar-wrap{max-width:300px;}
-  .bal-tap-btn{padding:10px 24px;font-size:12px;}
-  .kbtn{width:44px;height:44px;font-size:12px;}
+  .bal-tap-btn{padding:14px 32px;font-size:14px;}
+  .kbtn{width:48px;height:48px;font-size:13px;}
   #combo-keys{max-width:320px;}
   .mg-title{font-size:11px;letter-spacing:2px;}
+  .dec-btn{width:52px;height:52px;font-size:15px;}
+  #decrypt-btns{max-width:320px;}
+  .seq-btn{font-size:28px;padding:12px 16px;}
 }
 </style>
 </head>
@@ -374,7 +389,7 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
     <!-- 4. PARTS SORTING (color coded) -->
     <div class="minigame" id="mg-gear">
       <div class="mg-title">⚙️ PARTS SORTING</div>
-      <div class="mg-hint">Drag each colored part to its matching bin!</div>
+      <div class="mg-hint" id="gear-hint">Drag each colored part to its matching bin!</div>
       <div id="gear-source"></div>
       <div id="gear-bins"></div>
     </div>
@@ -416,7 +431,7 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
     <!-- 9. ROBOT ASSEMBLY (drag to silhouette) -->
     <div class="minigame" id="mg-sil">
       <div class="mg-title">🦾 ROBOT BUILD</div>
-      <div class="mg-hint">Drag each part to its slot on the robot!</div>
+      <div class="mg-hint" id="sil-hint">Drag each part to its slot on the robot!</div>
       <div id="sil-area">
         <div id="sil-robot"></div>
         <div id="sil-parts"></div>
@@ -463,6 +478,15 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 
 <script>
 // ════════════════════════════════
+//  DEVICE DETECTION
+// ════════════════════════════════
+const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+if(isMobile){
+  document.getElementById('gear-hint').textContent='Touch and drag each colored part to its matching bin!';
+  document.getElementById('sil-hint').textContent='Touch and drag each part to its slot on the robot!';
+}
+
+// ════════════════════════════════
 //  CORE STATE
 // ════════════════════════════════
 let G = {};
@@ -481,6 +505,34 @@ const GO_LINES=['"We NEVER miss build season like this!"','"I expect more. I hav
 
 const rnd = a => a[Math.floor(Math.random()*a.length)];
 const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a; };
+
+// ════════════════════════════════
+//  TOUCH DRAG HELPERS
+// ════════════════════════════════
+let _tClone=null, _tOffX=0, _tOffY=0;
+function touchDragStart(el, touch){
+  if(_tClone) _tClone.remove();
+  const r=el.getBoundingClientRect();
+  _tClone=el.cloneNode(true);
+  _tClone.id='touch-drag-clone';
+  _tOffX=touch.clientX-r.left; _tOffY=touch.clientY-r.top;
+  Object.assign(_tClone.style,{left:(touch.clientX-_tOffX)+'px',top:(touch.clientY-_tOffY)+'px',width:r.width+'px',height:r.height+'px'});
+  document.body.appendChild(_tClone);
+}
+function touchDragMove(touch){
+  if(!_tClone)return;
+  _tClone.style.left=(touch.clientX-_tOffX)+'px';
+  _tClone.style.top=(touch.clientY-_tOffY)+'px';
+}
+function touchDragEnd(){
+  if(_tClone){_tClone.remove();_tClone=null;}
+}
+function elemUnderTouch(touch){
+  if(_tClone) _tClone.style.display='none';
+  const el=document.elementFromPoint(touch.clientX,touch.clientY);
+  if(_tClone) _tClone.style.display='';
+  return el;
+}
 
 // ════════════════════════════════
 //  SCREENS
@@ -846,6 +898,26 @@ function launchGear(){
     el.style.boxShadow=`0 0 8px ${item.color}55`;
     el.ondragstart=()=>{gearSt.drag=id;el.classList.add('dragging');};
     el.ondragend=()=>el.classList.remove('dragging');
+    el.addEventListener('touchstart',e=>{
+      e.preventDefault();
+      gearSt.drag=id; el.classList.add('dragging');
+      touchDragStart(el,e.touches[0]);
+    },{passive:false});
+    el.addEventListener('touchmove',e=>{
+      e.preventDefault();
+      touchDragMove(e.touches[0]);
+      const under=elemUnderTouch(e.touches[0]);
+      document.querySelectorAll('.g-bin').forEach(b=>b.classList.remove('over'));
+      under?.closest('.g-bin')?.classList.add('over');
+    },{passive:false});
+    el.addEventListener('touchend',e=>{
+      e.preventDefault();
+      const under=elemUnderTouch(e.changedTouches[0]);
+      touchDragEnd(); el.classList.remove('dragging');
+      document.querySelectorAll('.g-bin').forEach(b=>b.classList.remove('over'));
+      const bin=under?.closest('.g-bin');
+      if(bin) gearDrop(bin);
+    },{passive:false});
     src.appendChild(el);
   });
   src.ondragover=e=>{e.preventDefault();};src.ondrop=e=>{e.preventDefault();};
@@ -1134,6 +1206,27 @@ function launchSil(){
     const d=document.createElement('div');d.className='sil-drag';d.textContent=p.emoji;d.dataset.partId=p.id;d.draggable=true;d.id='sil-drag-'+p.id;d.title=p.label;
     d.ondragstart=()=>{silSt.drag=p.id;d.classList.add('dragging');};
     d.ondragend=()=>d.classList.remove('dragging');
+    d.addEventListener('touchstart',e=>{
+      e.preventDefault();
+      silSt.drag=p.id; d.classList.add('dragging');
+      touchDragStart(d,e.touches[0]);
+    },{passive:false});
+    d.addEventListener('touchmove',e=>{
+      e.preventDefault();
+      touchDragMove(e.touches[0]);
+      const under=elemUnderTouch(e.touches[0]);
+      document.querySelectorAll('.sil-part').forEach(s=>s.classList.remove('drag-over'));
+      const slot=under?.closest('.sil-part');
+      if(slot?.classList.contains('drop-target')) slot.classList.add('drag-over');
+    },{passive:false});
+    d.addEventListener('touchend',e=>{
+      e.preventDefault();
+      const under=elemUnderTouch(e.changedTouches[0]);
+      touchDragEnd(); d.classList.remove('dragging');
+      document.querySelectorAll('.sil-part').forEach(s=>s.classList.remove('drag-over'));
+      const slot=under?.closest('.sil-part');
+      if(slot) silDrop(slot.dataset.partId);
+    },{passive:false});
     src.appendChild(d);
   });
 }

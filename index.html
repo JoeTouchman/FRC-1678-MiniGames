@@ -205,6 +205,27 @@
   .card-volt   .card-tag { background: rgba(0,255,200,0.12); border: 1px solid rgba(0,255,200,0.3); color: var(--volt); }
   .card-lime   .card-tag { background: rgba(200,230,0,0.12); border: 1px solid rgba(200,230,0,0.3); color: var(--lime); }
 
+  .device-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 2px;
+  }
+  .device-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .device-badge.mobile { background: rgba(0,255,204,0.1); border: 1px solid rgba(0,255,204,0.35); color: #00ffcc; }
+  .device-badge.desktop { background: rgba(100,150,255,0.1); border: 1px solid rgba(100,150,255,0.35); color: #88aaff; }
+
   .card-cta {
     font-family: 'Orbitron', sans-serif;
     font-size: 11px;
@@ -273,8 +294,8 @@
     <div class="arcade-subtitle">FRC Minigames Collection</div>
   </div>
 
-  <div class="games-grid">
-    <a href="crescendo-clash.html" class="game-card card-orange">
+  <div class="games-grid" id="games-grid">
+    <a href="crescendo-clash.html" class="game-card card-orange" data-platforms="desktop">
       <div class="card-icon">🎵</div>
       <div class="card-title">CRESCENDO CLASH</div>
       <div class="card-desc">
@@ -286,10 +307,13 @@
         <span class="card-tag">Score Attack</span>
         <span class="card-tag">AMP Mode</span>
       </div>
+      <div class="device-badges">
+        <span class="device-badge desktop">🖥 Computer</span>
+      </div>
       <div class="card-cta">PLAY NOW</div>
     </a>
 
-    <a href="iron-ring.html" class="game-card card-blue">
+    <a href="iron-ring.html" class="game-card card-blue" data-platforms="desktop">
       <div class="card-icon">🤖</div>
       <div class="card-title">IRON RING</div>
       <div class="card-desc">
@@ -301,10 +325,13 @@
         <span class="card-tag">Sumo</span>
         <span class="card-tag">Sudden Death</span>
       </div>
+      <div class="device-badges">
+        <span class="device-badge desktop">🖥 Computer</span>
+      </div>
       <div class="card-cta">PLAY NOW</div>
     </a>
 
-    <a href="circuit-breaker.html" class="game-card card-volt">
+    <a href="circuit-breaker.html" class="game-card card-volt" data-platforms="desktop">
       <div class="card-icon">⚡</div>
       <div class="card-title">CIRCUIT BREAKER</div>
       <div class="card-desc">
@@ -316,10 +343,13 @@
         <span class="card-tag">Ranged Combat</span>
         <span class="card-tag">Overcharge</span>
       </div>
+      <div class="device-badges">
+        <span class="device-badge desktop">🖥 Computer</span>
+      </div>
       <div class="card-cta">PLAY NOW</div>
     </a>
 
-    <a href="citrus-crunch.html" class="game-card card-lime">
+    <a href="citrus-crunch.html" class="game-card card-lime" data-platforms="mobile desktop">
       <div class="card-icon">⚙</div>
       <div class="card-title">CITRUS CRUNCH</div>
       <div class="card-desc">
@@ -331,14 +361,42 @@
         <span class="card-tag">Minigames</span>
         <span class="card-tag">Build Season</span>
       </div>
+      <div class="device-badges">
+        <span class="device-badge mobile">📱 Mobile</span>
+        <span class="device-badge desktop">🖥 Computer</span>
+      </div>
       <div class="card-cta">PLAY NOW</div>
     </a>
   </div>
 
-  <div class="footer">WASD vs Arrow Keys · Best with two players</div>
+  <div class="footer" id="footer-note">WASD vs Arrow Keys · Best with two players</div>
 </div>
 
 <script>
+// Device detection — reorder cards so compatible games show first
+(function(){
+  const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  const grid = document.getElementById('games-grid');
+  const cards = [...grid.querySelectorAll('.game-card')];
+  if(isMobile){
+    // Mobile: show mobile+desktop cards first, then desktop-only
+    cards.sort((a,b)=>{
+      const am = a.dataset.platforms.includes('mobile');
+      const bm = b.dataset.platforms.includes('mobile');
+      return bm - am;
+    });
+    document.getElementById('footer-note').textContent = 'Tap to play · Citrus Crunch works on mobile!';
+  } else {
+    // Desktop: show desktop-only cards first (they're keyboard-focused multi-player)
+    cards.sort((a,b)=>{
+      const ao = !a.dataset.platforms.includes('mobile');
+      const bo = !b.dataset.platforms.includes('mobile');
+      return bo - ao;
+    });
+  }
+  cards.forEach(c => grid.appendChild(c));
+})();
+
 // Animated background — grid with drifting particles
 const canvas = document.getElementById('bg-canvas');
 const ctx = canvas.getContext('2d');
