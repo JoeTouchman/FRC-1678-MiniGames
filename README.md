@@ -1,1 +1,1 @@
-https://1678-mini-games.vercel.app/
+https://1678-mini-games.touchman.xyz/
