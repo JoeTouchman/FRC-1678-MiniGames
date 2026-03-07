@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>CITRUS ARCADE — Team 1678</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap');
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; }
 
   :root {
     --citrus: #FF6B00;
@@ -16,6 +16,8 @@
     --blue-light: #44AAFF;
     --volt: #00FFCC;
     --volt-dark: #00BBAA;
+    --lime: #C8E600;
+    --lime-dark: #8FAA00;
   }
 
   body {
@@ -27,8 +29,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    overflow-y: auto;
     position: relative;
+    padding: 32px 16px;
   }
 
   #bg-canvas {
@@ -46,6 +49,8 @@
     flex-direction: column;
     align-items: center;
     gap: 32px;
+    width: 100%;
+    max-width: 1200px;
   }
 
   .header {
@@ -65,9 +70,9 @@
 
   .arcade-title {
     font-family: 'Orbitron', sans-serif;
-    font-size: 64px;
+    font-size: clamp(28px, 8vw, 64px);
     font-weight: 900;
-    letter-spacing: 4px;
+    letter-spacing: clamp(1px, 1vw, 4px);
     background: linear-gradient(135deg, var(--citrus) 0%, #fff 45%, var(--blue-light) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -85,14 +90,15 @@
 
   .games-grid {
     display: flex;
-    gap: 24px;
+    gap: 20px;
     align-items: stretch;
     flex-wrap: wrap;
     justify-content: center;
+    width: 100%;
   }
 
   .game-card {
-    width: 280px;
+    width: clamp(240px, calc(50% - 12px), 280px);
     background: rgba(255,255,255,0.03);
     border-radius: 12px;
     padding: 32px 24px;
@@ -127,6 +133,9 @@
   .card-volt::before {
     background: radial-gradient(ellipse at 50% 0%, rgba(0,255,200,0.12) 0%, transparent 70%);
   }
+  .card-lime::before {
+    background: radial-gradient(ellipse at 50% 0%, rgba(200,230,0,0.12) 0%, transparent 70%);
+  }
 
   .game-card:hover::before { opacity: 1; }
   .card-orange:hover {
@@ -142,6 +151,11 @@
   .card-volt:hover {
     border-color: rgba(0,255,200,0.5);
     box-shadow: 0 0 40px rgba(0,255,200,0.2), 0 8px 32px rgba(0,0,0,0.4);
+    transform: translateY(-4px);
+  }
+  .card-lime:hover {
+    border-color: rgba(200,230,0,0.5);
+    box-shadow: 0 0 40px rgba(200,230,0,0.2), 0 8px 32px rgba(0,0,0,0.4);
     transform: translateY(-4px);
   }
 
@@ -160,6 +174,7 @@
   .card-orange .card-title { color: var(--citrus-light); }
   .card-blue   .card-title { color: var(--blue-light); }
   .card-volt   .card-title { color: var(--volt); }
+  .card-lime   .card-title { color: var(--lime); }
 
   .card-desc {
     font-family: 'Rajdhani', sans-serif;
@@ -188,6 +203,34 @@
   .card-orange .card-tag { background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.3); color: var(--citrus-light); }
   .card-blue   .card-tag { background: rgba(0,102,255,0.15); border: 1px solid rgba(0,102,255,0.3); color: var(--blue-light); }
   .card-volt   .card-tag { background: rgba(0,255,200,0.12); border: 1px solid rgba(0,255,200,0.3); color: var(--volt); }
+  .card-lime   .card-tag { background: rgba(200,230,0,0.12); border: 1px solid rgba(200,230,0,0.3); color: var(--lime); }
+
+  .card-devices {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 2px;
+  }
+  .device-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.5);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .device-badge.highlight {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.75);
+  }
 
   .card-cta {
     font-family: 'Orbitron', sans-serif;
@@ -217,10 +260,16 @@
     color: #000;
     box-shadow: 0 4px 16px rgba(0,255,200,0.3);
   }
+  .card-lime .card-cta {
+    background: linear-gradient(135deg, var(--lime-dark), var(--lime));
+    color: #000;
+    box-shadow: 0 4px 16px rgba(200,230,0,0.3);
+  }
   .game-card:hover .card-cta { transform: scale(1.05); }
   .card-orange:hover .card-cta { box-shadow: 0 6px 24px rgba(255,107,0,0.5); }
   .card-blue:hover   .card-cta { box-shadow: 0 6px 24px rgba(0,102,255,0.5); }
   .card-volt:hover   .card-cta { box-shadow: 0 6px 24px rgba(0,255,200,0.5); }
+  .card-lime:hover   .card-cta { box-shadow: 0 6px 24px rgba(200,230,0,0.5); }
 
   .footer {
     font-family: 'Share Tech Mono', monospace;
@@ -228,6 +277,16 @@
     letter-spacing: 2px;
     color: rgba(255,255,255,0.12);
     text-transform: uppercase;
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 24px 12px; }
+    .games-grid { gap: 14px; }
+    .game-card { width: min(320px, 100%); padding: 24px 18px; }
+    .arcade-subtitle { font-size: 11px; letter-spacing: 2px; }
+    .card-title { font-size: 15px; letter-spacing: 1px; }
+    .card-desc { font-size: 13px; }
+    .team-badge { font-size: 10px; letter-spacing: 2px; }
   }
 </style>
 </head>
@@ -254,6 +313,9 @@
         <span class="card-tag">Score Attack</span>
         <span class="card-tag">AMP Mode</span>
       </div>
+      <div class="card-devices">
+        <span class="device-badge highlight">&#x1F4BB; Computer</span>
+      </div>
       <div class="card-cta">PLAY NOW</div>
     </a>
 
@@ -268,6 +330,9 @@
         <span class="card-tag">2 Players</span>
         <span class="card-tag">Sumo</span>
         <span class="card-tag">Sudden Death</span>
+      </div>
+      <div class="card-devices">
+        <span class="device-badge highlight">&#x1F4BB; Computer</span>
       </div>
       <div class="card-cta">PLAY NOW</div>
     </a>
@@ -284,11 +349,33 @@
         <span class="card-tag">Ranged Combat</span>
         <span class="card-tag">Overcharge</span>
       </div>
+      <div class="card-devices">
+        <span class="device-badge highlight">&#x1F4BB; Computer</span>
+      </div>
+      <div class="card-cta">PLAY NOW</div>
+    </a>
+
+    <a href="citrus-crunch.html" class="game-card card-lime">
+      <div class="card-icon">⚙</div>
+      <div class="card-title">CITRUS CRUNCH</div>
+      <div class="card-desc">
+        Mike's watching — build the robot before time runs out!<br>
+        Survive 8 waves of frantic build-season minigames!
+      </div>
+      <div class="card-tags">
+        <span class="card-tag">1 Player</span>
+        <span class="card-tag">Minigames</span>
+        <span class="card-tag">Build Season</span>
+      </div>
+      <div class="card-devices">
+        <span class="device-badge highlight">&#x1F4BB; Computer</span>
+        <span class="device-badge highlight">&#x1F4F1; Mobile</span>
+      </div>
       <div class="card-cta">PLAY NOW</div>
     </a>
   </div>
 
-  <div class="footer">WASD vs Arrow Keys · Best with two players</div>
+  <div class="footer">WASD vs Arrow Keys · Best with two players · Citrus Crunch playable on mobile</div>
 </div>
 
 <script>
