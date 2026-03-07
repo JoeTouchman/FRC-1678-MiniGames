@@ -136,6 +136,9 @@
   .card-lime::before {
     background: radial-gradient(ellipse at 50% 0%, rgba(200,230,0,0.12) 0%, transparent 70%);
   }
+  .card-teal::before {
+    background: radial-gradient(ellipse at 50% 0%, rgba(0,255,204,0.12) 0%, transparent 70%);
+  }
 
   .game-card:hover::before { opacity: 1; }
   .card-orange:hover {
@@ -158,6 +161,11 @@
     box-shadow: 0 0 40px rgba(200,230,0,0.2), 0 8px 32px rgba(0,0,0,0.4);
     transform: translateY(-4px);
   }
+  .card-teal:hover {
+    border-color: rgba(0,255,204,0.5);
+    box-shadow: 0 0 40px rgba(0,255,204,0.2), 0 8px 32px rgba(0,0,0,0.4);
+    transform: translateY(-4px);
+  }
 
   .card-icon {
     font-size: 40px;
@@ -175,6 +183,7 @@
   .card-blue   .card-title { color: var(--blue-light); }
   .card-volt   .card-title { color: var(--volt); }
   .card-lime   .card-title { color: var(--lime); }
+  .card-teal   .card-title { color: var(--volt); }
 
   .card-desc {
     font-family: 'Rajdhani', sans-serif;
@@ -204,6 +213,7 @@
   .card-blue   .card-tag { background: rgba(0,102,255,0.15); border: 1px solid rgba(0,102,255,0.3); color: var(--blue-light); }
   .card-volt   .card-tag { background: rgba(0,255,200,0.12); border: 1px solid rgba(0,255,200,0.3); color: var(--volt); }
   .card-lime   .card-tag { background: rgba(200,230,0,0.12); border: 1px solid rgba(200,230,0,0.3); color: var(--lime); }
+  .card-teal   .card-tag { background: rgba(0,255,204,0.10); border: 1px solid rgba(0,255,204,0.3); color: var(--volt); }
 
   .card-devices {
     display: flex;
@@ -265,11 +275,17 @@
     color: #000;
     box-shadow: 0 4px 16px rgba(200,230,0,0.3);
   }
+  .card-teal .card-cta {
+    background: linear-gradient(135deg, var(--volt-dark), var(--volt));
+    color: #000;
+    box-shadow: 0 4px 16px rgba(0,255,204,0.3);
+  }
   .game-card:hover .card-cta { transform: scale(1.05); }
   .card-orange:hover .card-cta { box-shadow: 0 6px 24px rgba(255,107,0,0.5); }
   .card-blue:hover   .card-cta { box-shadow: 0 6px 24px rgba(0,102,255,0.5); }
   .card-volt:hover   .card-cta { box-shadow: 0 6px 24px rgba(0,255,200,0.5); }
   .card-lime:hover   .card-cta { box-shadow: 0 6px 24px rgba(200,230,0,0.5); }
+  .card-teal:hover   .card-cta { box-shadow: 0 6px 24px rgba(0,255,204,0.5); }
 
   .footer {
     font-family: 'Share Tech Mono', monospace;
@@ -355,6 +371,25 @@
       <div class="card-cta">PLAY NOW</div>
     </a>
 
+    <a href="scouting-sim.html" class="game-card card-teal">
+      <div class="card-icon">🖥️</div>
+      <div class="card-title">SCOUT ROOM SIM</div>
+      <div class="card-desc">
+        Spawn your scouting crew and watch the chaos unfold!<br>
+        Joe fixes, Charlie tinkers, Kurt restores order...
+      </div>
+      <div class="card-tags">
+        <span class="card-tag">1 Player</span>
+        <span class="card-tag">Sandbox</span>
+        <span class="card-tag">Simulation</span>
+      </div>
+      <div class="card-devices">
+        <span class="device-badge highlight">&#x1F4BB; Computer</span>
+        <span class="device-badge highlight">&#x1F4F1; Mobile</span>
+      </div>
+      <div class="card-cta">PLAY NOW</div>
+    </a>
+
     <a href="citrus-crunch.html" class="game-card card-lime">
       <div class="card-icon">⚙</div>
       <div class="card-title">CITRUS CRUNCH</div>
@@ -375,7 +410,7 @@
     </a>
   </div>
 
-  <div class="footer">WASD vs Arrow Keys · Best with two players · Citrus Crunch playable on mobile</div>
+  <div class="footer">WASD vs Arrow Keys · Best with two players · Citrus Crunch &amp; Scout Room Sim playable on mobile</div>
 </div>
 
 <script>

@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Scout Room Sim — Team 1678</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; }
+
+:root {
+  --citrus: #FF6B00;
+  --citrus-light: #FFB347;
+  --blue: #0066FF;
+  --blue-light: #44AAFF;
+  --volt: #00FFCC;
+  --volt-dark: #00BBAA;
+  --bg: #080d08;
+  --panel: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.09);
+  --text-muted: rgba(255,255,255,0.45);
+}
+
+body {
+  background: var(--bg);
+  color: #fff;
+  font-family: 'Rajdhani', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── TOP BAR ── */
+#topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(0,0,0,0.5);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+#back-btn {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  transition: color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+#back-btn:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+
+.topbar-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(11px, 2.5vw, 16px);
+  font-weight: 700;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, var(--volt) 0%, var(--blue-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  flex: 1;
+}
+
+.topbar-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── MAIN LAYOUT ── */
+#app {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  gap: 0;
+}
+
+/* ── LEFT SIDEBAR ── */
+#sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.35);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.panel-section {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+/* ── SIM CONTROLS ── */
+#sim-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ctrl-row {
+  display: flex;
+  gap: 5px;
+}
+
+.btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex: 1;
+  text-align: center;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.btn:hover { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.25); }
+.btn:active { transform: scale(0.96); }
+
+.btn-play {
+  background: linear-gradient(135deg, var(--volt-dark), var(--volt));
+  color: #000;
+  border-color: var(--volt);
+  font-size: 10px;
+}
+.btn-play:hover { box-shadow: 0 0 14px rgba(0,255,204,0.4); color: #000; }
+
+.btn-reset {
+  border-color: rgba(255,107,0,0.4);
+  color: var(--citrus-light);
+}
+.btn-reset:hover { border-color: var(--citrus); background: rgba(255,107,0,0.1); color: var(--citrus-light); }
+
+.btn-speed.active {
+  background: rgba(0,102,255,0.2);
+  border-color: var(--blue-light);
+  color: var(--blue-light);
+}
+
+/* ── SPAWN PANEL ── */
+#spawn-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.spawn-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: rgba(255,255,255,0.75);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.spawn-btn:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2); }
+.spawn-btn:active { transform: scale(0.97); }
+.spawn-btn.active { opacity: 0.45; cursor: default; pointer-events: none; }
+
+.spawn-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.spawn-name { flex: 1; }
+.spawn-role {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+/* ── CHARACTER STATUS ── */
+#char-status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-height: 0;
+}
+
+.char-status-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 5px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.char-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; }
+.char-status-name { font-size: 11px; font-weight: 700; }
+.char-status-action {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+  line-height: 1.4;
+}
+
+/* ── CANVAS AREA ── */
+#canvas-wrap {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  background: #050a05;
+  overflow: hidden;
+  position: relative;
+}
+
+#sim-canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+#overlay-msg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+#overlay-msg .big { font-family: 'Orbitron', sans-serif; font-size: 22px; font-weight: 700; color: var(--volt); letter-spacing: 2px; }
+#overlay-msg .small { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--text-muted); margin-top: 6px; letter-spacing: 1px; }
+
+/* ── EVENT LOG ── */
+#log-panel {
+  width: 210px;
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.35);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#log-header {
+  padding: 10px 12px 6px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+#event-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#event-log::-webkit-scrollbar { width: 3px; }
+#event-log::-webkit-scrollbar-track { background: transparent; }
+#event-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+.log-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 5px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.03);
+  border-left: 2px solid rgba(0,255,204,0.3);
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateX(6px); } to { opacity: 1; transform: none; } }
+
+.log-time {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+.log-msg {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.35;
+}
+
+/* ── STATS BAR ── */
+#stats-bar {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  pointer-events: none;
+}
+.stat-chip {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.stat-chip span { color: #fff; font-weight: 700; }
+
+/* ── MOBILE LAYOUT ── */
+@media (max-width: 700px) {
+  body { overflow-y: auto; }
+  #app { flex-direction: column; overflow: visible; }
+  #sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    max-height: none;
+  }
+  .panel-section {
+    flex-shrink: 0;
+    border-bottom: none;
+    border-right: 1px solid var(--border);
+  }
+  #char-status-section { display: none; }
+  #canvas-wrap {
+    height: clamp(240px, 56vw, 420px);
+    flex-shrink: 0;
+  }
+  #log-panel {
+    width: 100%;
+    height: 200px;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  #stats-bar { top: 4px; gap: 6px; }
+  .stat-chip { font-size: 8px; padding: 2px 6px; }
+  .topbar-sub { display: none; }
+}
+
+@media (max-width: 480px) {
+  #sidebar { flex-direction: column; overflow-x: hidden; overflow-y: auto; max-height: 260px; }
+  .panel-section { border-right: none; border-bottom: 1px solid var(--border); }
+  .spawn-btn { font-size: 13px; padding: 9px 10px; }
+  .btn { font-size: 10px; padding: 9px 10px; }
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <a href="index.html" id="back-btn">&#8592; BACK</a>
+  <div class="topbar-title">SCOUT ROOM SIM</div>
+  <div class="topbar-sub">SOFTWARE SCOUTING &#183; TEAM 1678</div>
+</div>
+
+<div id="app">
+  <!-- LEFT SIDEBAR -->
+  <div id="sidebar">
+    <div class="panel-section">
+      <div class="panel-label">Simulation</div>
+      <div id="sim-controls">
+        <button class="btn btn-play" id="btn-playpause">&#9654; PLAY</button>
+        <div class="ctrl-row">
+          <button class="btn btn-reset" id="btn-reset">RESET</button>
+        </div>
+        <div class="ctrl-row" id="speed-btns">
+          <button class="btn btn-speed active" data-speed="1">1x</button>
+          <button class="btn btn-speed" data-speed="2">2x</button>
+          <button class="btn btn-speed" data-speed="4">4x</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-label">Spawn Character</div>
+      <div id="spawn-list">
+        <button class="spawn-btn" data-char="Joe">
+          <div class="spawn-dot" style="background:#FF6B00"></div>
+          <div>
+            <div class="spawn-name">Joe</div>
+            <div class="spawn-role">Fixer</div>
+          </div>
+        </button>
+        <button class="spawn-btn" data-char="Charlie">
+          <div class="spawn-dot" style="background:#FF3366"></div>
+          <div>
+            <div class="spawn-name">Charlie</div>
+            <div class="spawn-role">Tinkerer</div>
+          </div>
+        </button>
+        <button class="spawn-btn" data-char="Kurt">
+          <div class="spawn-dot" style="background:#4488FF"></div>
+          <div>
+            <div class="spawn-name">Kurt</div>
+            <div class="spawn-role">Restorer</div>
+          </div>
+        </button>
+        <button class="spawn-btn" data-char="Alton">
+          <div class="spawn-dot" style="background:#00FFCC"></div>
+          <div>
+            <div class="spawn-name">Alton</div>
+            <div class="spawn-role">Chill Presence</div>
+          </div>
+        </button>
+        <button class="spawn-btn" data-char="Jay">
+          <div class="spawn-dot" style="background:#FFD700"></div>
+          <div>
+            <div class="spawn-name">Jay</div>
+            <div class="spawn-role">Coordinator</div>
+          </div>
+        </button>
+        <button class="spawn-btn" data-char="Liam">
+          <div class="spawn-dot" style="background:#CC88FF"></div>
+          <div>
+            <div class="spawn-name">Liam</div>
+            <div class="spawn-role">Contributor</div>
+          </div>
+        </button>
+        <button class="spawn-btn" data-char="Andy">
+          <div class="spawn-dot" style="background:#FF8C42"></div>
+          <div>
+            <div class="spawn-name">Andy</div>
+            <div class="spawn-role">Lead</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel-section" id="char-status-section">
+      <div class="panel-label">Active Characters</div>
+      <div id="char-status-list"></div>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div id="canvas-wrap">
+    <canvas id="sim-canvas"></canvas>
+    <div id="overlay-msg">
+      <div class="big">SCOUT ROOM SIM</div>
+      <div class="small">Spawn characters, then press PLAY</div>
+    </div>
+    <div id="stats-bar">
+      <div class="stat-chip">Active: <span id="stat-active">0</span></div>
+      <div class="stat-chip">OK: <span id="stat-ok">0</span></div>
+      <div class="stat-chip">Disrupted: <span id="stat-disrupted">0</span></div>
+      <div class="stat-chip">Efficient: <span id="stat-efficient">0</span></div>
+    </div>
+  </div>
+
+  <!-- EVENT LOG -->
+  <div id="log-panel">
+    <div id="log-header">EVENT LOG</div>
+    <div id="event-log"><div style="padding:8px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted)">Events will appear here...</div></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ─────────────────────────────────────────────
+// CONSTANTS & CONFIG
+// ─────────────────────────────────────────────
+const RW = 800, RH = 540; // internal room resolution
+
+// Character color map
+const CHAR_COLORS = {
+  Joe:    '#FF6B00',
+  Charlie:'#FF3366',
+  Kurt:   '#4488FF',
+  Alton:  '#00FFCC',
+  Jay:    '#FFD700',
+  Liam:   '#CC88FF',
+  Andy:   '#FF8C42',
+};
+
+// Image file names differ from display names in two cases
+const CHAR_IMAGE_FILES = {
+  Joe:    'Joe.png',
+  Charlie:'Charlie.png',
+  Kurt:   'Kurt.png',
+  Alton:  'Altin.png', // file is Altin.png
+  Jay:    'Jai.png',   // file is Jai.png
+  Liam:   'Liam.png',
+  Andy:   'Andy.png',
+};
+
+// ─────────────────────────────────────────────
+// UTILITY
+// ─────────────────────────────────────────────
+function dist(a, b) {
+  // Handles both Character {x,y} and RoomObject {cx,cy}
+  const ax = a.cx !== undefined ? a.cx : a.x;
+  const ay = a.cy !== undefined ? a.cy : a.y;
+  const bx = b.cx !== undefined ? b.cx : b.x;
+  const by = b.cy !== undefined ? b.cy : b.y;
+  return Math.hypot(ax - bx, ay - by);
+}
+function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+function rand(lo, hi) { return lo + Math.random() * (hi - lo); }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function nearestObj(char, list) {
+  return list.reduce((best, o) => {
+    const d = dist(char, o);
+    return d < best.d ? { obj: o, d } : best;
+  }, { obj: null, d: Infinity }).obj;
+}
+
+// ─────────────────────────────────────────────
+// CHROMA KEY REMOVAL
+// Removes the green outline from character sprites
+// ─────────────────────────────────────────────
+function removeGreenChroma(img) {
+  const oc = document.createElement('canvas');
+  oc.width  = img.naturalWidth  || img.width;
+  oc.height = img.naturalHeight || img.height;
+  const ctx = oc.getContext('2d');
+  ctx.drawImage(img, 0, 0);
+  const id = ctx.getImageData(0, 0, oc.width, oc.height);
+  const d  = id.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], g = d[i + 1], b = d[i + 2];
+    const gDom = g - Math.max(r, b); // how much green dominates
+    if (gDom > 12 && g > 55) {
+      // Feather: reduce alpha based on greenness strength
+      const strength = Math.min(1, gDom / 70);
+      d[i + 3] = Math.floor(d[i + 3] * (1 - strength));
+    }
+  }
+  ctx.putImageData(id, 0, 0);
+  return oc;
+}
+
+// Loads all character images and returns a name→canvas map
+function loadCharImages() {
+  const map = {};
+  const promises = Object.entries(CHAR_IMAGE_FILES).map(([name, file]) =>
+    new Promise(resolve => {
+      const img = new Image();
+      img.onload  = () => { map[name] = removeGreenChroma(img); resolve(); };
+      img.onerror = () => resolve(); // fallback: no sprite
+      img.src = `characters/${file}`;
+    })
+  );
+  return Promise.all(promises).then(() => map);
+}
+
+// ─────────────────────────────────────────────
+// ROOM OBJECT
+// Represents an interactive item in the room
+// ─────────────────────────────────────────────
+const STATE = { NORMAL: 'normal', DISRUPTED: 'disrupted', EFFICIENT: 'efficient' };
+
+class RoomObject {
+  constructor({ id, x, y, w, h, type, label, interactive = true }) {
+    this.id = id; this.x = x; this.y = y; this.w = w; this.h = h;
+    this.type = type; this.label = label; this.interactive = interactive;
+    this.state = STATE.NORMAL;
+    this.animT = 0; // drives blink / glow animations
+  }
+  get cx() { return this.x + this.w / 2; }
+  get cy() { return this.y + this.h / 2; }
+
+  update(dt) { this.animT += dt; }
+  disrupt()      { this.state = STATE.DISRUPTED; }
+  repair()       { this.state = STATE.NORMAL; }
+  makeEfficient(){ this.state = STATE.EFFICIENT; }
+  reset()        { this.state = STATE.NORMAL; this.animT = 0; }
+
+  draw(ctx) {
+    const { x, y, w, h, type, state, animT } = this;
+    const pulse = 0.5 + 0.5 * Math.sin(animT * 3); // 0‥1 pulsing value
+
+    // Base colour per type
+    const baseFill = {
+      table:   '#1a1f1a',
+      laptop:  '#1c2b3a',
+      tablet:  '#1a2a1a',
+      phone:   '#2a1a2a',
+      charger: '#1a2a2a',
+      server:  '#0d1a2a',
+      station: '#0a1a1a',
+    }[type] || '#1a1a1a';
+
+    // State overlay
+    const stateColor = state === STATE.DISRUPTED  ? `rgba(255,60,60,${0.25 + pulse * 0.2})`
+                     : state === STATE.EFFICIENT  ? `rgba(0,255,200,${0.18 + pulse * 0.15})`
+                     : 'transparent';
+
+    // Shadow
+    ctx.save();
+    ctx.shadowColor = state === STATE.DISRUPTED  ? '#ff3c3c'
+                    : state === STATE.EFFICIENT  ? '#00ffc8'
+                    : 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = state === STATE.NORMAL ? 4 : 14;
+
+    // Body
+    ctx.fillStyle = baseFill;
+    this._roundRect(ctx, x, y, w, h, 4);
+    ctx.fill();
+
+    // State overlay glow
+    if (stateColor !== 'transparent') {
+      ctx.fillStyle = stateColor;
+      this._roundRect(ctx, x, y, w, h, 4);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // Border
+    ctx.strokeStyle = state === STATE.DISRUPTED ? `rgba(255,80,80,${0.6 + pulse * 0.4})`
+                    : state === STATE.EFFICIENT ? `rgba(0,255,200,${0.5 + pulse * 0.4})`
+                    : 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = state === STATE.NORMAL ? 1 : 1.5;
+    this._roundRect(ctx, x, y, w, h, 4);
+    ctx.stroke();
+
+    // Icon / detail per type
+    this._drawDetail(ctx, pulse);
+  }
+
+  _drawDetail(ctx, pulse) {
+    const { x, y, w, h, type, state } = this;
+    ctx.save();
+    ctx.font = `${Math.min(w, h) * 0.45}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const icons = { laptop:'💻', tablet:'📱', phone:'📲', charger:'⚡', server:'🖥️', station:'📡', table:'▬' };
+    const icon = icons[type] || '▪';
+    if (type !== 'table') {
+      ctx.globalAlpha = state === STATE.DISRUPTED ? 0.6 + pulse * 0.4 : 0.7;
+      ctx.fillText(icon, x + w / 2, y + h / 2);
+    }
+
+    // Disrupted warning flicker
+    if (state === STATE.DISRUPTED) {
+      ctx.font = 'bold 9px Share Tech Mono, monospace';
+      ctx.fillStyle = `rgba(255,80,80,${0.7 + pulse * 0.3})`;
+      ctx.fillText('!ERR', x + w / 2, y + h - 7);
+    }
+    // Efficient boost indicator
+    if (state === STATE.EFFICIENT) {
+      ctx.font = 'bold 8px Share Tech Mono, monospace';
+      ctx.fillStyle = `rgba(0,255,200,${0.7 + pulse * 0.3})`;
+      ctx.fillText('+EFF', x + w / 2, y + h - 7);
+    }
+
+    // Table label
+    if (type === 'table') {
+      ctx.font = '8px Rajdhani, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.fillText(this.label, x + w / 2, y + h / 2);
+    }
+    ctx.restore();
+  }
+
+  _roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+}
+
+// ─────────────────────────────────────────────
+// CHARACTER
+// ─────────────────────────────────────────────
+const CS = { IDLE: 'idle', WANDER: 'wander', MOVING: 'moving', WORKING: 'working' };
+
+class Character {
+  constructor({ name, color, speed, role, behaviors }) {
+    this.name  = name;
+    this.color = color;
+    this.speed = speed;
+    this.role  = role;
+    this.behaviors = behaviors;
+
+    // Runtime state
+    this.x = 400; this.y = 270;
+    this.vx = 0; this.vy = 0;
+    this.state = CS.IDLE;
+    this.target = null;          // {x, y, obj: RoomObject|null}
+    this.actionTimer  = 0;       // countdown while working
+    this.workDuration = 1;       // set from behaviors when work starts
+    this.workProgress = 0;
+    this.idleTimer = 0;
+    this.statusText = 'Ready';
+    this.active = false;
+    this.image  = null;          // set after images load
+
+    // Buff flags (set by other characters' passive effects)
+    this.andyBoost  = 0; // seconds remaining of Andy speed bonus
+    this.altonCalm  = 0; // set by Alton each frame (reduces idle jitter)
+
+    // Per-character timers for passive events
+    this._passiveTimer = rand(5, 15);
+  }
+
+  // ── Update ──────────────────────────────────
+  update(dt, sim) {
+    if (!this.active) return;
+
+    // Apply passive effect (if defined)
+    if (this.behaviors.onPassive) this.behaviors.onPassive(this, sim, dt);
+
+    // Work rate modified by Andy's leadership boost
+    const workRate = this.andyBoost > 0 ? 1.6 : 1.0;
+    if (this.andyBoost  > 0) this.andyBoost  -= dt;
+    if (this.altonCalm  > 0) this.altonCalm  -= dt;
+
+    switch (this.state) {
+      case CS.IDLE:
+        this.vx = 0; this.vy = 0;
+        this.idleTimer -= dt;
+        if (this.idleTimer <= 0) this._pickGoal(sim);
+        break;
+
+      case CS.WANDER:
+      case CS.MOVING:
+        this._steer(dt);
+        break;
+
+      case CS.WORKING:
+        this.vx = 0; this.vy = 0;
+        this.actionTimer -= dt * workRate;
+        this.workProgress = 1 - clamp(this.actionTimer / this.workDuration, 0, 1);
+        if (this.actionTimer <= 0) this._finishWork(sim);
+        break;
+    }
+
+    // Separation from other characters
+    this._separate(sim.characters);
+
+    // Soft obstacle push from table rects
+    this._pushFromTables(sim.tables);
+
+    // Integrate
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    this.x = clamp(this.x, 22, RW - 22);
+    this.y = clamp(this.y, 22, RH - 22);
+  }
+
+  _pickGoal(sim) {
+    const result = this.behaviors.selectTarget
+      ? this.behaviors.selectTarget(this, sim)
+      : null;
+
+    if (result) {
+      this.target = result;
+      this.state  = result.obj ? CS.MOVING : CS.WANDER;
+      if (result.statusText) this.statusText = result.statusText;
+    } else {
+      this._wander();
+    }
+  }
+
+  _wander() {
+    this.target = { x: rand(50, RW - 50), y: rand(50, RH - 50), obj: null };
+    this.state  = CS.WANDER;
+    this.statusText = 'Wandering...';
+  }
+
+  _steer(dt) {
+    if (!this.target) { this._goIdle(rand(0.4, 1.2)); return; }
+    const dx = this.target.x - this.x;
+    const dy = this.target.y - this.y;
+    const d  = Math.hypot(dx, dy);
+    const arriveR = this.target.obj ? 28 : 12;
+
+    if (d < arriveR) {
+      this.vx = 0; this.vy = 0;
+      if (this.target.obj) {
+        // Begin working at this object
+        this.workDuration = this.behaviors.workDuration || 3;
+        this.actionTimer  = this.workDuration;
+        this.workProgress = 0;
+        this.state = CS.WORKING;
+        if (this.behaviors.onArrive) this.behaviors.onArrive(this, sim);
+      } else {
+        this._goIdle(rand(0.3, 1.4));
+      }
+    } else {
+      const spd = this.speed;
+      this.vx = (dx / d) * spd;
+      this.vy = (dy / d) * spd;
+    }
+  }
+
+  _finishWork(sim) {
+    if (this.behaviors.onComplete) this.behaviors.onComplete(this, sim);
+    this.workProgress = 0;
+    this._goIdle(rand(0.3, 1.2));
+  }
+
+  _goIdle(dur) {
+    this.state = CS.IDLE;
+    this.idleTimer = dur;
+    this.vx = 0; this.vy = 0;
+    this.target = null;
+  }
+
+  _separate(characters) {
+    for (const o of characters) {
+      if (o === this || !o.active) continue;
+      const dx = this.x - o.x, dy = this.y - o.y;
+      const d  = Math.hypot(dx, dy);
+      const minD = 42;
+      if (d < minD && d > 0) {
+        const f = (minD - d) / minD * 55;
+        this.vx += (dx / d) * f;
+        this.vy += (dy / d) * f;
+      }
+    }
+  }
+
+  _pushFromTables(tables) {
+    for (const t of tables) {
+      // Closest point on table rect
+      const cx = clamp(this.x, t.x, t.x + t.w);
+      const cy = clamp(this.y, t.y, t.y + t.h);
+      const dx = this.x - cx, dy = this.y - cy;
+      const d  = Math.hypot(dx, dy);
+      const r  = 18;
+      if (d < r) {
+        const f = (r - d) / r * 90;
+        if (d > 0) { this.vx += (dx / d) * f; this.vy += (dy / d) * f; }
+        else       { this.vx += (Math.random() - 0.5) * 80; this.vy += (Math.random() - 0.5) * 80; }
+      }
+    }
+  }
+
+  // ── Draw ────────────────────────────────────
+  draw(ctx) {
+    if (!this.active) return;
+    const { x, y, color, image, name, statusText, state, workProgress } = this;
+
+    // Shadow ellipse
+    ctx.save();
+    ctx.globalAlpha = 0.25;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 22, 16, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Colour aura glow
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, 26, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Sprite or fallback circle
+    if (image) {
+      const s = 52;
+      ctx.drawImage(image, x - s / 2, y - s / 2, s, s);
+    } else {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, 20, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // Work progress bar
+    if (state === CS.WORKING) {
+      const bw = 46, bh = 4;
+      const bx = x - bw / 2, by = y + 27;
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(bx, by, bw, bh);
+      ctx.fillStyle = color;
+      ctx.fillRect(bx, by, bw * workProgress, bh);
+    }
+
+    // Alton calm ring
+    if (this.name === 'Alton' && state === CS.IDLE) {
+      const t = Date.now() / 1000;
+      ctx.save();
+      ctx.globalAlpha = 0.12 + 0.05 * Math.sin(t * 1.5);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, 70 + 5 * Math.sin(t), 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Andy aura ring
+    if (this.name === 'Andy') {
+      const t = Date.now() / 1000;
+      ctx.save();
+      ctx.globalAlpha = 0.1 + 0.04 * Math.sin(t * 0.8);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 6]);
+      ctx.beginPath();
+      ctx.arc(x, y, 100, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    // Status text
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#000';
+    ctx.shadowBlur = 5;
+    ctx.font = '8px Share Tech Mono, monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+    ctx.fillText(statusText, x, y - 38);
+
+    // Name
+    ctx.font = 'bold 12px Rajdhani, sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(name, x, y - 27);
+    ctx.restore();
+  }
+}
+
+// ─────────────────────────────────────────────
+// CHARACTER BEHAVIOR DEFINITIONS
+// Each entry defines: selectTarget, onArrive, onComplete, onPassive, workDuration
+// ─────────────────────────────────────────────
+
+const BEHAVIORS = {
+
+  // ── Joe: Fixer / Optimizer ──────────────────
+  Joe: {
+    workDuration: 3.5,
+    selectTarget(char, sim) {
+      const disrupted = sim.interactive.filter(o => o.state === STATE.DISRUPTED);
+      if (disrupted.length > 0) {
+        const t = nearestObj(char, disrupted);
+        return { x: t.cx, y: t.cy, obj: t, statusText: 'Found an issue' };
+      }
+      const normal = sim.interactive.filter(o => o.state === STATE.NORMAL);
+      if (normal.length > 0 && Math.random() < 0.4) {
+        const t = pick(normal);
+        return { x: t.cx, y: t.cy, obj: t, statusText: 'Optimizing...' };
+      }
+      return null;
+    },
+    onArrive(char) {
+      char.statusText = char.target?.obj?.state === STATE.DISRUPTED
+        ? 'Repairing...' : 'Boosting efficiency...';
+    },
+    onComplete(char, sim) {
+      const obj = char.target?.obj;
+      if (!obj) return;
+      if (obj.state === STATE.DISRUPTED) {
+        obj.repair();
+        sim.addEvent(pick([
+          `Joe patched up ${obj.label} like a pro`,
+          `Joe fixed ${obj.label} in record time`,
+          `${obj.label} works perfectly again — thanks Joe`,
+        ]));
+      } else if (obj.state === STATE.NORMAL) {
+        obj.makeEfficient();
+        sim.addEvent(pick([
+          `Joe optimized ${obj.label} — peak efficiency unlocked`,
+          `Joe upgraded ${obj.label}. It's running 20% faster now`,
+        ]));
+      }
+      char.statusText = 'Done!';
+    },
+  },
+
+  // ── Charlie: Chaotic Tinkerer ───────────────
+  Charlie: {
+    workDuration: 2.8,
+    selectTarget(char, sim) {
+      const available = sim.interactive.filter(o => o.state !== STATE.DISRUPTED);
+      if (available.length > 0) {
+        const t = pick(available);
+        return { x: t.cx, y: t.cy, obj: t, statusText: 'Spotted something...' };
+      }
+      return null;
+    },
+    onArrive(char) { char.statusText = 'Tinkering...'; },
+    onComplete(char, sim) {
+      const obj = char.target?.obj;
+      if (obj && obj.state !== STATE.DISRUPTED) {
+        obj.disrupt();
+        sim.addEvent(pick([
+          `Charlie gave ${obj.label} a "creative" new configuration`,
+          `Charlie discovered an undocumented feature on ${obj.label}`,
+          `Charlie performed unsanctioned improvements on ${obj.label}`,
+          `Charlie installed something on ${obj.label}. Nobody asked. It happened.`,
+          `${obj.label} is now running Charlie's custom firmware`,
+        ]));
+        char.statusText = 'Mission accomplished!';
+      } else {
+        char.statusText = 'Already done here...';
+      }
+    },
+  },
+
+  // ── Kurt: Order Restorer ────────────────────
+  Kurt: {
+    workDuration: 3.0,
+    selectTarget(char, sim) {
+      const disrupted = sim.interactive.filter(o => o.state === STATE.DISRUPTED);
+      if (disrupted.length > 0) {
+        const t = nearestObj(char, disrupted);
+        return { x: t.cx, y: t.cy, obj: t, statusText: 'Restoring order...' };
+      }
+      // Patrol between random waypoints
+      return null;
+    },
+    onArrive(char) { char.statusText = 'Fixing...'; },
+    onComplete(char, sim) {
+      const obj = char.target?.obj;
+      if (obj && obj.state === STATE.DISRUPTED) {
+        obj.repair();
+        sim.addEvent(pick([
+          `Kurt restored order at ${obj.label} with surgical precision`,
+          `Kurt quietly corrected ${obj.label}. Of course he did.`,
+          `${obj.label} is back to normal. Kurt was on it before anyone noticed.`,
+          `Kurt walked over to ${obj.label} and calmly fixed everything`,
+        ]));
+        char.statusText = 'Order restored.';
+      } else {
+        char.statusText = 'All clear here.';
+      }
+    },
+  },
+
+  // ── Alton: Chill Presence ───────────────────
+  Alton: {
+    workDuration: 2.0,
+    selectTarget(char, sim) {
+      // Drift toward groups or stay near tables
+      const active = sim.characters.filter(c => c.active && c !== char);
+      if (active.length > 0 && Math.random() < 0.5) {
+        const t = pick(active);
+        return { x: t.x + rand(-70, 70), y: t.y + rand(-70, 70), obj: null, statusText: 'Vibing nearby' };
+      }
+      return null;
+    },
+    onArrive(char) { char.statusText = 'Just hanging out'; },
+    onComplete(char) { char.statusText = 'Relaxing'; },
+    onPassive(char, sim, dt) {
+      // Calm aura: passively reduce nearby characters' idle randomness
+      for (const c of sim.characters) {
+        if (c === char || !c.active) continue;
+        if (dist(char, c) < 110) c.altonCalm = Math.min(c.altonCalm + dt, 0.5);
+      }
+      // Passive event
+      char._passiveTimer -= dt;
+      if (char._passiveTimer <= 0) {
+        char._passiveTimer = rand(18, 30);
+        if (sim.running) {
+          sim.addEvent(pick([
+            `Alton's chill energy spread through the room`,
+            `Everyone near Alton felt weirdly productive`,
+            `Alton somehow made chaos 15% less chaotic just by existing`,
+          ]));
+        }
+      }
+    },
+  },
+
+  // ── Jay: Active Coordinator ─────────────────
+  Jay: {
+    workDuration: 1.8,
+    selectTarget(char, sim) {
+      // Head toward a character or active object
+      const active = sim.characters.filter(c => c.active && c !== char);
+      if (active.length > 0 && Math.random() < 0.65) {
+        const t = pick(active);
+        return { x: t.x + rand(-25, 25), y: t.y + rand(-25, 25), obj: null, statusText: 'Coordinating...' };
+      }
+      const objs = sim.interactive;
+      if (objs.length > 0 && Math.random() < 0.5) {
+        const t = pick(objs);
+        return { x: t.cx, y: t.cy, obj: null, statusText: 'Checking status...' };
+      }
+      return null;
+    },
+    onArrive(char, sim) {
+      // Nudge nearby characters toward disrupted objects
+      const nearby = sim.characters.filter(c => c.active && c !== char && dist(char, c) < 130);
+      const disrupted = sim.interactive.filter(o => o.state === STATE.DISRUPTED);
+      if (nearby.length > 0 && disrupted.length > 0) {
+        const target = pick(nearby.filter(c => c.state !== CS.WORKING) || nearby);
+        const obj    = disrupted[0];
+        if (target && target.state !== CS.WORKING) {
+          target.target = { x: obj.cx, y: obj.cy, obj, statusText: '(Jay said go)' };
+          target.state  = CS.MOVING;
+          sim.addEvent(`Jay redirected ${target.name} toward ${obj.label}`);
+          char.statusText = 'Delegated!';
+          return;
+        }
+      }
+      if (nearby.length > 0) {
+        sim.addEvent(`Jay checked in with ${nearby.map(c => c.name).join(' & ')}`);
+        char.statusText = 'Checked in!';
+      }
+    },
+    onComplete(char) { char.statusText = 'What\'s next?'; },
+  },
+
+  // ── Liam: Flexible Contributor ──────────────
+  Liam: {
+    workDuration: 3.2,
+    selectTarget(char, sim) {
+      const disrupted = sim.interactive.filter(o => o.state === STATE.DISRUPTED);
+      const normal    = sim.interactive.filter(o => o.state === STATE.NORMAL);
+      // Random chance to switch tasks
+      if (disrupted.length > 0) {
+        // Sometimes pick a different one than the current target
+        const pool = disrupted.filter(o => o !== char.target?.obj);
+        const t = pool.length > 0 ? (Math.random() < 0.4 ? pick(pool) : disrupted[0]) : disrupted[0];
+        return { x: t.cx, y: t.cy, obj: t, statusText: 'On it!' };
+      }
+      if (normal.length > 0) {
+        const t = pick(normal);
+        return { x: t.cx, y: t.cy, obj: t, statusText: 'Helping out...' };
+      }
+      return null;
+    },
+    onArrive(char) { char.statusText = 'Working on it...'; },
+    onComplete(char, sim) {
+      const obj = char.target?.obj;
+      if (!obj) return;
+      if (obj.state === STATE.DISRUPTED) {
+        obj.repair();
+        sim.addEvent(pick([
+          `Liam quietly fixed ${obj.label}`,
+          `Liam helped out at ${obj.label} — no big deal`,
+          `${obj.label} is back up. Liam was already moving to the next thing.`,
+        ]));
+      } else {
+        if (Math.random() < 0.45) {
+          obj.makeEfficient();
+          sim.addEvent(`Liam gave ${obj.label} a small boost`);
+        } else {
+          sim.addEvent(`Liam checked on ${obj.label} — all good!`);
+        }
+      }
+      char.statusText = Math.random() < 0.5 ? 'Done! What\'s next?' : 'Moving on...';
+    },
+  },
+
+  // ── Andy: Respected Lead ────────────────────
+  Andy: {
+    workDuration: 2.5,
+    selectTarget(char, sim) {
+      const disrupted = sim.interactive.filter(o => o.state === STATE.DISRUPTED);
+      // Head toward busy/disrupted areas to stabilize
+      if (disrupted.length >= 2) {
+        const cx = disrupted.reduce((s, o) => s + o.cx, 0) / disrupted.length;
+        const cy = disrupted.reduce((s, o) => s + o.cy, 0) / disrupted.length;
+        return { x: cx + rand(-50, 50), y: cy + rand(-50, 50), obj: null, statusText: 'Monitoring...' };
+      }
+      return null;
+    },
+    onArrive(char, sim) {
+      const nearby = sim.characters.filter(c => c.active && c !== char && dist(char, c) < 160);
+      if (nearby.length > 0) {
+        for (const c of nearby) c.andyBoost = Math.max(c.andyBoost, 5);
+        sim.addEvent(pick([
+          `Andy's presence boosted the whole team's focus`,
+          `Everyone near Andy suddenly became 40% more productive`,
+          `Andy strolled over. Productivity went up. Nobody questioned it.`,
+        ]));
+        char.statusText = 'Leading!';
+      }
+    },
+    onComplete(char) { char.statusText = 'Keeping watch'; },
+    onPassive(char, sim, dt) {
+      // Passive leadership aura
+      for (const c of sim.characters) {
+        if (c === char || !c.active) continue;
+        if (dist(char, c) < 130) c.andyBoost = Math.max(c.andyBoost, 1.5);
+      }
+      char._passiveTimer -= dt;
+      if (char._passiveTimer <= 0) {
+        char._passiveTimer = rand(20, 35);
+        if (sim.running && sim.characters.some(c => c.active && c !== char)) {
+          sim.addEvent(`Andy did a quiet room scan. The team felt seen.`);
+        }
+      }
+    },
+  },
+};
+
+// ─────────────────────────────────────────────
+// ROOM LAYOUT
+// Define all objects in the room
+// ─────────────────────────────────────────────
+function buildRoom() {
+  const defs = [
+    // ── Tables (physical obstacles, not interactive) ──
+    { id:'tbl-tl',  x:55,  y:42,  w:210, h:68, type:'table',   label:'Table A', interactive:false },
+    { id:'tbl-tr',  x:520, y:42,  w:225, h:68, type:'table',   label:'Table B', interactive:false },
+    { id:'tbl-mid', x:255, y:205, w:290, h:65, type:'table',   label:'Table C', interactive:false },
+    { id:'tbl-bl',  x:55,  y:375, w:210, h:68, type:'table',   label:'Table D', interactive:false },
+    { id:'tbl-br',  x:520, y:375, w:225, h:68, type:'table',   label:'Table E', interactive:false },
+
+    // ── Laptops ──
+    { id:'lap1', x:68,  y:52,  w:52, h:38, type:'laptop',  label:'Laptop 1' },
+    { id:'lap2', x:140, y:52,  w:52, h:38, type:'laptop',  label:'Laptop 2' },
+    { id:'lap3', x:268, y:215, w:52, h:38, type:'laptop',  label:'Laptop 3' },
+    { id:'lap4', x:350, y:215, w:52, h:38, type:'laptop',  label:'Laptop 4' },
+    { id:'lap5', x:534, y:385, w:52, h:38, type:'laptop',  label:'Laptop 5' },
+
+    // ── Tablets ──
+    { id:'tab1', x:538, y:52,  w:38, h:54, type:'tablet',  label:'Tablet 1' },
+    { id:'tab2', x:598, y:52,  w:38, h:54, type:'tablet',  label:'Tablet 2' },
+    { id:'tab3', x:68,  y:383, w:38, h:54, type:'tablet',  label:'Tablet 3' },
+
+    // ── Phones ──
+    { id:'ph1',  x:140, y:387, w:28, h:46, type:'phone',   label:'Phone 1' },
+    { id:'ph2',  x:180, y:387, w:28, h:46, type:'phone',   label:'Phone 2' },
+    { id:'ph3',  x:620, y:387, w:28, h:46, type:'phone',   label:'Phone 3' },
+
+    // ── Charger strip (left wall) ──
+    { id:'chg1', x:16,  y:195, w:30, h:130, type:'charger', label:'Charger A', interactive:false },
+
+    // ── Data server (top-center) ──
+    { id:'srv1', x:354, y:38,  w:95, h:85, type:'server',  label:'Data Server' },
+
+    // ── Scouting stations (bottom) ──
+    { id:'stn1', x:340, y:368, w:110, h:82, type:'station', label:'Scout Station' },
+
+    // ── Second charger strip (right wall) ──
+    { id:'chg2', x:756, y:195, w:30, h:130, type:'charger', label:'Charger B', interactive:false },
+  ];
+  return defs.map(d => new RoomObject(d));
+}
+
+// ─────────────────────────────────────────────
+// SIMULATION
+// ─────────────────────────────────────────────
+class Simulation {
+  constructor() {
+    this.objects    = buildRoom();
+    this.characters = this._buildCharacters();
+    this.events     = [];
+    this.running    = false;
+    this.speed      = 1;
+    this.simTime    = 0; // seconds (scaled)
+  }
+
+  get tables()      { return this.objects.filter(o => o.type === 'table'); }
+  get interactive() { return this.objects.filter(o => o.interactive !== false); }
+  get activeChars() { return this.characters.filter(c => c.active); }
+
+  _buildCharacters() {
+    return Object.keys(BEHAVIORS).map(name =>
+      new Character({
+        name,
+        color: CHAR_COLORS[name],
+        speed: name === 'Alton' ? 50 : name === 'Jay' ? 115 : name === 'Kurt' ? 100 : 85,
+        role:  { Joe:'Fixer', Charlie:'Tinkerer', Kurt:'Restorer', Alton:'Chill Presence', Jay:'Coordinator', Liam:'Contributor', Andy:'Lead' }[name],
+        behaviors: BEHAVIORS[name],
+      })
+    );
+  }
+
+  spawn(name) {
+    const c = this.characters.find(ch => ch.name === name);
+    if (!c || c.active) return;
+    c.active = true;
+    c.x = rand(280, 520); c.y = rand(195, 345);
+    c.state = CS.IDLE; c.idleTimer = rand(0.5, 2);
+    c.statusText = 'Ready';
+    this.addEvent(`${name} joined the scouting room!`);
+  }
+
+  despawn(name) {
+    const c = this.characters.find(ch => ch.name === name);
+    if (c) { c.active = false; c.state = CS.IDLE; c.target = null; }
+  }
+
+  update(dt) {
+    if (!this.running) return;
+    const scaled = dt * this.speed;
+    this.simTime += scaled;
+
+    for (const obj of this.objects)    obj.update(scaled);
+    this._randomGlitches(scaled);
+    for (const c   of this.characters) c.update(scaled, this);
+  }
+
+  _randomGlitches(dt) {
+    const rate = 0.004; // base glitch probability per second per object
+    for (const obj of this.interactive) {
+      if (obj.state === STATE.NORMAL && Math.random() < rate * dt) {
+        obj.disrupt();
+        this.addEvent(`${obj.label} started acting up on its own`);
+      }
+      // Efficient objects slowly decay
+      if (obj.state === STATE.EFFICIENT && Math.random() < rate * 0.3 * dt) {
+        obj.state = STATE.NORMAL;
+      }
+    }
+  }
+
+  addEvent(msg) {
+    const s   = Math.floor(this.simTime);
+    const min = String(Math.floor(s / 60)).padStart(2, '0');
+    const sec = String(s % 60).padStart(2, '0');
+    this.events.unshift({ time: `${min}:${sec}`, msg });
+    if (this.events.length > 60) this.events.pop();
+    renderEventLog(this.events);
+  }
+
+  reset() {
+    this.running = false; this.simTime = 0; this.events = [];
+    for (const o of this.objects)    o.reset();
+    for (const c of this.characters) {
+      c.active = false; c.state = CS.IDLE; c.target = null;
+      c.statusText = 'Ready'; c.workProgress = 0;
+      c.andyBoost = 0; c.altonCalm = 0;
+      c._passiveTimer = rand(5, 15);
+    }
+    renderEventLog([]);
+    renderCharPanel(this.characters);
+    updateSpawnButtons(this.characters);
+  }
+
+  stats() {
+    const inter = this.interactive;
+    return {
+      active:    this.activeChars.length,
+      ok:        inter.filter(o => o.state === STATE.NORMAL).length,
+      disrupted: inter.filter(o => o.state === STATE.DISRUPTED).length,
+      efficient: inter.filter(o => o.state === STATE.EFFICIENT).length,
+    };
+  }
+}
+
+// ─────────────────────────────────────────────
+// RENDERER
+// Draws the room, floor, decorations, and objects onto the canvas
+// ─────────────────────────────────────────────
+function renderRoom(ctx, sim) {
+  const { objects, characters } = sim;
+
+  // Floor — dark grid
+  ctx.fillStyle = '#0b120b';
+  ctx.fillRect(0, 0, RW, RH);
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 1;
+  for (let gx = 0; gx <= RW; gx += 40) {
+    ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, RH); ctx.stroke();
+  }
+  for (let gy = 0; gy <= RH; gy += 40) {
+    ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(RW, gy); ctx.stroke();
+  }
+
+  // Room walls
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, RW - 2, RH - 2);
+
+  // Corner accents
+  const corners = [[0,0],[RW,0],[0,RH],[RW,RH]];
+  const len = 20;
+  ctx.strokeStyle = 'rgba(0,255,204,0.3)';
+  ctx.lineWidth = 2;
+  for (const [cx,cy] of corners) {
+    const sx = cx === 0 ? 1 : -1, sy = cy === 0 ? 1 : -1;
+    ctx.beginPath();
+    ctx.moveTo(cx + sx*2, cy + sy*2 + len*sy); ctx.lineTo(cx + sx*2, cy + sy*2); ctx.lineTo(cx + sx*2 + len*sx, cy + sy*2);
+    ctx.stroke();
+  }
+
+  // Floor label
+  ctx.save();
+  ctx.font = '10px Share Tech Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  ctx.fillText('SOFTWARE SCOUTING — TEAM 1678', RW / 2, RH - 8);
+  ctx.restore();
+
+  // Draw all objects (tables first, then interactive on top)
+  for (const obj of objects.filter(o => o.type === 'table')) obj.draw(ctx);
+  for (const obj of objects.filter(o => o.type !== 'table')) obj.draw(ctx);
+
+  // Draw characters
+  for (const c of characters) c.draw(ctx);
+}
+
+// ─────────────────────────────────────────────
+// UI HELPERS
+// ─────────────────────────────────────────────
+function renderEventLog(events) {
+  const el = document.getElementById('event-log');
+  if (events.length === 0) {
+    el.innerHTML = '<div style="padding:8px;font-family:\'Share Tech Mono\',monospace;font-size:10px;color:var(--text-muted)">Events will appear here...</div>';
+    return;
+  }
+  el.innerHTML = events.map(e =>
+    `<div class="log-entry"><div class="log-time">${e.time}</div><div class="log-msg">${e.msg}</div></div>`
+  ).join('');
+}
+
+function renderCharPanel(characters) {
+  const el = document.getElementById('char-status-list');
+  const active = characters.filter(c => c.active);
+  if (active.length === 0) {
+    el.innerHTML = '<div style="font-family:\'Share Tech Mono\',monospace;font-size:9px;color:var(--text-muted);padding:4px">No characters spawned</div>';
+    return;
+  }
+  el.innerHTML = active.map(c =>
+    `<div class="char-status-item">
+      <div class="char-status-dot" style="background:${c.color}"></div>
+      <div>
+        <div class="char-status-name">${c.name}</div>
+        <div class="char-status-action">${c.statusText}</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function updateSpawnButtons(characters) {
+  document.querySelectorAll('.spawn-btn').forEach(btn => {
+    const name = btn.dataset.char;
+    const c    = characters.find(ch => ch.name === name);
+    btn.classList.toggle('active', !!(c && c.active));
+  });
+}
+
+function updateStats(sim) {
+  const s = sim.stats();
+  document.getElementById('stat-active').textContent    = s.active;
+  document.getElementById('stat-ok').textContent        = s.ok;
+  document.getElementById('stat-disrupted').textContent = s.disrupted;
+  document.getElementById('stat-efficient').textContent = s.efficient;
+}
+
+// ─────────────────────────────────────────────
+// MAIN — Canvas setup, loop, UI wiring
+// ─────────────────────────────────────────────
+const canvas = document.getElementById('sim-canvas');
+const ctx    = canvas.getContext('2d');
+canvas.width  = RW;
+canvas.height = RH;
+
+let sim         = new Simulation();
+let lastTime    = null;
+let imagesReady = false;
+
+// Assign images to character objects once loaded
+loadCharImages().then(imageMap => {
+  for (const c of sim.characters) {
+    if (imageMap[c.name]) c.image = imageMap[c.name];
+  }
+  imagesReady = true;
+});
+
+// Main loop
+function loop(ts) {
+  if (lastTime === null) lastTime = ts;
+  const rawDt = Math.min((ts - lastTime) / 1000, 0.1); // cap dt at 100ms
+  lastTime = ts;
+
+  sim.update(rawDt);
+  ctx.clearRect(0, 0, RW, RH);
+  renderRoom(ctx, sim);
+
+  // Update UI panels every frame (cheap DOM ops)
+  renderCharPanel(sim.characters);
+  updateSpawnButtons(sim.characters);
+  updateStats(sim);
+
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ── Play / Pause ──
+const btnPlayPause = document.getElementById('btn-playpause');
+const overlay      = document.getElementById('overlay-msg');
+
+btnPlayPause.addEventListener('click', () => {
+  if (sim.activeChars.length === 0 && !sim.running) {
+    // Helpful nudge
+    overlay.querySelector('.small').textContent = 'Spawn at least one character first!';
+    return;
+  }
+  sim.running = !sim.running;
+  btnPlayPause.textContent = sim.running ? '⏸ PAUSE' : '▶ PLAY';
+  btnPlayPause.style.background = sim.running
+    ? 'linear-gradient(135deg,#cc0000,#ff3333)'
+    : 'linear-gradient(135deg,var(--volt-dark),var(--volt))';
+  btnPlayPause.style.borderColor = sim.running ? '#ff3333' : 'var(--volt)';
+  btnPlayPause.style.color       = '#000';
+  overlay.style.display = sim.running ? 'none' : '';
+  if (!sim.running) {
+    overlay.querySelector('.big').textContent   = 'PAUSED';
+    overlay.querySelector('.small').textContent = 'Press PLAY to continue';
+  }
+});
+
+// ── Reset ──
+document.getElementById('btn-reset').addEventListener('click', () => {
+  sim.reset();
+  btnPlayPause.textContent       = '▶ PLAY';
+  btnPlayPause.style.background  = 'linear-gradient(135deg,var(--volt-dark),var(--volt))';
+  btnPlayPause.style.borderColor = 'var(--volt)';
+  btnPlayPause.style.color       = '#000';
+  overlay.style.display = '';
+  overlay.querySelector('.big').textContent   = 'SCOUT ROOM SIM';
+  overlay.querySelector('.small').textContent = 'Spawn characters, then press PLAY';
+});
+
+// ── Speed ──
+document.querySelectorAll('.btn-speed').forEach(btn => {
+  btn.addEventListener('click', () => {
+    sim.speed = parseFloat(btn.dataset.speed);
+    document.querySelectorAll('.btn-speed').forEach(b => b.classList.toggle('active', b === btn));
+  });
+});
+
+// ── Spawn / Despawn ──
+document.querySelectorAll('.spawn-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const name = btn.dataset.char;
+    const c    = sim.characters.find(ch => ch.name === name);
+    if (!c) return;
+    if (c.active) {
+      sim.despawn(name);
+    } else {
+      sim.spawn(name);
+      // Re-assign image in case images loaded after sim init
+      loadCharImages().then(map => { if (map[name]) c.image = map[name]; });
+    }
+  });
+});
+
+// Hide overlay once user interacts
+overlay.style.display = '';
+</script>
+</body>
+</html>
