@@ -118,8 +118,8 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 
 /* GEAR SORT — color coded */
 #gear-source{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;background:var(--panel2);border:2px dashed var(--border);border-radius:10px;padding:10px;min-height:64px;width:100%;}
-#gear-bins{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
-.g-bin{width:115px;min-height:100px;border:2px solid;border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px;transition:filter .2s;}
+#gear-bins{display:grid;grid-template-columns:repeat(4,minmax(92px,1fr));gap:10px;width:100%;max-width:520px;}
+.g-bin{min-height:100px;border:2px solid;border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px;transition:filter .2s;}
 .g-bin.over{filter:brightness(1.4);}
 .g-bin-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;text-align:center;letter-spacing:1px;font-weight:700;}
 .g-item{font-size:26px;width:44px;height:44px;border:2px solid #0004;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:grab;transition:transform .1s;}
@@ -158,16 +158,21 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 
 
 /* ═══ ROBOT SILHOUETTE ═══ */
-#sil-area{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;justify-content:center;}
-#sil-robot{position:relative;width:160px;height:200px;flex-shrink:0;}
+#sil-area{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;justify-content:center;width:100%;}
+#sil-robot{position:relative;width:min(220px,45vw);height:min(280px,56vw);min-width:180px;min-height:230px;flex-shrink:0;}
 .sil-part{position:absolute;display:flex;align-items:center;justify-content:center;font-size:22px;border:2px dashed #333;border-radius:6px;transition:all .2s;cursor:default;}
 .sil-part.drop-target{border-color:var(--citrus);background:#0a1200;animation:boltPulse .7s ease-in-out infinite;}
 .sil-part.filled{border-color:var(--green);background:#001a08;border-style:solid;}
 .sil-part.wrong-drop{border-color:var(--red)!important;background:#1a0005!important;animation:boltMiss .3s ease!important;}
-#sil-parts{display:flex;flex-direction:column;gap:8px;align-items:flex-start;}
-.sil-drag{font-size:26px;padding:8px 12px;background:var(--panel2);border:2px solid var(--border);border-radius:8px;cursor:grab;transition:transform .1s;}
+#sil-parts{display:flex;flex-direction:column;gap:8px;align-items:stretch;min-width:min(260px,90vw);}
+.sil-drag{font-size:18px;padding:8px 12px;background:var(--panel2);border:2px solid var(--border);border-radius:8px;cursor:grab;transition:transform .1s;display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .sil-drag:hover{border-color:var(--citrus);transform:scale(1.08);}
 .sil-drag.dragging{opacity:.35;}
+
+
+/* CABLE UNCOIL */
+#uncoil-canvas{border:2px solid var(--border);border-radius:8px;background:var(--panel2);cursor:crosshair;touch-action:none;display:block;max-width:100%;}
+#uncoil-status{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim);}
 
 /* ═══ CODE DECRYPT ═══ */
 #decrypt-area{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;}
@@ -237,12 +242,12 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
   .wack-hole{width:64px;height:64px;font-size:26px;}
   #gear-source{padding:6px;}
   .g-bin{width:90px;min-height:80px;}
-  #gear-bins{gap:6px;}
+  #gear-bins{gap:6px;grid-template-columns:repeat(2,minmax(0,1fr));}
   .g-item{width:40px;height:40px;font-size:22px;}
   #sil-area{flex-direction:column;align-items:center;}
-  #sil-robot{width:200px;height:250px;}
-  #sil-parts{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:8px;}
-  .sil-drag{font-size:24px;padding:10px 14px;}
+  #sil-robot{width:min(220px,80vw);height:min(280px,95vw);}
+  #sil-parts{flex-direction:column;width:100%;max-width:320px;gap:8px;}
+  .sil-drag{font-size:16px;padding:10px 12px;}
   #bal-track{max-width:300px;}
   #bal-hold-bar-wrap{max-width:300px;}
   .bal-tap-btn{padding:14px 36px;font-size:14px;min-height:52px;}
@@ -299,7 +304,7 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
     <text x="44" y="40" font-size="7" fill="#c8e600" font-family="Arial" font-weight="bold">1678</text>
   </svg>
   <div style="font-family:'Rajdhani',sans-serif;font-size:16px;color:#777;max-width:380px;text-align:center;line-height:1.55;margin-bottom:10px;">Mike's watching. Mike's <span style="color:var(--orange);font-style:italic">always</span> watching. Build the robot. Don't disappoint him.</div>
-  <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#444;max-width:380px;text-align:center;margin-bottom:24px;">10 MINIGAMES • 8 WAVES • NO MERCY</div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#444;max-width:380px;text-align:center;margin-bottom:24px;">11 MINIGAMES • ENDLESS CHECKPOINTS • NO MERCY</div>
   <button class="btn" onclick="startGame()">START BUILD SEASON</button>
 </div>
 
@@ -427,22 +432,30 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
     <!-- 8. MAZE NAVIGATION -->
     <div class="minigame" id="mg-maze">
       <div class="mg-title">🧩 CABLE MAZE</div>
-      <div class="mg-hint" id="maze-hint">Click/tap adjacent cells to move. Reach EXIT without dead ends!</div>
-      <canvas id="maze-canvas" width="380" height="260" style="border:2px solid var(--border);border-radius:8px;background:var(--panel2);cursor:pointer;touch-action:none;display:block;max-width:100%;"></canvas>
-      <div id="maze-status" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim);">Use arrow keys or tap adjacent cells</div>
+      <div class="mg-hint" id="maze-hint">Draw a route from START to EXIT. Crossing walls resets your trace.</div>
+      <canvas id="maze-canvas" width="380" height="260" style="border:2px solid var(--border);border-radius:8px;background:var(--panel2);cursor:crosshair;touch-action:none;display:block;max-width:100%;"></canvas>
+      <div id="maze-status" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim);">Drag to trace the cable path</div>
     </div>
 
     <!-- 9. ROBOT ASSEMBLY (drag to silhouette) -->
     <div class="minigame" id="mg-sil">
       <div class="mg-title">🦾 ROBOT BUILD</div>
-      <div class="mg-hint">Drag each part to its slot on the robot!</div>
+      <div class="mg-hint">Match each module code card to the same socket code.</div>
       <div id="sil-area">
         <div id="sil-robot"></div>
         <div id="sil-parts"></div>
       </div>
     </div>
 
-    <!-- 10. CODE DECRYPT -->
+    <!-- 10. CABLE UNCOILING -->
+    <div class="minigame" id="mg-uncoil">
+      <div class="mg-title">🧵 CABLE UNCOIL</div>
+      <div class="mg-hint">Trace along the cable from the loose end to the plug.</div>
+      <canvas id="uncoil-canvas" width="380" height="260"></canvas>
+      <div id="uncoil-status">Keep tracing to unspool...</div>
+    </div>
+
+    <!-- 11. CODE DECRYPT -->
     <div class="minigame" id="mg-decrypt">
       <div class="mg-title">💻 CODE DECRYPT</div>
       <div class="mg-hint">The RoboRIO passcode is scrambled. Enter the correct digits!</div>
@@ -462,7 +475,7 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 <div class="modal-bg" id="levelup-modal">
   <div class="modal-title" style="color:var(--citrus)" id="lu-title">WAVE COMPLETE!</div>
   <div class="modal-sub" id="lu-sub">Fine. Barely acceptable.</div>
-  <button class="btn" onclick="nextWave()">NEXT WAVE ▶</button>
+  <div class="btn-row"><button class="btn" id="continue-btn" onclick="nextWave()">NEXT WAVE ▶</button><button class="btn btn-red" id="bank-run-btn" onclick="gameOver(true)" style="display:none;">BANK IT & END RUN</button></div>
 </div>
 
 <!-- GAME OVER -->
@@ -485,8 +498,10 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 //  CORE STATE
 // ════════════════════════════════
 let G = {};
-const TOTAL_WAVES = 8;
-const TASKS_PER_WAVE = [5,5,6,6,7,7,8,8];
+const WAVE_BLOCK = 8;
+const TASKS_PER_WAVE_BASE = [5,5,6,6,7,7,8,8];
+const getTasksForWave = wave => TASKS_PER_WAVE_BASE[(wave-1)%WAVE_BLOCK] + Math.floor((wave-1)/WAVE_BLOCK);
+const getWaveGoal = wave => Math.ceil(wave/WAVE_BLOCK)*WAVE_BLOCK;
 
 const MIKE_LINES = {
   0:["I've seen faster turtles.","You call THAT tight?","We did this in 10 minutes last year.","Focus. FOCUS.","Team 254 is already done with this.","The deadline doesn't care about your feelings."],
@@ -576,9 +591,10 @@ function stopAll(){
 // ════════════════════════════════
 function updateHUD(){
   document.getElementById('score-val').textContent=G.score;
-  document.getElementById('wave-val').textContent=`${G.wave}/${TOTAL_WAVES}`;
-  document.getElementById('task-progress').textContent=`${G.task}/${TASKS_PER_WAVE[G.wave-1]}`;
-  document.getElementById('wave-prog-fill').style.width=(G.task/TASKS_PER_WAVE[G.wave-1]*100)+'%';
+  const waveGoal=getWaveGoal(G.wave), taskGoal=getTasksForWave(G.wave);
+  document.getElementById('wave-val').textContent=`${G.wave}/${waveGoal}`;
+  document.getElementById('task-progress').textContent=`${G.task}/${taskGoal}`;
+  document.getElementById('wave-prog-fill').style.width=(G.task/taskGoal*100)+'%';
   document.getElementById('lives-disp').textContent=['❤️','❤️','❤️'].map((v,i)=>i<G.lives?v:'🖤').join('');
   document.getElementById('patience-fill').style.width=G.patience+'%';
 }
@@ -643,17 +659,17 @@ function sayMike(line,cls){
 // ════════════════════════════════
 //  TASK MANAGER
 // ════════════════════════════════
-const MG_ALL=['bolt','wire','seq','gear','combo','balance','wack','maze','sil','decrypt'];
+const MG_ALL=['bolt','wire','seq','gear','combo','balance','wack','maze','sil','decrypt','uncoil'];
 function getPool(){
   if(G.wave<=1)return['bolt','seq','combo','balance'];
   if(G.wave<=2)return['bolt','seq','combo','balance','wire','gear'];
   if(G.wave<=3)return['bolt','seq','combo','wire','gear','maze','balance'];
   // wack only enters wave 4+, and appears once vs others appearing twice (less likely)
-  const base=['bolt','bolt','seq','seq','combo','wire','gear','maze','balance','sil','decrypt'];
+  const base=['bolt','bolt','seq','seq','combo','wire','gear','maze','balance','sil','decrypt','uncoil'];
   return G.wave>=4?[...base,'wack']:base;
 }
-const MG_ICONS={bolt:'🔩',wire:'🔌',seq:'🤖',gear:'⚙️',combo:'🔧',balance:'⚡',wack:'🔨',maze:'🧩',sil:'🦾',decrypt:'💻'};
-const MG_LABELS={bolt:'Tighten all bolts on the drivetrain!',wire:'Route power wires to the RoboRIO — avoid the live zaps!',seq:'Assemble parts in the correct order!',gear:'Sort components into the right bins!',combo:'Execute the quick-assembly sequence!',balance:'Calibrate the power distribution board!',wack:'Whack every loose screw before it disappears!',maze:'Navigate the cable maze from START to EXIT!',sil:'Drag parts onto the robot frame!',decrypt:'Crack the RoboRIO access code!'};
+const MG_ICONS={bolt:'🔩',wire:'🔌',seq:'🤖',gear:'⚙️',combo:'🔧',balance:'⚡',wack:'🔨',maze:'🧩',sil:'🦾',decrypt:'💻',uncoil:'🧵'};
+const MG_LABELS={bolt:'Tighten all bolts on the drivetrain!',wire:'Route power wires to the RoboRIO — avoid the live zaps!',seq:'Assemble parts in the correct order!',gear:'Sort components into the right bins!',combo:'Execute the quick-assembly sequence!',balance:'Calibrate the power distribution board!',wack:'Whack every loose screw before it disappears!',maze:'Drag a cable path through the maze from START to EXIT!',sil:'Match coded modules to the correct robot sockets!',decrypt:'Crack the RoboRIO access code!',uncoil:'Drag along the cable coil to unspool it cleanly!'};
 
 function startTask(){
   if(!G.running)return;
@@ -665,7 +681,7 @@ function startTask(){
   document.getElementById('mission-icon').textContent=MG_ICONS[mg];
   document.getElementById('mission-text').textContent=MG_LABELS[mg];
   updateHUD();
-  ({bolt:launchBolt,wire:launchWire,seq:launchSeq,gear:launchGear,combo:launchCombo,balance:launchBalance,wack:launchWack,maze:launchMaze,sil:launchSil,decrypt:launchDecrypt})[mg]();
+  ({bolt:launchBolt,wire:launchWire,seq:launchSeq,gear:launchGear,combo:launchCombo,balance:launchBalance,wack:launchWack,maze:launchMaze,sil:launchSil,decrypt:launchDecrypt,uncoil:launchUncoil})[mg]();
   document.getElementById('mg-'+mg).classList.add('active');
   startTimer();
 }
@@ -682,7 +698,7 @@ function taskDone(){
   if(G.combo>=2)showComboBanner(mult);
   if(Math.random()<.3)sayMike(rnd(GOOD_LINES));
   updateHUD(); updateMikeAnger();
-  if(G.task>=TASKS_PER_WAVE[G.wave-1])setTimeout(waveComplete,600);
+  if(G.task>=getTasksForWave(G.wave))setTimeout(waveComplete,600);
   else setTimeout(startTask,550);
 }
 function onTimeout(){
@@ -693,19 +709,25 @@ function onTimeout(){
   sayMike(rnd(MIKE_LINES[Math.min(3,G.angerLevel+1)]));
   updateHUD(); updateMikeAnger();
   if(G.lives<=0){setTimeout(gameOver,700);return;}
-  if(G.task>=TASKS_PER_WAVE[G.wave-1])setTimeout(waveComplete,700);
+  if(G.task>=getTasksForWave(G.wave))setTimeout(waveComplete,700);
   else setTimeout(startTask,700);
 }
 function penaltyTime(s){ G.timerVal=Math.max(1,G.timerVal-s); spawnPop('-'+s+'s','var(--red)'); sayMike(rnd(MIKE_LINES[G.angerLevel])); }
 function waveComplete(){
   stopAll();
   document.getElementById('lu-title').textContent=`WAVE ${G.wave} COMPLETE!`;
-  document.getElementById('lu-sub').textContent=WAVE_LINES[Math.min(G.wave-1,WAVE_LINES.length-1)];
+  const atCheckpoint=G.wave%WAVE_BLOCK===0;
+  document.getElementById('lu-sub').textContent=atCheckpoint
+    ?`Checkpoint hit. Continue to wave ${getWaveGoal(G.wave+1)} for harder tasks?`
+    :WAVE_LINES[(G.wave-1)%WAVE_LINES.length];
+  document.getElementById('continue-btn').textContent=atCheckpoint
+    ?`CONTINUE TO ${getWaveGoal(G.wave+1)} ▶`
+    :'NEXT WAVE ▶';
+  document.getElementById('bank-run-btn').style.display=atCheckpoint?'inline-block':'none';
   document.getElementById('levelup-modal').classList.add('open');
 }
 function nextWave(){
   document.getElementById('levelup-modal').classList.remove('open');
-  if(G.wave>=TOTAL_WAVES){gameOver(true);return;}
   G.wave++; G.task=0; G.patience=Math.min(100,G.patience+15); G.running=true;
   updateHUD(); applyMikeFace(); startTask(); scheduleMike();
 }
@@ -790,7 +812,7 @@ function wireZap(){
   updateHUD(); updateMikeAnger();
   if(G.lives<=0){G.mgDone=true;clearInterval(G.timerIv);setTimeout(gameOver,700);}
 }
-function wireHits(){ for(const p of wireSt.path)for(const o of wireSt.obs)if(p.x>o.x&&p.x<o.x+o.w&&p.y>o.y&&p.y<o.y+o.h)return true;return false; }
+function wireHits(){ const cv=document.getElementById('wire-canvas'); for(const p of wireSt.path){ if(p.x<=3||p.y<=3||p.x>=cv.width-3||p.y>=cv.height-3)return true; for(const o of wireSt.obs)if(p.x>o.x&&p.x<o.x+o.w&&p.y>o.y&&p.y<o.y+o.h)return true;} return false; }
 function drawWire(win){
   const cv=document.getElementById('wire-canvas'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
   ctx.clearRect(0,0,W,H);ctx.strokeStyle='#1a1a2e';ctx.lineWidth=1;
@@ -1066,147 +1088,72 @@ function generateMaze(cols,rows){
   visit(0,0);return cells;
 }
 function launchMaze(){
-  const cols=Math.min(11,6+Math.floor(G.wave*.7));
-  const rows=Math.min(8,5+Math.floor(G.wave*.4));
+  const cols=Math.min(12,6+Math.floor(G.wave*.9));
+  const rows=Math.min(9,5+Math.floor(G.wave*.55));
   const cells=generateMaze(cols,rows);
-  mazeSt={cols,rows,cells,pr:0,pc:0,done:false};
+  mazeSt={cols,rows,cells,path:[[0,0]],done:false,drawing:false};
   const cv=document.getElementById('maze-canvas');
-  // Scale canvas to container
-  const maxW=Math.min(380,window.innerWidth-40);
-  cv.width=maxW; cv.height=Math.round(maxW*(rows/cols)*0.85);
+  const maxW=Math.min(420,window.innerWidth-36);
+  cv.width=maxW; cv.height=Math.round(maxW*(rows/cols)*0.9);
   drawMaze();
-  cv.onclick=e=>mazeClick(e,cv);
-  cv.ontouchend=e=>{e.preventDefault();if(e.changedTouches[0])mazeClick(e.changedTouches[0],cv);};
-  document.onkeydown=e=>{
-    if(G.currentMG!=='maze'||G.mgDone)return;
-    const m={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]};
-    if(m[e.key]){e.preventDefault();const[dr,dc]=m[e.key];mazeMove(dr,dc);}
-  };
-  document.getElementById('maze-status').textContent='Arrow keys or tap adjacent cells — reach EXIT!';
+  cv.onmousedown=cv.ontouchstart=e=>mazeStart(e,cv);
+  cv.onmousemove=cv.ontouchmove=e=>mazeDrag(e,cv);
+  cv.onmouseup=cv.ontouchend=()=>mazeSt.drawing=false;
+  document.getElementById('maze-status').textContent='Drag a cable from START to EXIT';
 }
+function mazeCellAt(e,cv){ const r=cv.getBoundingClientRect(),s=e.touches?e.touches[0]:e;const x=s.clientX-r.left,y=s.clientY-r.top;return{x,y,c:Math.max(0,Math.min(mazeSt.cols-1,Math.floor(x/(cv.width/mazeSt.cols)))),r:Math.max(0,Math.min(mazeSt.rows-1,Math.floor(y/(cv.height/mazeSt.rows))))}; }
+function mazeStart(e,cv){ if(G.mgDone||mazeSt.done)return;const at=mazeCellAt(e,cv); if(at.r===0&&at.c===0){mazeSt.path=[[0,0]];mazeSt.drawing=true;drawMaze();} e.preventDefault(); }
+function mazeDrag(e,cv){ if(!mazeSt.drawing||G.mgDone||mazeSt.done)return; const at=mazeCellAt(e,cv); const last=mazeSt.path[mazeSt.path.length-1]; const dr=at.r-last[0],dc=at.c-last[1]; if(dr===0&&dc===0){e.preventDefault();return;} if(Math.abs(dr)+Math.abs(dc)!==1){e.preventDefault();return;} const prev=mazeSt.path[mazeSt.path.length-2]; if(prev&&prev[0]===at.r&&prev[1]===at.c){mazeSt.path.pop();drawMaze();e.preventDefault();return;} const wall=dr===-1?'top':dr===1?'bottom':dc===-1?'left':'right'; if(mazeSt.cells[last[0]][last[1]][wall]){mazeSt.path=[[0,0]];mazeSt.drawing=false;flashScreen('r');penaltyTime(1.5);drawMaze();e.preventDefault();return;} mazeSt.path.push([at.r,at.c]); drawMaze(); if(at.r===mazeSt.rows-1&&at.c===mazeSt.cols-1){mazeSt.done=true;mazeSt.drawing=false;taskDone();} e.preventDefault(); }
 function drawMaze(){
   const cv=document.getElementById('maze-canvas');
   const ctx=cv.getContext('2d');
   const W=cv.width,H=cv.height;
-  const{cols,rows,cells,pr,pc}=mazeSt;
+  const{cols,rows,cells,path}=mazeSt;
   const cw=W/cols,ch=H/rows;
   ctx.clearRect(0,0,W,H);
-  // Background
   ctx.fillStyle='#0f0f18';ctx.fillRect(0,0,W,H);
-  // Solve path hint: BFS to highlight solution path faintly
-  const solPath=mazeSolve(cols,rows,cells);
-  for(let r=0;r<rows;r++){
-    for(let c=0;c<cols;c++){
-      const x=c*cw,y=r*ch;
-      const onPath=solPath&&solPath.some(([sr,sc])=>sr===r&&sc===c);
-      // Cell fill
-      if(r===pr&&c===pc) ctx.fillStyle='#c8e600';
-      else if(r===rows-1&&c===cols-1) ctx.fillStyle='rgba(0,255,102,0.25)';
-      else if(onPath) ctx.fillStyle='rgba(200,230,0,0.06)';
-      else ctx.fillStyle='#13131e';
-      ctx.fillRect(x+1,y+1,cw-2,ch-2);
-      // Walls
-      ctx.strokeStyle='#3a3a55';ctx.lineWidth=2;
-      const cell=cells[r][c];
-      if(cell.top){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+cw,y);ctx.stroke();}
-      if(cell.right){ctx.beginPath();ctx.moveTo(x+cw,y);ctx.lineTo(x+cw,y+ch);ctx.stroke();}
-      if(cell.bottom){ctx.beginPath();ctx.moveTo(x,y+ch);ctx.lineTo(x+cw,y+ch);ctx.stroke();}
-      if(cell.left){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+ch);ctx.stroke();}
-    }
-  }
-  // Draw outer border
-  ctx.strokeStyle='#55557a';ctx.lineWidth=3;ctx.strokeRect(1,1,W-2,H-2);
-  // Labels
-  const fs=Math.max(7,Math.min(cw,ch)*0.38);
-  ctx.font=`bold ${fs}px Share Tech Mono`;ctx.textAlign='center';ctx.textBaseline='middle';
-  // Start label
-  if(!(pr===0&&pc===0)){ctx.fillStyle='#00d4ff';ctx.fillText('S',0.5*cw,0.5*ch);}
-  // Exit label
-  ctx.fillStyle='#00ff66';ctx.fillText('EXIT',(cols-0.5)*cw,(rows-0.5)*ch);
-  // Player dot
-  if(!(pr===rows-1&&pc===cols-1)){
-    ctx.fillStyle='#c8e600';
-    ctx.beginPath();ctx.arc((pc+0.5)*cw,(pr+0.5)*ch,Math.min(cw,ch)*0.28,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#0f0f18';ctx.font=`bold ${fs*0.7}px Share Tech Mono`;
-    ctx.fillText('YOU',(pc+0.5)*cw,(pr+0.5)*ch);
-  }
-}
-function mazeSolve(cols,rows,cells){
-  // BFS from (0,0) to (rows-1,cols-1)
-  const prev=Array.from({length:rows},()=>Array(cols).fill(null));
-  const visited=Array.from({length:rows},()=>Array(cols).fill(false));
-  const queue=[[0,0]];visited[0][0]=true;
-  const dirs=[[-1,0,'top'],[1,0,'bottom'],[0,-1,'left'],[0,1,'right']];
-  while(queue.length){
-    const[r,c]=queue.shift();
-    if(r===rows-1&&c===cols-1){
-      const path=[];let cur=[r,c];
-      while(cur){path.push(cur);cur=prev[cur[0]][cur[1]];}
-      return path;
-    }
-    for(const[dr,dc,wall]of dirs){
-      const nr=r+dr,nc=c+dc;
-      if(nr>=0&&nr<rows&&nc>=0&&nc<cols&&!visited[nr][nc]&&!cells[r][c][wall]){
-        visited[nr][nc]=true;prev[nr][nc]=[r,c];queue.push([nr,nc]);
-      }
-    }
-  }
-  return null;
-}
-function mazeClick(e,cv){
-  if(G.mgDone||mazeSt.done)return;
-  const rect=cv.getBoundingClientRect();
-  const x=(e.clientX||e.pageX)-rect.left,y=(e.clientY||e.pageY)-rect.top;
-  const cw=cv.width/mazeSt.cols,ch=cv.height/mazeSt.rows;
-  const clickC=Math.floor(x/cw),clickR=Math.floor(y/ch);
-  const dr=clickR-mazeSt.pr,dc=clickC-mazeSt.pc;
-  if(Math.abs(dr)+Math.abs(dc)===1)mazeMove(dr,dc);
-}
-function mazeMove(dr,dc){
-  const{pr,pc,cells,rows,cols}=mazeSt;
-  const nr=pr+dr,nc=pc+dc;
-  if(nr<0||nr>=rows||nc<0||nc>=cols)return;
-  const wallMap=[[-1,0,'top'],[1,0,'bottom'],[0,-1,'left'],[0,1,'right']];
-  const entry=wallMap.find(([r,c])=>r===dr&&c===dc);
-  if(!entry||cells[pr][pc][entry[2]]){flashScreen('r');penaltyTime(1);return;}
-  mazeSt.pr=nr;mazeSt.pc=nc;
-  drawMaze();
-  if(nr===rows-1&&nc===cols-1){mazeSt.done=true;document.onkeydown=null;taskDone();}
+  ctx.fillStyle='rgba(0,255,102,0.15)';ctx.fillRect(0,0,cw,ch);
+  ctx.fillStyle='rgba(0,255,102,0.2)';ctx.fillRect((cols-1)*cw,(rows-1)*ch,cw,ch);
+  if(path.length>1){ctx.beginPath();ctx.moveTo((path[0][1]+0.5)*cw,(path[0][0]+0.5)*ch);path.forEach(([r,c])=>ctx.lineTo((c+0.5)*cw,(r+0.5)*ch));ctx.strokeStyle='#c8e600';ctx.lineWidth=Math.max(4,Math.min(cw,ch)*0.28);ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();}
+  ctx.strokeStyle='#3a3a52';ctx.lineWidth=2;
+  for(let r=0;r<rows;r++){for(let c=0;c<cols;c++){const x=c*cw,y=r*ch,cell=cells[r][c];if(cell.top){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+cw,y);ctx.stroke();}if(cell.left){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+ch);ctx.stroke();}if(r===rows-1&&cell.bottom){ctx.beginPath();ctx.moveTo(x,y+ch);ctx.lineTo(x+cw,y+ch);ctx.stroke();}if(c===cols-1&&cell.right){ctx.beginPath();ctx.moveTo(x+cw,y);ctx.lineTo(x+cw,y+ch);ctx.stroke();}}}
+  ctx.fillStyle='#00ff66';ctx.font=`bold ${Math.max(10,Math.min(cw,ch)*0.32)}px Share Tech Mono`;ctx.fillText('START',6,Math.min(ch*0.6,20));
+  ctx.fillText('EXIT',W-Math.max(34,cw*0.9),H-6);
 }
 
 // ════════════════════════════════
-//  9. ROBOT SILHOUETTE BUILD
+//  9. ROBOT ASSEMBLY SOCKET MATCH
 // ════════════════════════════════
-// Drag robot parts onto labeled slots on the robot outline.
 const SIL_PARTS=[
-  {id:'arm',  label:'ARM',    emoji:'🦾', top:'10%', left:'60%', w:'30%', h:'25%'},
-  {id:'wheel',label:'WHEEL',  emoji:'⚙️', top:'70%', left:'10%', w:'25%', h:'22%'},
-  {id:'cam',  label:'CAMERA', emoji:'📷', top:'5%',  left:'15%', w:'30%', h:'20%'},
-  {id:'cpu',  label:'CPU',    emoji:'🖥️', top:'40%', left:'30%', w:'35%', h:'25%'},
-  {id:'bat',  label:'BATTERY',emoji:'🔋', top:'70%', left:'60%', w:'28%', h:'20%'},
+  {id:'arm',  code:'M1', label:'ARM ACTUATOR', emoji:'🦾', top:'12%', left:'58%', w:'34%', h:'22%'},
+  {id:'drive',code:'M2', label:'DRIVE HUB', emoji:'⚙️', top:'70%', left:'8%', w:'30%', h:'20%'},
+  {id:'vision',code:'M3',label:'VISION UNIT', emoji:'📷', top:'6%',  left:'10%', w:'34%', h:'18%'},
+  {id:'cpu',  code:'M4', label:'CONTROL CORE', emoji:'🖥️', top:'40%', left:'30%', w:'38%', h:'24%'},
+  {id:'bat',  code:'M5', label:'POWER PACK', emoji:'🔋', top:'72%', left:'58%', w:'32%', h:'20%'},
+  {id:'radio',code:'M6', label:'RADIO LINK', emoji:'📡', top:'24%', left:'14%', w:'30%', h:'18%'},
 ];
 let silSt={};
 function launchSil(){
-  const count=Math.min(5,2+Math.floor(G.wave/2));
+  const count=Math.min(6,3+Math.floor(G.wave/2));
   const parts=SIL_PARTS.slice(0,count);
   silSt={parts,filled:{},done:false,drag:null};
 
-  // Build robot outline
   const robot=document.getElementById('sil-robot');robot.innerHTML='';
   robot.style.background='var(--panel2)';robot.style.border='2px solid var(--border)';robot.style.borderRadius='10px';
   parts.forEach(p=>{
     const slot=document.createElement('div');slot.className='sil-part drop-target';
     slot.style.cssText=`top:${p.top};left:${p.left};width:${p.w};height:${p.h};`;
-    slot.dataset.partId=p.id;slot.textContent=p.label;slot.style.fontSize='9px';slot.style.color='var(--dim)';slot.style.fontFamily='Share Tech Mono,monospace';
+    slot.dataset.partId=p.id;
+    slot.innerHTML=`<div style="text-align:center;line-height:1.15"><div style="font-size:11px;color:var(--citrus);font-weight:700">${p.code}</div><div style="font-size:8px;color:var(--dim)">${p.label}</div></div>`;
     slot.addEventListener('dragover',e=>e.preventDefault());
     slot.addEventListener('drop',e=>{e.preventDefault();silDrop(p.id);});
     robot.appendChild(slot);
   });
 
-  // Draggable parts on the right
   const src=document.getElementById('sil-parts');src.innerHTML='';
   shuffle([...parts]).forEach(p=>{
-    const d=document.createElement('div');d.className='sil-drag';d.textContent=p.emoji;d.dataset.partId=p.id;d.draggable=true;d.id='sil-drag-'+p.id;d.title=p.label;
+    const d=document.createElement('div');d.className='sil-drag';d.dataset.partId=p.id;d.draggable=true;d.id='sil-drag-'+p.id;
+    d.innerHTML=`<span style="font-size:22px">${p.emoji}</span><span style="font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:1px">${p.code} • ${p.label}</span>`;
     d.ondragstart=()=>{silSt.drag=p.id;d.classList.add('dragging');};
     d.ondragend=()=>d.classList.remove('dragging');
     src.appendChild(d);
@@ -1222,8 +1169,8 @@ function silDrop(slotId){
   const slot=document.querySelector(`.sil-part[data-part-id="${slotId}"]`);
   const dragEl=document.getElementById('sil-drag-'+dragId);
   if(dragId===slotId){
-    slot.textContent=SIL_PARTS.find(p=>p.id===slotId).emoji;
-    slot.style.fontSize='';slot.style.color='';slot.style.fontFamily='';
+    const part=SIL_PARTS.find(p=>p.id===slotId);
+    slot.innerHTML=`<div style="font-size:20px">${part.emoji}</div>`;
     slot.classList.remove('drop-target');slot.classList.add('filled');
     if(dragEl)dragEl.remove();
     silSt.filled[slotId]=true;
@@ -1232,6 +1179,49 @@ function silDrop(slotId){
     slot.classList.add('wrong-drop');setTimeout(()=>slot.classList.remove('wrong-drop'),400);
     penaltyTime(2.5);flashScreen('r');
   }
+}
+
+// ════════════════════════════════
+//  10. CABLE UNCOIL
+// ════════════════════════════════
+let uncoilSt={};
+function launchUncoil(){
+  const cv=document.getElementById('uncoil-canvas');
+  const maxW=Math.min(420,window.innerWidth-36);
+  cv.width=maxW; cv.height=Math.round(maxW*0.68);
+  const W=cv.width,H=cv.height;
+  const turns=3.2+G.wave*0.18, pts=[];
+  const cx=W*0.48, cy=H*0.5;
+  const maxR=Math.min(W,H)*0.43;
+  const samples=Math.floor(220+G.wave*22);
+  for(let i=0;i<=samples;i++){
+    const t=i/samples;
+    const ang=t*Math.PI*2*turns;
+    const r=maxR*(1-t*0.88);
+    pts.push({x:cx+Math.cos(ang)*r,y:cy+Math.sin(ang)*r});
+  }
+  uncoilSt={pts,progress:0,drawing:false,done:false,tol:Math.max(12,20-G.wave*0.6)};
+  drawUncoil();
+  cv.onmousedown=cv.ontouchstart=e=>uncoilStart(e,cv);
+  cv.onmousemove=cv.ontouchmove=e=>uncoilMove(e,cv);
+  cv.onmouseup=cv.ontouchend=()=>uncoilSt.drawing=false;
+  document.getElementById('uncoil-status').textContent='Trace the whole cable to the plug.';
+}
+function uncoilPos(e,cv){const r=cv.getBoundingClientRect(),s=e.touches?e.touches[0]:e;return{x:s.clientX-r.left,y:s.clientY-r.top};}
+function uncoilStart(e,cv){ if(G.mgDone||uncoilSt.done)return; const p=uncoilPos(e,cv),a=uncoilSt.pts[Math.max(0,uncoilSt.progress-2)]; if(Math.hypot(p.x-a.x,p.y-a.y)<=uncoilSt.tol+6)uncoilSt.drawing=true; e.preventDefault();}
+function uncoilMove(e,cv){ if(!uncoilSt.drawing||G.mgDone||uncoilSt.done)return; const p=uncoilPos(e,cv); const start=Math.max(0,uncoilSt.progress-5), end=Math.min(uncoilSt.pts.length-1,uncoilSt.progress+14); let best=-1,dist=1e9; for(let i=start;i<=end;i++){const q=uncoilSt.pts[i];const d=Math.hypot(p.x-q.x,p.y-q.y); if(d<dist){dist=d;best=i;}} if(dist>uncoilSt.tol){uncoilSt.drawing=false;penaltyTime(1.5);flashScreen('r');document.getElementById('uncoil-status').textContent='Cable slipped! Re-grab and keep tracing.';e.preventDefault();return;} if(best>uncoilSt.progress)uncoilSt.progress=best; drawUncoil(); if(uncoilSt.progress>=uncoilSt.pts.length-1){uncoilSt.done=true;taskDone();} e.preventDefault();}
+function drawUncoil(){
+  const cv=document.getElementById('uncoil-canvas'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0f0f18';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#2a3244';ctx.lineWidth=6;ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.beginPath();ctx.moveTo(uncoilSt.pts[0].x,uncoilSt.pts[0].y);uncoilSt.pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.stroke();
+  ctx.strokeStyle='#c8e600';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(uncoilSt.pts[0].x,uncoilSt.pts[0].y);for(let i=1;i<=uncoilSt.progress;i++)ctx.lineTo(uncoilSt.pts[i].x,uncoilSt.pts[i].y);ctx.stroke();
+  const head=uncoilSt.pts[Math.max(0,uncoilSt.progress-1)],tail=uncoilSt.pts[uncoilSt.pts.length-1];
+  ctx.fillStyle='#00ff66';ctx.beginPath();ctx.arc(head.x,head.y,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff7700';ctx.beginPath();ctx.arc(tail.x,tail.y,8,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff7700';ctx.font='bold 10px Share Tech Mono';ctx.fillText('PLUG',tail.x+10,tail.y+4);
+  const pct=Math.round(uncoilSt.progress/(uncoilSt.pts.length-1)*100);
+  document.getElementById('uncoil-status').textContent=`Uncoiled ${pct}%`;
 }
 
 // ════════════════════════════════
