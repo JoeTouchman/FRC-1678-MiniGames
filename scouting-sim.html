@@ -574,14 +574,23 @@ function removeGreenChroma(img) {
   return oc;
 }
 
-// Loads all character images and returns a name→canvas map
+// Loads all character images and returns a name→image map
 function loadCharImages() {
   const map = {};
   const promises = Object.entries(CHAR_IMAGE_FILES).map(([name, file]) =>
     new Promise(resolve => {
       const img = new Image();
-      img.onload  = () => { map[name] = removeGreenChroma(img); resolve(); };
-      img.onerror = () => resolve(); // fallback: no sprite
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          map[name] = removeGreenChroma(img);
+        } catch {
+          // If pixel access is blocked on this device/browser, still use the raw image.
+          map[name] = img;
+        }
+        resolve();
+      };
+      img.onerror = () => resolve();
       img.src = `characters/${file}`;
     })
   );
@@ -947,18 +956,10 @@ class Character {
     ctx.fill();
     ctx.restore();
 
-    // Sprite or fallback circle
+    // Always render character images (no colored circle fallback)
     if (image) {
       const s = 52;
       ctx.drawImage(image, x - s / 2, y - s / 2, s, s);
-    } else {
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(x, y, 20, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
     }
 
     // Work progress bar
@@ -1562,13 +1563,17 @@ canvas.height = RH;
 let sim         = new Simulation();
 let lastTime    = null;
 let imagesReady = false;
+let imageMapCache = {};
 
 // Assign images to character objects once loaded
 loadCharImages().then(imageMap => {
+  imageMapCache = imageMap;
   for (const c of sim.characters) {
     if (imageMap[c.name]) c.image = imageMap[c.name];
   }
-  imagesReady = true;
+  imagesReady = Object.keys(CHAR_IMAGE_FILES).every(name => !!imageMap[name]);
+
+  if (!imagesReady) console.warn('Some character images failed to load.');
 });
 
 // Main loop
@@ -1643,9 +1648,14 @@ document.querySelectorAll('.spawn-btn').forEach(btn => {
     if (c.active) {
       sim.despawn(name);
     } else {
+      if (!imagesReady || !imageMapCache[name]) {
+        overlay.style.display = '';
+        overlay.querySelector('.big').textContent = 'SPRITES LOADING';
+        overlay.querySelector('.small').textContent = 'Please wait for character images before spawning.';
+        return;
+      }
+      c.image = imageMapCache[name];
       sim.spawn(name);
-      // Re-assign image in case images loaded after sim init
-      loadCharImages().then(map => { if (map[name]) c.image = map[name]; });
     }
   });
 });
