@@ -580,7 +580,6 @@ function loadCharImages() {
   const promises = Object.entries(CHAR_IMAGE_FILES).map(([name, file]) =>
     new Promise(resolve => {
       const img = new Image();
-      img.crossOrigin = 'anonymous';
       img.onload = () => {
         try {
           map[name] = removeGreenChroma(img);
@@ -590,11 +589,45 @@ function loadCharImages() {
         }
         resolve();
       };
-      img.onerror = () => resolve();
-      img.src = `characters/${file}`;
+      img.onerror = () => {
+        // Keep sim usable even when an asset is unavailable on a device/network.
+        map[name] = null;
+        resolve();
+      };
+      img.src = new URL(`characters/${file}`, window.location.href).href;
     })
   );
   return Promise.all(promises).then(() => map);
+}
+
+function createFallbackSprite(name, color) {
+  const size = 64;
+  const c = document.createElement('canvas');
+  c.width = size;
+  c.height = size;
+  const cctx = c.getContext('2d');
+
+  // Halo
+  const grad = cctx.createRadialGradient(size / 2, size / 2, 8, size / 2, size / 2, size / 2);
+  grad.addColorStop(0, 'rgba(255,255,255,0.26)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  cctx.fillStyle = grad;
+  cctx.fillRect(0, 0, size, size);
+
+  // Body
+  cctx.fillStyle = color;
+  cctx.beginPath();
+  cctx.arc(size / 2, size / 2, 20, 0, Math.PI * 2);
+  cctx.fill();
+
+  // Initial
+  cctx.fillStyle = '#111';
+  cctx.font = 'bold 24px Rajdhani, sans-serif';
+  cctx.textAlign = 'center';
+  cctx.textBaseline = 'middle';
+  cctx.fillText(name.charAt(0).toUpperCase(), size / 2, size / 2 + 1);
+
+  return c;
 }
 
 // ─────────────────────────────────────────────
@@ -1569,11 +1602,14 @@ let imageMapCache = {};
 loadCharImages().then(imageMap => {
   imageMapCache = imageMap;
   for (const c of sim.characters) {
-    if (imageMap[c.name]) c.image = imageMap[c.name];
+    c.image = imageMap[c.name] || createFallbackSprite(c.name, c.color);
   }
-  imagesReady = Object.keys(CHAR_IMAGE_FILES).every(name => !!imageMap[name]);
+  imagesReady = true;
 
-  if (!imagesReady) console.warn('Some character images failed to load.');
+  const failedSprites = Object.keys(CHAR_IMAGE_FILES).filter(name => !imageMap[name]);
+  if (failedSprites.length) {
+    console.warn(`Falling back to generated sprites: ${failedSprites.join(', ')}`);
+  }
 });
 
 // Main loop
@@ -1648,13 +1684,13 @@ document.querySelectorAll('.spawn-btn').forEach(btn => {
     if (c.active) {
       sim.despawn(name);
     } else {
-      if (!imagesReady || !imageMapCache[name]) {
+      if (!imagesReady) {
         overlay.style.display = '';
         overlay.querySelector('.big').textContent = 'SPRITES LOADING';
         overlay.querySelector('.small').textContent = 'Please wait for character images before spawning.';
         return;
       }
-      c.image = imageMapCache[name];
+      c.image = imageMapCache[name] || createFallbackSprite(c.name, c.color);
       sim.spawn(name);
     }
   });
