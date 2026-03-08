@@ -439,17 +439,17 @@ body {
             <div class="spawn-role">Restorer</div>
           </div>
         </button>
-        <button class="spawn-btn" data-char="Alton">
+        <button class="spawn-btn" data-char="Altin">
           <div class="spawn-dot" style="background:#00FFCC"></div>
           <div>
-            <div class="spawn-name">Alton</div>
+            <div class="spawn-name">Altin</div>
             <div class="spawn-role">Chill Presence</div>
           </div>
         </button>
-        <button class="spawn-btn" data-char="Jay">
+        <button class="spawn-btn" data-char="Jai">
           <div class="spawn-dot" style="background:#FFD700"></div>
           <div>
-            <div class="spawn-name">Jay</div>
+            <div class="spawn-name">Jai</div>
             <div class="spawn-role">Coordinator</div>
           </div>
         </button>
@@ -511,19 +511,19 @@ const CHAR_COLORS = {
   Joe:    '#FF6B00',
   Charlie:'#FF3366',
   Kurt:   '#4488FF',
-  Alton:  '#00FFCC',
-  Jay:    '#FFD700',
+  Altin:  '#00FFCC',
+  Jai:    '#FFD700',
   Liam:   '#CC88FF',
   Andy:   '#FF8C42',
 };
 
-// Image file names differ from display names in two cases
+// Character image file map
 const CHAR_IMAGE_FILES = {
   Joe:    'Joe.png',
   Charlie:'Charlie.png',
   Kurt:   'Kurt.png',
-  Alton:  'Altin.png', // file is Altin.png
-  Jay:    'Jai.png',   // file is Jai.png
+  Altin:  'Altin.png', // file is Altin.png
+  Jai:    'Jai.png',   // file is Jai.png
   Liam:   'Liam.png',
   Andy:   'Andy.png',
 };
@@ -574,14 +574,23 @@ function removeGreenChroma(img) {
   return oc;
 }
 
-// Loads all character images and returns a name→canvas map
+// Loads all character images and returns a name→image map
 function loadCharImages() {
   const map = {};
   const promises = Object.entries(CHAR_IMAGE_FILES).map(([name, file]) =>
     new Promise(resolve => {
       const img = new Image();
-      img.onload  = () => { map[name] = removeGreenChroma(img); resolve(); };
-      img.onerror = () => resolve(); // fallback: no sprite
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          map[name] = removeGreenChroma(img);
+        } catch {
+          // If pixel access is blocked on this device/browser, still use the raw image.
+          map[name] = img;
+        }
+        resolve();
+      };
+      img.onerror = () => resolve();
       img.src = `characters/${file}`;
     })
   );
@@ -740,10 +749,15 @@ class Character {
 
     // Buff flags (set by other characters' passive effects)
     this.andyBoost  = 0; // seconds remaining of Andy speed bonus
-    this.altonCalm  = 0; // set by Alton each frame (reduces idle jitter)
+    this.altinCalm  = 0; // set by Altin each frame (reduces idle jitter)
 
     // Per-character timers for passive events
     this._passiveTimer = rand(5, 15);
+
+    // Fight state
+    this.health = 100;
+    this.fightCooldown = rand(0.6, 1.8);
+    this.hitFlash = 0;
   }
 
   // ── Update ──────────────────────────────────
@@ -756,7 +770,9 @@ class Character {
     // Work rate modified by Andy's leadership boost
     const workRate = this.andyBoost > 0 ? 1.6 : 1.0;
     if (this.andyBoost  > 0) this.andyBoost  -= dt;
-    if (this.altonCalm  > 0) this.altonCalm  -= dt;
+    if (this.altinCalm  > 0) this.altinCalm  -= dt;
+    if (this.fightCooldown > 0) this.fightCooldown -= dt;
+    if (this.hitFlash > 0) this.hitFlash -= dt;
 
     switch (this.state) {
       case CS.IDLE:
@@ -767,7 +783,7 @@ class Character {
 
       case CS.WANDER:
       case CS.MOVING:
-        this._steer(dt);
+        this._steer(dt, sim);
         break;
 
       case CS.WORKING:
@@ -783,6 +799,9 @@ class Character {
 
     // Soft obstacle push from table rects
     this._pushFromTables(sim.tables);
+
+    // Close-quarters scout room brawls
+    this._battleNearby(sim, dt);
 
     // Integrate
     this.x += this.vx * dt;
@@ -811,7 +830,7 @@ class Character {
     this.statusText = 'Wandering...';
   }
 
-  _steer(dt) {
+  _steer(dt, sim) {
     if (!this.target) { this._goIdle(rand(0.4, 1.2)); return; }
     const dx = this.target.x - this.x;
     const dy = this.target.y - this.y;
@@ -864,6 +883,40 @@ class Character {
     }
   }
 
+  _battleNearby(sim, dt) {
+    if (this.fightCooldown > 0 || this.health <= 0) return;
+    const foes = sim.characters.filter(c => c.active && c !== this && c.health > 0 && dist(this, c) < 48);
+    if (foes.length === 0) return;
+
+    const foe = pick(foes);
+    const damage = rand(4, 12);
+    foe.health = clamp(foe.health - damage, 0, 100);
+    foe.hitFlash = 0.35;
+    foe.statusText = pick(['Taking hits!', 'Defending!', 'Countering!']);
+    this.statusText = pick(['Throwing hands!', 'Scout showdown!', 'Battle mode!']);
+
+    // Knockback
+    const dx = foe.x - this.x;
+    const dy = foe.y - this.y;
+    const d  = Math.max(1, Math.hypot(dx, dy));
+    foe.vx += (dx / d) * 95;
+    foe.vy += (dy / d) * 95;
+
+    this.fightCooldown = rand(0.7, 1.6);
+
+    if (Math.random() < 0.35) {
+      sim.addEvent(`${this.name} landed a hit on ${foe.name} (-${Math.round(damage)} HP)`);
+    }
+
+    if (foe.health <= 0) {
+      foe.health = 35;
+      foe.state = CS.IDLE;
+      foe.idleTimer = rand(1.2, 2.6);
+      foe.statusText = 'Respawning...';
+      sim.addEvent(`${foe.name} got KO'd by ${this.name} and jumped back in!`);
+    }
+  }
+
   _pushFromTables(tables) {
     for (const t of tables) {
       // Closest point on table rect
@@ -903,18 +956,10 @@ class Character {
     ctx.fill();
     ctx.restore();
 
-    // Sprite or fallback circle
+    // Always render character images (no colored circle fallback)
     if (image) {
       const s = 52;
       ctx.drawImage(image, x - s / 2, y - s / 2, s, s);
-    } else {
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(x, y, 20, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
     }
 
     // Work progress bar
@@ -927,8 +972,8 @@ class Character {
       ctx.fillRect(bx, by, bw * workProgress, bh);
     }
 
-    // Alton calm ring
-    if (this.name === 'Alton' && state === CS.IDLE) {
+    // Altin calm ring
+    if (this.name === 'Altin' && state === CS.IDLE) {
       const t = Date.now() / 1000;
       ctx.save();
       ctx.globalAlpha = 0.12 + 0.05 * Math.sin(t * 1.5);
@@ -954,6 +999,26 @@ class Character {
       ctx.setLineDash([]);
       ctx.restore();
     }
+
+    // Hit flash
+    if (this.hitFlash > 0) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(this.hitFlash * 2.2, 0.7);
+      ctx.strokeStyle = '#ff3c3c';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x, y, 28, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Health bar for battle mode
+    const hpW = 46;
+    const hpRatio = clamp(this.health / 100, 0, 1);
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(x - hpW / 2, y + 32, hpW, 4);
+    ctx.fillStyle = hpRatio > 0.55 ? '#00ff99' : hpRatio > 0.25 ? '#ffd447' : '#ff5757';
+    ctx.fillRect(x - hpW / 2, y + 32, hpW * hpRatio, 4);
 
     // Status text
     ctx.save();
@@ -1080,8 +1145,8 @@ const BEHAVIORS = {
     },
   },
 
-  // ── Alton: Chill Presence ───────────────────
-  Alton: {
+  // ── Altin: Chill Presence ───────────────────
+  Altin: {
     workDuration: 2.0,
     selectTarget(char, sim) {
       // Drift toward groups or stay near tables
@@ -1098,7 +1163,7 @@ const BEHAVIORS = {
       // Calm aura: passively reduce nearby characters' idle randomness
       for (const c of sim.characters) {
         if (c === char || !c.active) continue;
-        if (dist(char, c) < 110) c.altonCalm = Math.min(c.altonCalm + dt, 0.5);
+        if (dist(char, c) < 110) c.altinCalm = Math.min(c.altinCalm + dt, 0.5);
       }
       // Passive event
       char._passiveTimer -= dt;
@@ -1106,17 +1171,17 @@ const BEHAVIORS = {
         char._passiveTimer = rand(18, 30);
         if (sim.running) {
           sim.addEvent(pick([
-            `Alton's chill energy spread through the room`,
-            `Everyone near Alton felt weirdly productive`,
-            `Alton somehow made chaos 15% less chaotic just by existing`,
+            `Altin's chill energy spread through the room`,
+            `Everyone near Altin felt weirdly productive`,
+            `Altin somehow made chaos 15% less chaotic just by existing`,
           ]));
         }
       }
     },
   },
 
-  // ── Jay: Active Coordinator ─────────────────
-  Jay: {
+  // ── Jai: Active Coordinator ─────────────────
+  Jai: {
     workDuration: 1.8,
     selectTarget(char, sim) {
       // Head toward a character or active object
@@ -1140,15 +1205,15 @@ const BEHAVIORS = {
         const target = pick(nearby.filter(c => c.state !== CS.WORKING) || nearby);
         const obj    = disrupted[0];
         if (target && target.state !== CS.WORKING) {
-          target.target = { x: obj.cx, y: obj.cy, obj, statusText: '(Jay said go)' };
+          target.target = { x: obj.cx, y: obj.cy, obj, statusText: '(Jai said go)' };
           target.state  = CS.MOVING;
-          sim.addEvent(`Jay redirected ${target.name} toward ${obj.label}`);
+          sim.addEvent(`Jai redirected ${target.name} toward ${obj.label}`);
           char.statusText = 'Delegated!';
           return;
         }
       }
       if (nearby.length > 0) {
-        sim.addEvent(`Jay checked in with ${nearby.map(c => c.name).join(' & ')}`);
+        sim.addEvent(`Jai checked in with ${nearby.map(c => c.name).join(' & ')}`);
         char.statusText = 'Checked in!';
       }
     },
@@ -1307,8 +1372,8 @@ class Simulation {
       new Character({
         name,
         color: CHAR_COLORS[name],
-        speed: name === 'Alton' ? 50 : name === 'Jay' ? 115 : name === 'Kurt' ? 100 : 85,
-        role:  { Joe:'Fixer', Charlie:'Tinkerer', Kurt:'Restorer', Alton:'Chill Presence', Jay:'Coordinator', Liam:'Contributor', Andy:'Lead' }[name],
+        speed: name === 'Altin' ? 50 : name === 'Jai' ? 115 : name === 'Kurt' ? 100 : 85,
+        role:  { Joe:'Fixer', Charlie:'Tinkerer', Kurt:'Restorer', Altin:'Chill Presence', Jai:'Coordinator', Liam:'Contributor', Andy:'Lead' }[name],
         behaviors: BEHAVIORS[name],
       })
     );
@@ -1368,7 +1433,7 @@ class Simulation {
     for (const c of this.characters) {
       c.active = false; c.state = CS.IDLE; c.target = null;
       c.statusText = 'Ready'; c.workProgress = 0;
-      c.andyBoost = 0; c.altonCalm = 0;
+      c.andyBoost = 0; c.altinCalm = 0; c.health = 100; c.fightCooldown = rand(0.6, 1.8); c.hitFlash = 0;
       c._passiveTimer = rand(5, 15);
     }
     renderEventLog([]);
@@ -1498,13 +1563,17 @@ canvas.height = RH;
 let sim         = new Simulation();
 let lastTime    = null;
 let imagesReady = false;
+let imageMapCache = {};
 
 // Assign images to character objects once loaded
 loadCharImages().then(imageMap => {
+  imageMapCache = imageMap;
   for (const c of sim.characters) {
     if (imageMap[c.name]) c.image = imageMap[c.name];
   }
-  imagesReady = true;
+  imagesReady = Object.keys(CHAR_IMAGE_FILES).every(name => !!imageMap[name]);
+
+  if (!imagesReady) console.warn('Some character images failed to load.');
 });
 
 // Main loop
@@ -1579,9 +1648,14 @@ document.querySelectorAll('.spawn-btn').forEach(btn => {
     if (c.active) {
       sim.despawn(name);
     } else {
+      if (!imagesReady || !imageMapCache[name]) {
+        overlay.style.display = '';
+        overlay.querySelector('.big').textContent = 'SPRITES LOADING';
+        overlay.querySelector('.small').textContent = 'Please wait for character images before spawning.';
+        return;
+      }
+      c.image = imageMapCache[name];
       sim.spawn(name);
-      // Re-assign image in case images loaded after sim init
-      loadCharImages().then(map => { if (map[name]) c.image = map[name]; });
     }
   });
 });
