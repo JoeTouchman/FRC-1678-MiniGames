@@ -566,7 +566,7 @@ function showGameScreen(){
 // ════════════════════════════════
 function startGame(){
   stopAll();
-  G={score:0,wave:1,task:0,lives:3,combo:0,bestCombo:0,patience:100,timerMax:20,timerVal:20,angerLevel:0,mgDone:false,running:true,timerIv:null,mikeIv:null,speechTO:null,balIv:null,wackIv:null,currentMG:null};
+  G={score:0,wave:1,task:0,lives:3,combo:0,bestCombo:0,patience:100,timerMax:20,timerVal:20,angerLevel:0,mgDone:false,running:true,timerIv:null,mikeIv:null,speechTO:null,balIv:null,wackIv:null,currentMG:null,lastMG:null};
   document.getElementById('levelup-modal').classList.remove('open');
   document.getElementById('gameover-modal').classList.remove('open');
   showGameScreen(); updateHUD(); startTask(); scheduleMike();
@@ -656,8 +656,8 @@ function getPool(){
   if(G.wave<=1)return['bolt','seq','combo','balance'];
   if(G.wave<=2)return['bolt','seq','combo','balance','wire','gear'];
   if(G.wave<=3)return['bolt','seq','combo','wire','gear','maze','balance','uncoil'];
-  // keep uncoil common; wack and sweep are later-wave spice
-  const base=['bolt','bolt','seq','seq','combo','wire','gear','maze','balance','decrypt','uncoil','uncoil'];
+  // uncoil appears once; wack and sweep are later-wave spice
+  const base=['bolt','bolt','seq','seq','combo','wire','gear','maze','balance','decrypt','uncoil'];
   return G.wave>=4?[...base,'wack','sweep']:base;
 }
 const MG_ICONS={bolt:'🔩',wire:'🔌',seq:'🤖',gear:'⚙️',combo:'🔧',balance:'⚡',wack:'🔨',maze:'🧩',sweep:'📡',decrypt:'💻',uncoil:'🧵'};
@@ -670,7 +670,8 @@ function startTask(){
   if(sweepSt.iv){clearInterval(sweepSt.iv);sweepSt.iv=null;}
   G.mgDone=false;
   document.querySelectorAll('.minigame').forEach(m=>m.classList.remove('active'));
-  const mg=rnd(getPool()); G.currentMG=mg;
+  const pool=getPool().filter(m=>m!==G.lastMG);
+  const mg=rnd(pool.length?pool:getPool()); G.lastMG=mg; G.currentMG=mg;
   document.getElementById('mission-icon').textContent=MG_ICONS[mg];
   document.getElementById('mission-text').textContent=MG_LABELS[mg];
   updateHUD();
