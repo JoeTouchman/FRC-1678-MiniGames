@@ -392,7 +392,7 @@ body {
 <body>
 
 <div id="topbar">
-  <a href="index.html" id="back-btn">&#8592; BACK</a>
+  <a href="../index.html" id="back-btn">&#8592; BACK</a>
   <div class="topbar-title">SCOUT ROOM SIM</div>
   <div class="topbar-sub">SOFTWARE SCOUTING &#183; TEAM 1678</div>
 </div>
@@ -594,7 +594,7 @@ function loadCharImages() {
         map[name] = null;
         resolve();
       };
-      img.src = new URL(`characters/${file}`, window.location.href).href;
+      img.src = new URL(`../public/sprites/scouting-sim/${file}`, window.location.href).href;
     })
   );
   return Promise.all(promises).then(() => map);
