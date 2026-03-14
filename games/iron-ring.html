@@ -1334,7 +1334,7 @@ function mpSerP(p) {
 }
 function mpApplyState(s) {
   if (!p1||!p2) return;
-  mpApplyP(p1,s.p1); mpApplyP(p2,s.p2);
+  mpApplyP(p1,s.p1,false); mpApplyP(p2,s.p2,true);
   cells.length=s.cells.length;
   s.cells.forEach((sc,i)=>{ if(!cells[i])cells[i]={};cells[i].x=sc.x;cells[i].y=sc.y;cells[i].alive=sc.alive;cells[i].bob=sc.bob;cells[i].respawnTimer=sc.respawnTimer; });
   ringRadius=s.ringRadius; suddenDeath=s.suddenDeath; tiltAngle=s.tiltAngle; tiltStrength=s.tiltStrength;
@@ -1343,10 +1343,17 @@ function mpApplyState(s) {
   if (s.particles) { particles.push(...s.particles); if(particles.length>250)particles=particles.slice(-250); }
   if (s.floatingTexts) { floatingTexts.push(...s.floatingTexts); if(floatingTexts.length>40)floatingTexts=floatingTexts.slice(-40); }
   if (s.gameEnded && state==='playing') { state='ended'; endGame(); }
-  updateHUD(); draw();
+  // Note: rendering is handled by mpClientLoop every frame, not here
 }
-function mpApplyP(p,sp) {
-  p.x=sp.x;p.y=sp.y;p.angle=sp.angle;p.lives=sp.lives;p.charge=sp.charge;p.charged=sp.charged;
+function mpApplyP(p,sp,isLocal) {
+  if (isLocal) {
+    // Smooth reconciliation: lerp toward server position instead of snapping,
+    // so client-side prediction corrections don't cause jarring jumps
+    const dx=sp.x-p.x, dy=sp.y-p.y, d=Math.hypot(dx,dy);
+    if (d > 60) { p.x=sp.x; p.y=sp.y; } // large gap: snap to server
+    else { p.x+=dx*0.3; p.y+=dy*0.3; }  // small gap: smooth blend
+  } else { p.x=sp.x; p.y=sp.y; }
+  p.angle=sp.angle;p.lives=sp.lives;p.charge=sp.charge;p.charged=sp.charged;
   p.boostTimer=sp.boostTimer;p.boostCooldown=sp.boostCooldown;p.bumpCooldown=sp.bumpCooldown;
   p.invincible=sp.invincible;p.dead=sp.dead;p.respawnTimer=sp.respawnTimer;
   p.knockVx=sp.knockVx;p.knockVy=sp.knockVy;p.trail=sp.trail;p.onStation=sp.onStation;
@@ -1354,15 +1361,51 @@ function mpApplyP(p,sp) {
 
 function mpClientLoop() {
   if (state !== 'playing') return;
-  if (mpSocket) mpSocket.emit('playerInput', {
+  const input = {
     up:    heldKeys.has('KeyW')||heldKeys.has('ArrowUp'),
     down:  heldKeys.has('KeyS')||heldKeys.has('ArrowDown'),
     left:  heldKeys.has('KeyA')||heldKeys.has('ArrowLeft'),
     right: heldKeys.has('KeyD')||heldKeys.has('ArrowRight'),
     boost: heldKeys.has('ShiftLeft')||heldKeys.has('ShiftRight')||heldKeys.has('Slash'),
-  });
+  };
+  if (mpSocket) mpSocket.emit('playerInput', input);
   justPressed.clear();
+  // Client-side prediction: locally simulate P2 movement for instant response
+  mpPredictP2(input);
+  updateHUD(); draw();
   requestAnimationFrame(mpClientLoop);
+}
+
+// Mirrors host-side movement physics for P2 (including ring boundary), so client feels responsive
+function mpPredictP2(input) {
+  if (!p2) return;
+  const p = p2;
+  let dx = 0, dy = 0;
+  if (input.up)    dy -= 1;
+  if (input.down)  dy += 1;
+  if (input.left)  dx -= 1;
+  if (input.right) dx += 1;
+  const moving = !!(dx || dy);
+  if (moving) { const m = Math.hypot(dx,dy); dx/=m; dy/=m; p.angle=Math.atan2(dy,dx); }
+  // Use server-authoritative boost state for speed; only predict position
+  const spd = p.boostTimer > 0 ? BOOST_SPEED : NORMAL_SPEED;
+  if (moving) {
+    const mx = dx*spd, my = dy*spd;
+    const tx = p.x+mx, ty = p.y+my;
+    const td = dist(tx,ty,CX,CY);
+    if (td+PLAYER_SIZE < ringRadius) { p.x=tx; p.y=ty; }
+    else {
+      const d2 = dist(p.x,p.y,CX,CY) || 1;
+      const nx2=(p.x-CX)/d2, ny2=(p.y-CY)/d2;
+      const dot=mx*nx2+my*ny2;
+      const sx=p.x+mx-nx2*dot, sy=p.y+my-ny2*dot;
+      if (dist(sx,sy,CX,CY)+PLAYER_SIZE < ringRadius) { p.x=sx; p.y=sy; }
+    }
+  }
+  p.x += p.knockVx; p.y += p.knockVy;
+  p.knockVx *= 0.86; p.knockVy *= 0.86;
+  if (Math.abs(p.knockVx) < 0.04) p.knockVx = 0;
+  if (Math.abs(p.knockVy) < 0.04) p.knockVy = 0;
 }
 
 function mpShowOnline() { document.getElementById('mp-s-mode').style.display='none'; document.getElementById('mp-s-online').style.display='flex'; mpConnectToServer(); }

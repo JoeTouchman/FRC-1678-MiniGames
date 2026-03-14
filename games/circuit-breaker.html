@@ -1548,7 +1548,7 @@ function mpSerP(p) {
 }
 function mpApplyState(s) {
   if (!p1||!p2) return;
-  mpApplyP(p1,s.p1); mpApplyP(p2,s.p2);
+  mpApplyP(p1,s.p1,false); mpApplyP(p2,s.p2,true);
   bolts.length=0; if(s.bolts) bolts.push(...s.bolts);
   packs.length=s.packs.length;
   s.packs.forEach((sp,i)=>{ if(!packs[i])packs[i]={};Object.assign(packs[i],sp); });
@@ -1558,10 +1558,17 @@ function mpApplyState(s) {
   if (s.particles) { particles.push(...s.particles); if(particles.length>250)particles=particles.slice(-250); }
   if (s.floatingTexts) { floatingTexts.push(...s.floatingTexts); if(floatingTexts.length>40)floatingTexts=floatingTexts.slice(-40); }
   if (s.gameEnded && state==='playing') { state='ended'; endGame(); }
-  updateHUD(); draw();
+  // Note: rendering is handled by mpClientLoop every frame, not here
 }
-function mpApplyP(p,sp) {
-  p.x=sp.x;p.y=sp.y;p.angle=sp.angle;p.score=sp.score;p.battery=sp.battery;p.overcharged=sp.overcharged;
+function mpApplyP(p,sp,isLocal) {
+  if (isLocal) {
+    // Smooth reconciliation: lerp toward server position instead of snapping,
+    // so client-side prediction corrections don't cause jarring jumps
+    const dx=sp.x-p.x, dy=sp.y-p.y, d=Math.hypot(dx,dy);
+    if (d > 60) { p.x=sp.x; p.y=sp.y; } // large gap: snap to server
+    else { p.x+=dx*0.3; p.y+=dy*0.3; }  // small gap: smooth blend
+  } else { p.x=sp.x; p.y=sp.y; }
+  p.angle=sp.angle;p.score=sp.score;p.battery=sp.battery;p.overcharged=sp.overcharged;
   p.disabled=sp.disabled;p.disableTimer=sp.disableTimer;
   p.boostTimer=sp.boostTimer;p.boostCooldown=sp.boostCooldown;p.boltCooldown=sp.boltCooldown;
   p.bumpCooldown=sp.bumpCooldown;p.invincible=sp.invincible;
@@ -1570,16 +1577,42 @@ function mpApplyP(p,sp) {
 
 function mpClientLoop() {
   if (state !== 'playing') return;
-  if (mpSocket) mpSocket.emit('playerInput', {
+  const input = {
     up:    heldKeys.has('KeyW')||heldKeys.has('ArrowUp'),
     down:  heldKeys.has('KeyS')||heldKeys.has('ArrowDown'),
     left:  heldKeys.has('KeyA')||heldKeys.has('ArrowLeft'),
     right: heldKeys.has('KeyD')||heldKeys.has('ArrowRight'),
     justBoost: justPressed.has('ShiftLeft')||justPressed.has('ShiftRight')||justPressed.has('Slash'),
     justFire:  justPressed.has('KeyF')||justPressed.has('Period'),
-  });
+  };
+  if (mpSocket) mpSocket.emit('playerInput', input);
   justPressed.clear();
+  // Client-side prediction: locally simulate P2 movement for instant response
+  mpPredictP2(input);
+  updateHUD(); draw();
   requestAnimationFrame(mpClientLoop);
+}
+
+// Mirrors host-side movement physics for P2, so client feels responsive without waiting for server
+function mpPredictP2(input) {
+  if (!p2 || p2.disabled) return;
+  const p = p2;
+  let dx = 0, dy = 0;
+  if (input.up)    dy -= 1;
+  if (input.down)  dy += 1;
+  if (input.left)  dx -= 1;
+  if (input.right) dx += 1;
+  const moving = !!(dx || dy);
+  if (moving) { const m = Math.hypot(dx,dy); dx/=m; dy/=m; p.angle=Math.atan2(dy,dx); }
+  // Use server-authoritative boost/overcharge state for speed; only predict position
+  const spd = (p.boostTimer > 0 ? BOOST_SPD : NORMAL_SPD) + (p.overcharged ? 0.45 : 0);
+  if (moving) { p.x += dx*spd; p.y += dy*spd; }
+  p.x += p.knockVx; p.y += p.knockVy;
+  p.knockVx *= 0.86; p.knockVy *= 0.86;
+  if (Math.abs(p.knockVx) < 0.04) p.knockVx = 0;
+  if (Math.abs(p.knockVy) < 0.04) p.knockVy = 0;
+  p.x = clamp(p.x, FP+PLAYER_R, W-FP-PLAYER_R);
+  p.y = clamp(p.y, FP+PLAYER_R, H-FP-PLAYER_R);
 }
 
 function mpShowOnline() { document.getElementById('mp-s-mode').style.display='none'; document.getElementById('mp-s-online').style.display='flex'; mpConnectToServer(); }
