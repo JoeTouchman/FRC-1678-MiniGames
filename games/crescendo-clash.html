@@ -448,10 +448,12 @@ const MATCH_TIME = 120;
 
 // ── MULTIPLAYER STATE ─────────────────────────────────────────────────────────
 const MP_SERVER = 'https://frc-1678-minigames.onrender.com';
-let mpMode = false;   // false | 'host' | 'client'
+// mpMode: false = local, 'host' = online as P1 (room creator), 'client' = online as P2 (joiner)
+// In server-authoritative mode both 'host' and 'client' are just online clients;
+// mpMode is kept to identify which player number you are (P1 vs P2).
+let mpMode = false;
 let mpSocket = null;
 let mpRoomCode = null;
-let mpRemoteInput = { up:false,down:false,left:false,right:false,boost:false,justShoot:false };
 let mpColors  = { 1:'#FF6B00', 2:'#0066FF' };
 let mpAccents = { 1:'#FFB347', 2:'#44AAFF' };
 const MP_COLORS = [
@@ -566,30 +568,15 @@ function addFloat(x, y, text, color, size=18) {
 }
 
 // ── UPDATE PLAYER ────────────────────────────────────────────────────────────
+// Note: only called by gameLoop() for local (same-keyboard) mode.
+// Online mode uses mpClientLoop() + server-authoritative simulation instead.
 function updatePlayer(p) {
-  // Determine input source
+  // Determine input source — local controls only (online physics run on server)
   let up, down, left, right, boost, justShoot;
-  if (mpMode === 'host' && p.id === 2) {
-    // Remote P2 input relayed from socket
-    up = mpRemoteInput.up; down = mpRemoteInput.down;
-    left = mpRemoteInput.left; right = mpRemoteInput.right;
-    boost = mpRemoteInput.boost;
-    justShoot = mpRemoteInput.justShoot;
-    if (justShoot) mpRemoteInput.justShoot = false;
-  } else if (mpMode !== false) {
-    // Online: local player accepts both WASD and arrow keys
-    up    = heldKeys.has('KeyW')     || heldKeys.has('ArrowUp');
-    down  = heldKeys.has('KeyS')     || heldKeys.has('ArrowDown');
-    left  = heldKeys.has('KeyA')     || heldKeys.has('ArrowLeft');
-    right = heldKeys.has('KeyD')     || heldKeys.has('ArrowRight');
-    boost = heldKeys.has('ShiftLeft')|| heldKeys.has('ShiftRight')|| heldKeys.has('Slash');
-    justShoot = justPressed.has('KeyF') || justPressed.has('Period');
-  } else {
-    const c = p.controls;
-    up = heldKeys.has(c.up); down = heldKeys.has(c.down);
-    left = heldKeys.has(c.left); right = heldKeys.has(c.right);
-    boost = heldKeys.has(c.boost); justShoot = justPressed.has(c.shoot);
-  }
+  const c = p.controls;
+  up = heldKeys.has(c.up); down = heldKeys.has(c.down);
+  left = heldKeys.has(c.left); right = heldKeys.has(c.right);
+  boost = heldKeys.has(c.boost); justShoot = justPressed.has(c.shoot);
 
   let dx = 0, dy = 0;
   if (up)    dy -= 1;
@@ -813,6 +800,13 @@ function updateHUD() {
     sh.textContent = `⬡ STAGE RECHARGE ${Math.ceil(stageTimer/60)}s`;
     sh.style.color = 'rgba(204,68,255,0.35)';
   }
+  // In online mode the server owns the timer; sync the display from the global timeLeft
+  if (mpMode !== false) {
+    const m=Math.floor(timeLeft/60), s=timeLeft%60;
+    const timerEl=document.getElementById('timer');
+    timerEl.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    timerEl.classList.toggle('urgent', timeLeft<=20);
+  }
 }
 
 // ── DRAW ─────────────────────────────────────────────────────────────────────
@@ -998,7 +992,6 @@ function gameLoop() {
   noteSpawnTimer++;
   if (noteSpawnTimer>200) { spawnNote(); noteSpawnTimer=0; }
   updateHUD(); draw();
-  if (mpMode === 'host' && mpSocket) mpSocket.emit('gameState', mpSerializeState());
   justPressed.clear(); // clear after processing so each keypress fires exactly once
   requestAnimationFrame(gameLoop);
 }
@@ -1055,26 +1048,17 @@ document.getElementById('start-btn').addEventListener('click', () => {
 
 // ── MULTIPLAYER FUNCTIONS ─────────────────────────────────────────────────────
 
-function mpSerializeState() {
-  return {
-    p1: mpSerP(p1), p2: mpSerP(p2),
-    notes: notes.map(n => ({ x:n.x,y:n.y,vx:n.vx,vy:n.vy,carriedBy:n.carried?n.carried.id:0,bob:n.bob })),
-    timeLeft, stageState, stageTimer, stageFlash,
-    particles: particles.slice(-20).map(p=>({x:p.x,y:p.y,vx:p.vx,vy:p.vy,life:p.life,decay:p.decay,size:p.size,color:p.color})),
-    floatingTexts: floatingTexts.map(f=>({x:f.x,y:f.y,text:f.text,color:f.color,life:f.life,vy:f.vy,size:f.size})),
-    gameEnded: state === 'ended',
-  };
-}
-function mpSerP(p) {
-  return { x:p.x,y:p.y,angle:p.angle,score:p.score,carryingIdx:notes.indexOf(p.carrying),
-    amped:p.amped,boostTimer:p.boostTimer,boostCooldown:p.boostCooldown,
-    shootCooldown:p.shootCooldown,bumpCooldown:p.bumpCooldown,
-    stageCharge:p.stageCharge,onStage:p.onStage,pickupImmunity:p.pickupImmunity,
-    knockVx:p.knockVx,knockVy:p.knockVy,trail:p.trail.slice(-6) };
-}
+/**
+ * Apply authoritative state received from the server.
+ * The local player uses smooth lerp reconciliation against server position;
+ * the remote player is snapped directly to server state.
+ * mpMode === 'host' means this client is P1; 'client' means P2.
+ */
 function mpApplyState(s) {
   if (!p1||!p2) return;
-  mpApplyP(p1,s.p1,false); mpApplyP(p2,s.p2,true);
+  const isP1Local = mpMode === 'host';
+  mpApplyP(p1, s.p1, isP1Local);
+  mpApplyP(p2, s.p2, !isP1Local);
   while (notes.length < s.notes.length) notes.push({bob:0,vx:0,vy:0,carried:null});
   notes.length = s.notes.length;
   s.notes.forEach((sn,i)=>{ notes[i].x=sn.x;notes[i].y=sn.y;notes[i].vx=sn.vx;notes[i].vy=sn.vy;notes[i].bob=sn.bob;notes[i].carried=sn.carriedBy===1?p1:sn.carriedBy===2?p2:null; });
@@ -1083,24 +1067,27 @@ function mpApplyState(s) {
   timeLeft=s.timeLeft; stageState=s.stageState; stageTimer=s.stageTimer; stageFlash=s.stageFlash;
   if (s.particles) { particles.push(...s.particles); if(particles.length>250)particles=particles.slice(-250); }
   if (s.floatingTexts) { floatingTexts.push(...s.floatingTexts); if(floatingTexts.length>40)floatingTexts=floatingTexts.slice(-40); }
-  if (s.gameEnded && state==='playing') { state='ended'; endGame(); }
-  // Note: rendering is handled by mpClientLoop every frame, not here
-}
-function mpApplyP(p,sp,isLocal) {
-  if (isLocal) {
-    // Smooth reconciliation: lerp toward server position instead of snapping,
-    // so client-side prediction corrections don't cause jarring jumps
-    const dx=sp.x-p.x, dy=sp.y-p.y, d=Math.hypot(dx,dy);
-    if (d > 60) { p.x=sp.x; p.y=sp.y; } // large gap: snap to server
-    else { p.x+=dx*0.3; p.y+=dy*0.3; }  // small gap: smooth blend
-  } else { p.x=sp.x; p.y=sp.y; }
-  p.angle=sp.angle;p.score=sp.score;
-  p.amped=sp.amped;p.boostTimer=sp.boostTimer;p.boostCooldown=sp.boostCooldown;
-  p.shootCooldown=sp.shootCooldown;p.bumpCooldown=sp.bumpCooldown;
-  p.stageCharge=sp.stageCharge;p.onStage=sp.onStage;p.pickupImmunity=sp.pickupImmunity;
-  p.knockVx=sp.knockVx;p.knockVy=sp.knockVy;p.trail=sp.trail;
+  if (s.gameEnded && state==='playing') endGame();
 }
 
+function mpApplyP(p, sp, isLocal) {
+  if (isLocal) {
+    // Smooth reconciliation: lerp toward server position to correct prediction drift
+    const dx=sp.x-p.x, dy=sp.y-p.y, d=Math.hypot(dx,dy);
+    if (d > 60) { p.x=sp.x; p.y=sp.y; } // large gap: snap
+    else { p.x+=dx*0.3; p.y+=dy*0.3; }  // small gap: smooth blend
+  } else { p.x=sp.x; p.y=sp.y; }
+  p.angle=sp.angle; p.score=sp.score;
+  p.amped=sp.amped; p.boostTimer=sp.boostTimer; p.boostCooldown=sp.boostCooldown;
+  p.shootCooldown=sp.shootCooldown; p.bumpCooldown=sp.bumpCooldown;
+  p.stageCharge=sp.stageCharge; p.onStage=sp.onStage; p.pickupImmunity=sp.pickupImmunity;
+  p.knockVx=sp.knockVx; p.knockVy=sp.knockVy; p.trail=sp.trail;
+}
+
+/**
+ * Online client loop — used by BOTH players (P1 and P2).
+ * The server is the authority; this loop only sends input and renders.
+ */
 function mpClientLoop() {
   if (state !== 'playing') return;
   const input = {
@@ -1113,23 +1100,26 @@ function mpClientLoop() {
   };
   if (mpSocket) mpSocket.emit('playerInput', input);
   justPressed.clear();
-  // Client-side prediction: locally simulate P2 movement for instant response
-  mpPredictP2(input);
+  // Client-side prediction: locally advance the local player's position for instant response.
+  // Server will reconcile the authoritative position each time gameState arrives.
+  const localP = mpMode === 'host' ? p1 : p2;
+  if (localP) mpPredictLocal(input, localP);
   updateHUD(); draw();
   requestAnimationFrame(mpClientLoop);
 }
 
-// Mirrors host-side movement physics for P2, so client feels responsive without waiting for server
-function mpPredictP2(input) {
-  if (!p2) return;
-  const p = p2;
+/**
+ * Mirrors server-side movement physics for the local player so input feels instant.
+ * Only predicts position; all other state (score, cooldowns, etc.) comes from the server.
+ */
+function mpPredictLocal(input, p) {
   let dx = 0, dy = 0;
   if (input.up)    dy -= 1;
   if (input.down)  dy += 1;
   if (input.left)  dx -= 1;
   if (input.right) dx += 1;
   if (dx || dy) { const m = Math.hypot(dx,dy); dx/=m; dy/=m; p.angle=Math.atan2(dy,dx); }
-  // Use server-authoritative boost state for speed; only predict position
+  // Use server-authoritative boost state for the speed scalar
   const spd = p.boostTimer > 0 ? BOOST_SPEED : NORMAL_SPEED;
   p.x += dx*spd + p.knockVx;
   p.y += dy*spd + p.knockVy;
@@ -1186,11 +1176,11 @@ function mpConnectToServer() {
       p2.color=mpColors[2];p2.accent=mpAccents[2];
       state='playing';
       document.getElementById('overlay').classList.add('hidden');
-      if(mpMode==='host') gameLoop();
-      else mpClientLoop();
+      // Server is now authoritative — both P1 and P2 use the client loop
+      mpClientLoop();
     });
-    mpSocket.on('remoteInput', input=>{ mpRemoteInput=input; });
-    mpSocket.on('gameState', s=>{ if(mpMode==='client') mpApplyState(s); });
+    // Server broadcasts authoritative state to all clients every tick
+    mpSocket.on('gameState', s=>{ mpApplyState(s); });
     mpSocket.on('playerLeft', ()=>{ if(state==='playing') addFloat(W/2,H/2-30,'OPPONENT LEFT','#FF4444',22); });
   };
   if (typeof io==='undefined') {
