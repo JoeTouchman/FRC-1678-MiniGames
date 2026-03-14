@@ -268,9 +268,108 @@
     border-color: rgba(255,107,0,0.6);
     color: #fff;
   }
+
+  /* ── MULTIPLAYER LOBBY ───────────────────────────────────────────────────── */
+  #mp-lobby { position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.96);backdrop-filter:blur(8px); }
+  #mp-lobby.hidden { display:none; }
+  .mp-panel { background:rgba(12,12,12,0.99);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:36px 40px;width:min(520px,94vw);display:flex;flex-direction:column;align-items:center;gap:18px;font-family:'Rajdhani',sans-serif; }
+  .mp-title { font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,#FF6B00,#fff,#44AAFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center; }
+  .mp-sub { font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.28);text-transform:uppercase; }
+  .mp-btn-row { display:flex;gap:12px;width:100%; }
+  .mp-btn { flex:1;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;padding:13px 16px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);cursor:pointer;text-transform:uppercase;transition:all 0.15s;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.7); }
+  .mp-btn:hover { background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.35); }
+  .mp-btn.primary { background:linear-gradient(135deg,#FF6B00,#FF9500);color:#000;border-color:transparent;box-shadow:0 4px 16px rgba(255,107,0,0.3); }
+  .mp-btn.primary:hover { box-shadow:0 6px 24px rgba(255,107,0,0.5);transform:scale(1.02); }
+  .mp-btn.blue { background:linear-gradient(135deg,#0066FF,#0099FF);color:#fff;border-color:transparent;box-shadow:0 4px 16px rgba(0,102,255,0.3); }
+  .mp-btn.blue:hover { box-shadow:0 6px 24px rgba(0,102,255,0.5);transform:scale(1.02); }
+  .mp-btn:disabled { opacity:0.4;cursor:not-allowed;transform:none!important;box-shadow:none!important; }
+  #mp-status { font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;padding:8px 14px;border-radius:5px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.45);text-align:center;width:100%; }
+  #mp-status.ok  { color:#00CC44;border-color:rgba(0,204,68,0.3);background:rgba(0,204,68,0.08); }
+  #mp-status.err { color:#FF4444;border-color:rgba(255,68,68,0.3);background:rgba(255,68,68,0.08); }
+  .mp-divider { display:flex;align-items:center;gap:12px;width:100%;font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,255,255,0.2);letter-spacing:1px; }
+  .mp-divider::before,.mp-divider::after { content:'';flex:1;height:1px;background:rgba(255,255,255,0.1); }
+  .mp-input-row { display:flex;gap:10px;width:100%; }
+  .mp-input { flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:11px 14px;font-family:'Orbitron',sans-serif;font-size:18px;font-weight:700;letter-spacing:5px;color:#fff;text-transform:uppercase;text-align:center;outline:none; }
+  .mp-input:focus { border-color:rgba(255,107,0,0.5);box-shadow:0 0 12px rgba(255,107,0,0.2); }
+  .mp-code-big { font-family:'Orbitron',sans-serif;font-size:52px;font-weight:900;letter-spacing:8px;background:linear-gradient(135deg,#FF6B00,#FFD600);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+  .mp-code-lbl { font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.3);text-transform:uppercase; }
+  .mp-slots { display:flex;flex-direction:column;gap:8px;width:100%; }
+  .mp-slot { display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border-radius:8px;padding:10px 14px;border:1px solid rgba(255,255,255,0.08);font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(255,255,255,0.5); }
+  .mp-slot.on { border-color:rgba(0,204,68,0.35);background:rgba(0,204,68,0.07);color:#00CC44; }
+  .mp-dot { width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.15);flex-shrink:0; }
+  .mp-slot.on .mp-dot { background:#00CC44;box-shadow:0 0 6px #00CC44; }
+  .mp-colors { display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%; }
+  .mp-color-group { display:flex;flex-direction:column;gap:5px; }
+  .mp-color-lbl { font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;color:rgba(255,255,255,0.3);text-transform:uppercase; }
+  .mp-sel { background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:5px;padding:8px 10px;color:#fff;font-family:'Share Tech Mono',monospace;font-size:11px;cursor:pointer;outline:none;width:100%; }
+  .mp-sel:focus { border-color:rgba(255,107,0,0.4); }
+  .mp-back { font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.25);background:none;border:none;padding:0;cursor:pointer;transition:color 0.15s; }
+  .mp-back:hover { color:rgba(255,255,255,0.6); }
+  .mp-wait-msg { font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.3);text-align:center; }
 </style>
 </head>
 <body>
+
+<!-- ── MULTIPLAYER LOBBY ──────────────────────────────────────────────────── -->
+<div id="mp-lobby">
+  <div class="mp-panel">
+    <div class="mp-title">CRESCENDO CLASH</div>
+    <div class="mp-sub">Select play mode</div>
+
+    <!-- Screen 1: Mode select -->
+    <div id="mp-s-mode" style="width:100%;display:flex;flex-direction:column;gap:14px;align-items:center">
+      <div class="mp-btn-row">
+        <button class="mp-btn" id="mp-local-btn">Local Play</button>
+        <button class="mp-btn blue" id="mp-online-btn">🌐 Online</button>
+      </div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,0.2);letter-spacing:1px">LOCAL: BOTH PLAYERS ON ONE KEYBOARD &nbsp;·&nbsp; ONLINE: EACH PLAYER ON THEIR OWN COMPUTER</div>
+    </div>
+
+    <!-- Screen 2: Online connect -->
+    <div id="mp-s-online" style="width:100%;display:none;flex-direction:column;gap:14px;align-items:center">
+      <div id="mp-status">Connecting to server…</div>
+      <button class="mp-btn primary" id="mp-create-btn" disabled>Create Room</button>
+      <div class="mp-divider">or join with a code</div>
+      <div class="mp-input-row">
+        <input class="mp-input" id="mp-code-input" placeholder="ABCD" maxlength="4" autocomplete="off" spellcheck="false">
+        <button class="mp-btn" id="mp-join-btn" disabled style="flex:0 0 auto;padding:13px 20px">Join</button>
+      </div>
+      <button class="mp-back" id="mp-back-btn">← Back</button>
+    </div>
+
+    <!-- Screen 3: Waiting room -->
+    <div id="mp-s-room" style="width:100%;display:none;flex-direction:column;gap:14px;align-items:center">
+      <div class="mp-code-lbl">Room Code — Share with opponent</div>
+      <div class="mp-code-big" id="mp-room-code">----</div>
+      <div class="mp-slots">
+        <div class="mp-slot" id="mp-slot1"><div class="mp-dot"></div><span id="mp-p1-txt">P1: Waiting…</span></div>
+        <div class="mp-slot" id="mp-slot2"><div class="mp-dot"></div><span id="mp-p2-txt">P2: Waiting…</span></div>
+      </div>
+      <div class="mp-colors">
+        <div class="mp-color-group">
+          <div class="mp-color-lbl">P1 Color</div>
+          <select class="mp-sel" id="mp-c1">
+            <option value="0">🟠 Orange</option><option value="1">🔵 Blue</option>
+            <option value="2">🟢 Green</option><option value="3">🔴 Red</option>
+            <option value="4">🟣 Purple</option><option value="5">🟡 Gold</option>
+          </select>
+        </div>
+        <div class="mp-color-group">
+          <div class="mp-color-lbl">P2 Color</div>
+          <select class="mp-sel" id="mp-c2">
+            <option value="0">🟠 Orange</option><option value="1" selected>🔵 Blue</option>
+            <option value="2">🟢 Green</option><option value="3">🔴 Red</option>
+            <option value="4">🟣 Purple</option><option value="5">🟡 Gold</option>
+          </select>
+        </div>
+      </div>
+      <button class="mp-btn primary" id="mp-start-btn" disabled>Waiting for P2…</button>
+      <div class="mp-wait-msg" id="mp-host-wait" style="display:none">WAITING FOR HOST TO START</div>
+    </div>
+
+  </div>
+</div>
+
 <div id="game-wrapper">
   <a href="../index.html" id="home-link">← HOME</a>
   <div id="hud">
@@ -346,6 +445,20 @@ const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
 const WIN_SCORE = 20;
 const MATCH_TIME = 120;
+
+// ── MULTIPLAYER STATE ─────────────────────────────────────────────────────────
+const MP_SERVER = 'http://localhost:3001';
+let mpMode = false;   // false | 'host' | 'client'
+let mpSocket = null;
+let mpRoomCode = null;
+let mpRemoteInput = { up:false,down:false,left:false,right:false,boost:false,justShoot:false };
+let mpColors  = { 1:'#FF6B00', 2:'#0066FF' };
+let mpAccents = { 1:'#FFB347', 2:'#44AAFF' };
+const MP_COLORS = [
+  {hex:'#FF6B00',acc:'#FFB347'},{hex:'#0066FF',acc:'#44AAFF'},
+  {hex:'#00CC44',acc:'#44FF77'},{hex:'#FF2222',acc:'#FF6666'},
+  {hex:'#CC44FF',acc:'#FF88FF'},{hex:'#FFD600',acc:'#FFFAAA'},
+];
 
 // ── INPUT using e.code (layout-independent, no stuck keys) ──────────────────
 const heldKeys = new Set();
@@ -454,12 +567,35 @@ function addFloat(x, y, text, color, size=18) {
 
 // ── UPDATE PLAYER ────────────────────────────────────────────────────────────
 function updatePlayer(p) {
-  const c = p.controls;
+  // Determine input source
+  let up, down, left, right, boost, justShoot;
+  if (mpMode === 'host' && p.id === 2) {
+    // Remote P2 input relayed from socket
+    up = mpRemoteInput.up; down = mpRemoteInput.down;
+    left = mpRemoteInput.left; right = mpRemoteInput.right;
+    boost = mpRemoteInput.boost;
+    justShoot = mpRemoteInput.justShoot;
+    if (justShoot) mpRemoteInput.justShoot = false;
+  } else if (mpMode !== false) {
+    // Online: local player accepts both WASD and arrow keys
+    up    = heldKeys.has('KeyW')     || heldKeys.has('ArrowUp');
+    down  = heldKeys.has('KeyS')     || heldKeys.has('ArrowDown');
+    left  = heldKeys.has('KeyA')     || heldKeys.has('ArrowLeft');
+    right = heldKeys.has('KeyD')     || heldKeys.has('ArrowRight');
+    boost = heldKeys.has('ShiftLeft')|| heldKeys.has('ShiftRight')|| heldKeys.has('Slash');
+    justShoot = justPressed.has('KeyF') || justPressed.has('Period');
+  } else {
+    const c = p.controls;
+    up = heldKeys.has(c.up); down = heldKeys.has(c.down);
+    left = heldKeys.has(c.left); right = heldKeys.has(c.right);
+    boost = heldKeys.has(c.boost); justShoot = justPressed.has(c.shoot);
+  }
+
   let dx = 0, dy = 0;
-  if (heldKeys.has(c.up))    dy -= 1;
-  if (heldKeys.has(c.down))  dy += 1;
-  if (heldKeys.has(c.left))  dx -= 1;
-  if (heldKeys.has(c.right)) dx += 1;
+  if (up)    dy -= 1;
+  if (down)  dy += 1;
+  if (left)  dx -= 1;
+  if (right) dx += 1;
 
   if (dx || dy) {
     const m = Math.hypot(dx, dy);
@@ -470,7 +606,7 @@ function updatePlayer(p) {
   // Boost
   if (p.boostCooldown > 0) p.boostCooldown--;
   if (p.boostTimer > 0) p.boostTimer--;
-  if (heldKeys.has(c.boost) && p.boostCooldown === 0 && (dx||dy) && p.boostTimer === 0) {
+  if (boost && p.boostCooldown === 0 && (dx||dy) && p.boostTimer === 0) {
     p.boostTimer = BOOST_DURATION;
     p.boostCooldown = BOOST_COOLDOWN;
   }
@@ -497,8 +633,8 @@ function updatePlayer(p) {
   if (p.shootCooldown > 0) p.shootCooldown--;
   if (p.pickupImmunity > 0) p.pickupImmunity--;
 
-  // Shoot — fires once per keypress using justPressed
-  if (justPressed.has(c.shoot) && p.shootCooldown === 0 && p.carrying) {
+  // Shoot — fires once per keypress
+  if (justShoot && p.shootCooldown === 0 && p.carrying) {
     shootNote(p);
   }
 
@@ -862,6 +998,7 @@ function gameLoop() {
   noteSpawnTimer++;
   if (noteSpawnTimer>200) { spawnNote(); noteSpawnTimer=0; }
   updateHUD(); draw();
+  if (mpMode === 'host' && mpSocket) mpSocket.emit('gameState', mpSerializeState());
   justPressed.clear(); // clear after processing so each keypress fires exactly once
   requestAnimationFrame(gameLoop);
 }
@@ -915,6 +1052,140 @@ document.getElementById('start-btn').addEventListener('click', () => {
   t.style.webkitBackgroundClip='text';
   startGame();
 });
+
+// ── MULTIPLAYER FUNCTIONS ─────────────────────────────────────────────────────
+
+function mpSerializeState() {
+  return {
+    p1: mpSerP(p1), p2: mpSerP(p2),
+    notes: notes.map(n => ({ x:n.x,y:n.y,vx:n.vx,vy:n.vy,carriedBy:n.carried?n.carried.id:0,bob:n.bob })),
+    timeLeft, stageState, stageTimer, stageFlash,
+    particles: particles.slice(-20).map(p=>({x:p.x,y:p.y,vx:p.vx,vy:p.vy,life:p.life,decay:p.decay,size:p.size,color:p.color})),
+    floatingTexts: floatingTexts.map(f=>({x:f.x,y:f.y,text:f.text,color:f.color,life:f.life,vy:f.vy,size:f.size})),
+    gameEnded: state === 'ended',
+  };
+}
+function mpSerP(p) {
+  return { x:p.x,y:p.y,angle:p.angle,score:p.score,carryingIdx:notes.indexOf(p.carrying),
+    amped:p.amped,boostTimer:p.boostTimer,boostCooldown:p.boostCooldown,
+    shootCooldown:p.shootCooldown,bumpCooldown:p.bumpCooldown,
+    stageCharge:p.stageCharge,onStage:p.onStage,pickupImmunity:p.pickupImmunity,
+    knockVx:p.knockVx,knockVy:p.knockVy,trail:p.trail.slice(-6) };
+}
+function mpApplyState(s) {
+  if (!p1||!p2) return;
+  mpApplyP(p1,s.p1); mpApplyP(p2,s.p2);
+  while (notes.length < s.notes.length) notes.push({bob:0,vx:0,vy:0,carried:null});
+  notes.length = s.notes.length;
+  s.notes.forEach((sn,i)=>{ notes[i].x=sn.x;notes[i].y=sn.y;notes[i].vx=sn.vx;notes[i].vy=sn.vy;notes[i].bob=sn.bob;notes[i].carried=sn.carriedBy===1?p1:sn.carriedBy===2?p2:null; });
+  p1.carrying=notes.find(n=>n.carried===p1)||null;
+  p2.carrying=notes.find(n=>n.carried===p2)||null;
+  timeLeft=s.timeLeft; stageState=s.stageState; stageTimer=s.stageTimer; stageFlash=s.stageFlash;
+  if (s.particles) { particles.push(...s.particles); if(particles.length>250)particles=particles.slice(-250); }
+  if (s.floatingTexts) { floatingTexts.push(...s.floatingTexts); if(floatingTexts.length>40)floatingTexts=floatingTexts.slice(-40); }
+  if (s.gameEnded && state==='playing') { state='ended'; endGame(); }
+  updateHUD(); draw();
+}
+function mpApplyP(p,sp) {
+  p.x=sp.x;p.y=sp.y;p.angle=sp.angle;p.score=sp.score;
+  p.amped=sp.amped;p.boostTimer=sp.boostTimer;p.boostCooldown=sp.boostCooldown;
+  p.shootCooldown=sp.shootCooldown;p.bumpCooldown=sp.bumpCooldown;
+  p.stageCharge=sp.stageCharge;p.onStage=sp.onStage;p.pickupImmunity=sp.pickupImmunity;
+  p.knockVx=sp.knockVx;p.knockVy=sp.knockVy;p.trail=sp.trail;
+}
+
+function mpClientLoop() {
+  if (state !== 'playing') return;
+  if (mpSocket) mpSocket.emit('playerInput', {
+    up:    heldKeys.has('KeyW')||heldKeys.has('ArrowUp'),
+    down:  heldKeys.has('KeyS')||heldKeys.has('ArrowDown'),
+    left:  heldKeys.has('KeyA')||heldKeys.has('ArrowLeft'),
+    right: heldKeys.has('KeyD')||heldKeys.has('ArrowRight'),
+    boost: heldKeys.has('ShiftLeft')||heldKeys.has('ShiftRight')||heldKeys.has('Slash'),
+    justShoot: justPressed.has('KeyF')||justPressed.has('Period'),
+  });
+  justPressed.clear();
+  requestAnimationFrame(mpClientLoop);
+}
+
+function mpShowOnline() {
+  document.getElementById('mp-s-mode').style.display='none';
+  document.getElementById('mp-s-online').style.display='flex';
+  mpConnectToServer();
+}
+function mpShowMode() {
+  document.getElementById('mp-s-online').style.display='none';
+  document.getElementById('mp-s-mode').style.display='';
+}
+function mpShowRoom(code) {
+  document.getElementById('mp-s-online').style.display='none';
+  document.getElementById('mp-s-room').style.display='flex';
+  document.getElementById('mp-room-code').textContent=code;
+}
+function mpSetStatus(msg,type) {
+  const el=document.getElementById('mp-status');
+  if(!el) return; el.textContent=msg; el.className=type||'';
+}
+function mpConnectToServer() {
+  if (mpSocket && mpSocket.connected) { mpSetStatus('Connected ✓','ok'); return; }
+  mpSetStatus('Connecting…','');
+  const doConnect = () => {
+    mpSocket = io(MP_SERVER, { transports:['websocket','polling'] });
+    mpSocket.on('connect', ()=>{ mpSetStatus('Connected ✓','ok'); document.getElementById('mp-create-btn').disabled=false; document.getElementById('mp-join-btn').disabled=false; });
+    mpSocket.on('connect_error', ()=>mpSetStatus('Server offline — run: node index.js','err'));
+    mpSocket.on('roomCreated', ({roomCode})=>{ mpRoomCode=roomCode; mpMode='host'; mpShowRoom(roomCode); document.getElementById('mp-start-btn').disabled=true; document.getElementById('mp-start-btn').textContent='Waiting for P2…'; document.getElementById('mp-start-btn').style.display=''; document.getElementById('mp-host-wait').style.display='none'; });
+    mpSocket.on('joinedRoom', ({roomCode})=>{ mpRoomCode=roomCode; mpMode='client'; mpShowRoom(roomCode); document.getElementById('mp-start-btn').style.display='none'; document.getElementById('mp-host-wait').style.display=''; });
+    mpSocket.on('roomError', ({message})=>mpSetStatus('Error: '+message,'err'));
+    mpSocket.on('roomState', (rs)=>{
+      const p1d=rs.players.find(p=>p.playerNum===1), p2d=rs.players.find(p=>p.playerNum===2);
+      const s1=document.getElementById('mp-slot1'),s2=document.getElementById('mp-slot2');
+      if(p1d){s1.classList.add('on');document.getElementById('mp-p1-txt').textContent='P1 ✓ Connected';mpColors[1]=p1d.color;mpAccents[1]=p1d.accent||p1d.color;}
+      else{s1.classList.remove('on');document.getElementById('mp-p1-txt').textContent='P1: Waiting…';}
+      if(p2d){s2.classList.add('on');document.getElementById('mp-p2-txt').textContent='P2 ✓ Connected';mpColors[2]=p2d.color;mpAccents[2]=p2d.accent||p2d.color;}
+      else{s2.classList.remove('on');document.getElementById('mp-p2-txt').textContent='P2: Waiting…';}
+      if(mpMode==='host'){const can=rs.players.length>=2;const sb=document.getElementById('mp-start-btn');sb.disabled=!can;sb.textContent=can?'START GAME':'Waiting for P2…';}
+    });
+    mpSocket.on('gameStarting', ()=>{
+      document.getElementById('mp-lobby').classList.add('hidden');
+      p1.color=mpColors[1];p1.accent=mpAccents[1];
+      p2.color=mpColors[2];p2.accent=mpAccents[2];
+      resetGame();
+      p1.color=mpColors[1];p1.accent=mpAccents[1];
+      p2.color=mpColors[2];p2.accent=mpAccents[2];
+      state='playing';
+      document.getElementById('overlay').classList.add('hidden');
+      if(mpMode==='host') gameLoop();
+      else mpClientLoop();
+    });
+    mpSocket.on('remoteInput', input=>{ mpRemoteInput=input; });
+    mpSocket.on('gameState', s=>{ if(mpMode==='client') mpApplyState(s); });
+    mpSocket.on('playerLeft', ()=>{ if(state==='playing') addFloat(W/2,H/2-30,'OPPONENT LEFT','#FF4444',22); });
+  };
+  if (typeof io==='undefined') {
+    const sc=document.createElement('script'); sc.src=MP_SERVER+'/socket.io/socket.io.js';
+    sc.onload=doConnect; sc.onerror=()=>mpSetStatus('Server offline — run: node index.js','err');
+    document.head.appendChild(sc);
+  } else { doConnect(); }
+}
+
+// Lobby button wiring
+document.getElementById('mp-local-btn').addEventListener('click', ()=>document.getElementById('mp-lobby').classList.add('hidden'));
+document.getElementById('mp-online-btn').addEventListener('click', mpShowOnline);
+document.getElementById('mp-back-btn').addEventListener('click', mpShowMode);
+document.getElementById('mp-create-btn').addEventListener('click', ()=>{ if(mpSocket&&mpSocket.connected) mpSocket.emit('createRoom',{gameMode:'crescendo-clash'}); });
+document.getElementById('mp-join-btn').addEventListener('click', ()=>{
+  const code=document.getElementById('mp-code-input').value.trim().toUpperCase();
+  if(code.length!==4){mpSetStatus('Enter a 4-letter room code','err');return;}
+  mpSocket.emit('joinRoom',{roomCode:code});
+});
+document.getElementById('mp-start-btn').addEventListener('click', ()=>{ if(mpSocket) mpSocket.emit('startGame'); });
+document.getElementById('mp-c1').addEventListener('change',e=>{ const c=MP_COLORS[+e.target.value];mpColors[1]=c.hex;mpAccents[1]=c.acc;if(mpSocket)mpSocket.emit('selectColor',{playerNum:1,color:c.hex,accent:c.acc}); });
+document.getElementById('mp-c2').addEventListener('change',e=>{ const c=MP_COLORS[+e.target.value];mpColors[2]=c.hex;mpAccents[2]=c.acc;if(mpSocket)mpSocket.emit('selectColor',{playerNum:2,color:c.hex,accent:c.acc}); });
+
+// Auto-show online screen if ?online=1 in URL
+if (new URLSearchParams(window.location.search).has('online')) {
+  mpShowOnline();
+}
 
 resetGame(); draw();
 </script>
