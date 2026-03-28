@@ -793,15 +793,6 @@ class Character {
     this.hitFlash = 0;
     this.eliminated = false;
     this.eliminations = 0;
-    this.decisionCooldown = 0;
-    this.manualTarget = null; // user-directed move target
-
-    // Ability state
-    this.abilityCooldown = rand(4, 9);
-    this.powerSurge = 0;
-    this.armorSurge = 0;
-    this.hasteSurge = 0;
-    this.evadeSurge = 0;
   }
 
   // ── Update ──────────────────────────────────
@@ -1013,15 +1004,14 @@ class Character {
       ? 0
       : Math.max(1, variableDamage * attackerCtx.power * (isCrit ? 1.7 : 1) * (1 - defenderCtx.armor));
 
+    foe.health = clamp(foe.health - damage, 0, 100);
+    foe.hitFlash = 0.35;
     foe.statusText = dodged
       ? pick(['Dodged it!', 'Slipped away!', 'Too quick!'])
       : pick(['Taking hits!', 'Defending!', 'Countering!']);
     this.statusText = isCrit
       ? pick(['Critical strike!', 'Massive hit!', 'Big damage!'])
       : pick(['Throwing hands!', 'Scout showdown!', 'Battle mode!']);
-    this._dealDamage(foe, damage, sim, `${this.name}${isCrit ? ' (CRIT)' : ''}`);
-    foe.hitFlash = 0.35;
-    if (!foe.active) return;
 
     // Knockback
     const dx = foe.x - this.x;
@@ -1037,22 +1027,49 @@ class Character {
       else sim.addEvent(`${this.name} hit ${foe.name}${isCrit ? ' with a CRIT' : ''} (-${Math.round(damage)} HP)`);
     }
 
-  }
-
-  _dealDamage(target, damage, sim, sourceName) {
-    target.health = clamp(target.health - damage, 0, 100);
-    if (target.health <= 0 && target.active) {
-      target.health = 0;
-      target.active = false;
-      target.eliminated = true;
-      target.state = CS.IDLE;
-      target.idleTimer = 0;
-      target.vx = 0; target.vy = 0;
-      target.statusText = 'OUT';
+    if (foe.health <= 0) {
+      foe.health = 0;
+      foe.active = false;
+      foe.eliminated = true;
+      foe.state = CS.IDLE;
+      foe.idleTimer = 0;
+      foe.vx = 0; foe.vy = 0;
+      foe.statusText = 'Eliminated';
       this.eliminations += 1;
-      sim.addEvent(`${target.name} was eliminated by ${sourceName}!`);
+      sim.addEvent(`${foe.name} was eliminated by ${this.name}!`);
       sim.checkForWinner();
     }
+  }
+
+  _combatContext(sim) {
+    const ctx = {
+      power: 1,
+      armor: 0,
+      crit: 0,
+      dodge: 0,
+      speed: 1,
+      chaos: 0,
+    };
+
+    const nearby = sim.objects.filter(o => dist(this, o) < 135);
+    for (const o of nearby) {
+      const mult = o.state === STATE.EFFICIENT ? 1.2 : o.state === STATE.DISRUPTED ? 0.85 : 1;
+      if (o.type === 'laptop')  { ctx.power += 0.08 * mult; ctx.crit += 0.02; }
+      if (o.type === 'tablet')  { ctx.crit += 0.05 * mult; }
+      if (o.type === 'phone')   { ctx.dodge += 0.03 * mult; }
+      if (o.type === 'server')  { ctx.power += 0.12 * mult; ctx.armor += 0.05 * mult; }
+      if (o.type === 'station') { ctx.power += 0.1 * mult; ctx.speed += 0.05 * mult; }
+      if (o.type === 'charger') { ctx.armor += 0.04 * mult; }
+
+      if (o.state === STATE.EFFICIENT) ctx.armor += 0.03;
+      if (o.state === STATE.DISRUPTED) { ctx.chaos += 0.08; ctx.armor -= 0.04; }
+    }
+
+    if (this.andyBoost > 0) { ctx.power += 0.08; ctx.speed += 0.08; }
+    if (this.altinCalm > 0) { ctx.chaos = Math.max(0, ctx.chaos - 0.06); ctx.dodge += 0.02; }
+
+    ctx.armor = clamp(ctx.armor, -0.1, 0.55);
+    return ctx;
   }
 
   _dashToward(tx, ty, amount = 84) {
@@ -1643,10 +1660,7 @@ class Simulation {
     c.state = CS.IDLE; c.idleTimer = rand(0.5, 2);
     c.health = 100;
     c.eliminated = false;
-    c.eliminations = 0;
-    c.manualTarget = null;
     c.fightCooldown = rand(0.4, 1.2);
-    c.abilityCooldown = rand(3, 8);
     c.statusText = 'Ready to fight';
     this.addEvent(`${name} entered the arena!`);
   }
@@ -1656,7 +1670,6 @@ class Simulation {
     if (c) {
       c.active = false; c.state = CS.IDLE; c.target = null;
       c.eliminated = false;
-      c.manualTarget = null;
       c.statusText = 'Ready';
     }
   }
@@ -1704,9 +1717,6 @@ class Simulation {
       c.statusText = 'Ready'; c.workProgress = 0;
       c.andyBoost = 0; c.altinCalm = 0; c.health = 100; c.fightCooldown = rand(0.6, 1.8); c.hitFlash = 0;
       c.eliminated = false; c.eliminations = 0;
-      c.manualTarget = null;
-      c.powerSurge = 0; c.armorSurge = 0; c.hasteSurge = 0; c.evadeSurge = 0;
-      c.abilityCooldown = rand(4, 9);
       c._passiveTimer = rand(5, 15);
     }
     renderEventLog([]);
@@ -1956,6 +1966,12 @@ document.querySelectorAll('.btn-speed').forEach(btn => {
 // ── Spawn + Select Commander ──
 document.querySelectorAll('.spawn-btn').forEach(btn => {
   btn.addEventListener('click', () => {
+    if (sim.running) {
+      overlay.style.display = '';
+      overlay.querySelector('.big').textContent = 'FIGHT IN PROGRESS';
+      overlay.querySelector('.small').textContent = 'Pause or reset before changing the roster.';
+      return;
+    }
     const name = btn.dataset.char;
     const c    = sim.characters.find(ch => ch.name === name);
     if (!c) return;
