@@ -480,11 +480,11 @@ body {
   <div id="canvas-wrap">
     <canvas id="sim-canvas"></canvas>
     <div id="overlay-msg">
-      <div class="big">SCOUT ROOM SIM</div>
-      <div class="small">Spawn characters, then press PLAY</div>
+      <div class="big">SCOUT BATTLE ROYALE</div>
+      <div class="small">Spawn contenders, then press PLAY</div>
     </div>
     <div id="stats-bar">
-      <div class="stat-chip">Active: <span id="stat-active">0</span></div>
+      <div class="stat-chip">Alive: <span id="stat-active">0</span></div>
       <div class="stat-chip">OK: <span id="stat-ok">0</span></div>
       <div class="stat-chip">Disrupted: <span id="stat-disrupted">0</span></div>
       <div class="stat-chip">Efficient: <span id="stat-efficient">0</span></div>
@@ -791,6 +791,8 @@ class Character {
     this.health = 100;
     this.fightCooldown = rand(0.6, 1.8);
     this.hitFlash = 0;
+    this.eliminated = false;
+    this.eliminations = 0;
   }
 
   // ── Update ──────────────────────────────────
@@ -918,15 +920,31 @@ class Character {
 
   _battleNearby(sim, dt) {
     if (this.fightCooldown > 0 || this.health <= 0) return;
-    const foes = sim.characters.filter(c => c.active && c !== this && c.health > 0 && dist(this, c) < 48);
+    const foes = sim.characters.filter(c => c.active && c !== this && c.health > 0 && dist(this, c) < 52);
     if (foes.length === 0) return;
 
     const foe = pick(foes);
-    const damage = rand(4, 12);
+    const attackerCtx = this._combatContext(sim);
+    const defenderCtx = foe._combatContext(sim);
+    const chaos = clamp(0.12 + attackerCtx.chaos + defenderCtx.chaos, 0.1, 0.55);
+    const baseDamage = rand(5.5, 11.5);
+    const variableDamage = rand(baseDamage * (1 - chaos), baseDamage * (1 + chaos));
+    const critChance = clamp(0.08 + attackerCtx.crit, 0.05, 0.45);
+    const dodgeChance = clamp(defenderCtx.dodge, 0, 0.35);
+    const dodged = Math.random() < dodgeChance;
+    const isCrit = !dodged && Math.random() < critChance;
+    const damage = dodged
+      ? 0
+      : Math.max(1, variableDamage * attackerCtx.power * (isCrit ? 1.7 : 1) * (1 - defenderCtx.armor));
+
     foe.health = clamp(foe.health - damage, 0, 100);
     foe.hitFlash = 0.35;
-    foe.statusText = pick(['Taking hits!', 'Defending!', 'Countering!']);
-    this.statusText = pick(['Throwing hands!', 'Scout showdown!', 'Battle mode!']);
+    foe.statusText = dodged
+      ? pick(['Dodged it!', 'Slipped away!', 'Too quick!'])
+      : pick(['Taking hits!', 'Defending!', 'Countering!']);
+    this.statusText = isCrit
+      ? pick(['Critical strike!', 'Massive hit!', 'Big damage!'])
+      : pick(['Throwing hands!', 'Scout showdown!', 'Battle mode!']);
 
     // Knockback
     const dx = foe.x - this.x;
@@ -935,19 +953,56 @@ class Character {
     foe.vx += (dx / d) * 95;
     foe.vy += (dy / d) * 95;
 
-    this.fightCooldown = rand(0.7, 1.6);
+    this.fightCooldown = rand(0.55, 1.45) * (1 / attackerCtx.speed);
 
-    if (Math.random() < 0.35) {
-      sim.addEvent(`${this.name} landed a hit on ${foe.name} (-${Math.round(damage)} HP)`);
+    if (Math.random() < 0.38) {
+      if (dodged) sim.addEvent(`${foe.name} dodged ${this.name}'s strike`);
+      else sim.addEvent(`${this.name} hit ${foe.name}${isCrit ? ' with a CRIT' : ''} (-${Math.round(damage)} HP)`);
     }
 
     if (foe.health <= 0) {
-      foe.health = 35;
+      foe.health = 0;
+      foe.active = false;
+      foe.eliminated = true;
       foe.state = CS.IDLE;
-      foe.idleTimer = rand(1.2, 2.6);
-      foe.statusText = 'Respawning...';
-      sim.addEvent(`${foe.name} got KO'd by ${this.name} and jumped back in!`);
+      foe.idleTimer = 0;
+      foe.vx = 0; foe.vy = 0;
+      foe.statusText = 'Eliminated';
+      this.eliminations += 1;
+      sim.addEvent(`${foe.name} was eliminated by ${this.name}!`);
+      sim.checkForWinner();
     }
+  }
+
+  _combatContext(sim) {
+    const ctx = {
+      power: 1,
+      armor: 0,
+      crit: 0,
+      dodge: 0,
+      speed: 1,
+      chaos: 0,
+    };
+
+    const nearby = sim.objects.filter(o => dist(this, o) < 135);
+    for (const o of nearby) {
+      const mult = o.state === STATE.EFFICIENT ? 1.2 : o.state === STATE.DISRUPTED ? 0.85 : 1;
+      if (o.type === 'laptop')  { ctx.power += 0.08 * mult; ctx.crit += 0.02; }
+      if (o.type === 'tablet')  { ctx.crit += 0.05 * mult; }
+      if (o.type === 'phone')   { ctx.dodge += 0.03 * mult; }
+      if (o.type === 'server')  { ctx.power += 0.12 * mult; ctx.armor += 0.05 * mult; }
+      if (o.type === 'station') { ctx.power += 0.1 * mult; ctx.speed += 0.05 * mult; }
+      if (o.type === 'charger') { ctx.armor += 0.04 * mult; }
+
+      if (o.state === STATE.EFFICIENT) ctx.armor += 0.03;
+      if (o.state === STATE.DISRUPTED) { ctx.chaos += 0.08; ctx.armor -= 0.04; }
+    }
+
+    if (this.andyBoost > 0) { ctx.power += 0.08; ctx.speed += 0.08; }
+    if (this.altinCalm > 0) { ctx.chaos = Math.max(0, ctx.chaos - 0.06); ctx.dodge += 0.02; }
+
+    ctx.armor = clamp(ctx.armor, -0.1, 0.55);
+    return ctx;
   }
 
   _pushFromTables(tables) {
@@ -1394,6 +1449,8 @@ class Simulation {
     this.running    = false;
     this.speed      = 1;
     this.simTime    = 0; // seconds (scaled)
+    this.winner     = null;
+    this.matchOver  = false;
   }
 
   get tables()      { return this.objects.filter(o => o.type === 'table'); }
@@ -1418,13 +1475,20 @@ class Simulation {
     c.active = true;
     c.x = rand(280, 520); c.y = rand(195, 345);
     c.state = CS.IDLE; c.idleTimer = rand(0.5, 2);
-    c.statusText = 'Ready';
-    this.addEvent(`${name} joined the scouting room!`);
+    c.health = 100;
+    c.eliminated = false;
+    c.fightCooldown = rand(0.4, 1.2);
+    c.statusText = 'Ready to fight';
+    this.addEvent(`${name} entered the arena!`);
   }
 
   despawn(name) {
     const c = this.characters.find(ch => ch.name === name);
-    if (c) { c.active = false; c.state = CS.IDLE; c.target = null; }
+    if (c) {
+      c.active = false; c.state = CS.IDLE; c.target = null;
+      c.eliminated = false;
+      c.statusText = 'Ready';
+    }
   }
 
   update(dt) {
@@ -1435,6 +1499,7 @@ class Simulation {
     for (const obj of this.objects)    obj.update(scaled);
     this._randomGlitches(scaled);
     for (const c   of this.characters) c.update(scaled, this);
+    this.checkForWinner();
   }
 
   _randomGlitches(dt) {
@@ -1462,11 +1527,13 @@ class Simulation {
 
   reset() {
     this.running = false; this.simTime = 0; this.events = [];
+    this.winner = null; this.matchOver = false;
     for (const o of this.objects)    o.reset();
     for (const c of this.characters) {
       c.active = false; c.state = CS.IDLE; c.target = null;
       c.statusText = 'Ready'; c.workProgress = 0;
       c.andyBoost = 0; c.altinCalm = 0; c.health = 100; c.fightCooldown = rand(0.6, 1.8); c.hitFlash = 0;
+      c.eliminated = false; c.eliminations = 0;
       c._passiveTimer = rand(5, 15);
     }
     renderEventLog([]);
@@ -1477,11 +1544,24 @@ class Simulation {
   stats() {
     const inter = this.interactive;
     return {
-      active:    this.activeChars.length,
+      active:    this.activeChars.filter(c => c.health > 0).length,
       ok:        inter.filter(o => o.state === STATE.NORMAL).length,
       disrupted: inter.filter(o => o.state === STATE.DISRUPTED).length,
       efficient: inter.filter(o => o.state === STATE.EFFICIENT).length,
     };
+  }
+
+  checkForWinner() {
+    if (this.matchOver) return;
+    const alive = this.characters.filter(c => c.active && c.health > 0);
+    const totalInMatch = alive.length + this.characters.filter(c => c.eliminated).length;
+    if (this.running && totalInMatch >= 2 && alive.length === 1) {
+      this.winner = alive[0];
+      this.matchOver = true;
+      this.running = false;
+      this.winner.statusText = 'LAST ONE STANDING 👑';
+      this.addEvent(`🏆 ${this.winner.name} is the last one standing!`);
+    }
   }
 }
 
@@ -1553,7 +1633,7 @@ function renderEventLog(events) {
 
 function renderCharPanel(characters) {
   const el = document.getElementById('char-status-list');
-  const active = characters.filter(c => c.active);
+  const active = characters.filter(c => c.active || c.eliminated);
   if (active.length === 0) {
     el.innerHTML = '<div style="font-family:\'Share Tech Mono\',monospace;font-size:9px;color:var(--text-muted);padding:4px">No characters spawned</div>';
     return;
@@ -1562,8 +1642,8 @@ function renderCharPanel(characters) {
     `<div class="char-status-item">
       <div class="char-status-dot" style="background:${c.color}"></div>
       <div>
-        <div class="char-status-name">${c.name}</div>
-        <div class="char-status-action">${c.statusText}</div>
+        <div class="char-status-name">${c.name}${c.eliminated ? ' ☠️' : ''}</div>
+        <div class="char-status-action">${c.statusText} · HP ${Math.round(c.health)} · KOs ${c.eliminations}</div>
       </div>
     </div>`
   ).join('');
@@ -1622,6 +1702,16 @@ function loop(ts) {
   ctx.clearRect(0, 0, RW, RH);
   renderRoom(ctx, sim);
 
+  if (sim.matchOver && sim.winner) {
+    btnPlayPause.textContent = '▶ PLAY';
+    btnPlayPause.style.background  = 'linear-gradient(135deg,var(--volt-dark),var(--volt))';
+    btnPlayPause.style.borderColor = 'var(--volt)';
+    btnPlayPause.style.color       = '#000';
+    overlay.style.display = '';
+    overlay.querySelector('.big').textContent = `${sim.winner.name} WINS`;
+    overlay.querySelector('.small').textContent = 'Press RESET to run another battle royale';
+  }
+
   // Update UI panels every frame (cheap DOM ops)
   renderCharPanel(sim.characters);
   updateSpawnButtons(sim.characters);
@@ -1636,9 +1726,19 @@ const btnPlayPause = document.getElementById('btn-playpause');
 const overlay      = document.getElementById('overlay-msg');
 
 btnPlayPause.addEventListener('click', () => {
+  if (sim.matchOver) {
+    overlay.style.display = '';
+    overlay.querySelector('.big').textContent = 'MATCH COMPLETE';
+    overlay.querySelector('.small').textContent = 'Press RESET to start a new round.';
+    return;
+  }
   if (sim.activeChars.length === 0 && !sim.running) {
     // Helpful nudge
     overlay.querySelector('.small').textContent = 'Spawn at least one character first!';
+    return;
+  }
+  if (sim.activeChars.length < 2 && !sim.running) {
+    overlay.querySelector('.small').textContent = 'Spawn at least two contenders for last-one-standing.';
     return;
   }
   sim.running = !sim.running;
@@ -1663,8 +1763,8 @@ document.getElementById('btn-reset').addEventListener('click', () => {
   btnPlayPause.style.borderColor = 'var(--volt)';
   btnPlayPause.style.color       = '#000';
   overlay.style.display = '';
-  overlay.querySelector('.big').textContent   = 'SCOUT ROOM SIM';
-  overlay.querySelector('.small').textContent = 'Spawn characters, then press PLAY';
+  overlay.querySelector('.big').textContent   = 'SCOUT BATTLE ROYALE';
+  overlay.querySelector('.small').textContent = 'Spawn contenders, then press PLAY';
 });
 
 // ── Speed ──
@@ -1678,6 +1778,12 @@ document.querySelectorAll('.btn-speed').forEach(btn => {
 // ── Spawn / Despawn ──
 document.querySelectorAll('.spawn-btn').forEach(btn => {
   btn.addEventListener('click', () => {
+    if (sim.running) {
+      overlay.style.display = '';
+      overlay.querySelector('.big').textContent = 'FIGHT IN PROGRESS';
+      overlay.querySelector('.small').textContent = 'Pause or reset before changing the roster.';
+      return;
+    }
     const name = btn.dataset.char;
     const c    = sim.characters.find(ch => ch.name === name);
     if (!c) return;
