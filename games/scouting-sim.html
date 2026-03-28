@@ -189,7 +189,7 @@ body {
 }
 .spawn-btn:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2); }
 .spawn-btn:active { transform: scale(0.97); }
-.spawn-btn.active { opacity: 0.45; cursor: default; pointer-events: none; }
+.spawn-btn.active { opacity: 0.82; border-color: rgba(0,255,204,0.45); }
 
 .spawn-dot {
   width: 10px;
@@ -808,12 +808,26 @@ class Character {
     if (this.altinCalm  > 0) this.altinCalm  -= dt;
     if (this.fightCooldown > 0) this.fightCooldown -= dt;
     if (this.hitFlash > 0) this.hitFlash -= dt;
+    if (this.decisionCooldown > 0) this.decisionCooldown -= dt;
+    if (this.abilityCooldown > 0) this.abilityCooldown -= dt;
+    if (this.powerSurge > 0) this.powerSurge -= dt;
+    if (this.armorSurge > 0) this.armorSurge -= dt;
+    if (this.hasteSurge > 0) this.hasteSurge -= dt;
+    if (this.evadeSurge > 0) this.evadeSurge -= dt;
+
+    if (sim.running) {
+      this._decideBattleGoal(sim);
+      this._maybeUseAbility(sim);
+    }
 
     switch (this.state) {
       case CS.IDLE:
         this.vx = 0; this.vy = 0;
         this.idleTimer -= dt;
-        if (this.idleTimer <= 0) this._pickGoal(sim);
+        if (this.idleTimer <= 0) {
+          if (sim.running) this._decideBattleGoal(sim);
+          else this._pickGoal(sim);
+        }
         break;
 
       case CS.WANDER:
@@ -859,6 +873,45 @@ class Character {
     }
   }
 
+  _decideBattleGoal(sim) {
+    if (this.state === CS.WORKING || this.decisionCooldown > 0) return;
+
+    if (this.manualTarget && this.manualTarget.ttl > 0) {
+      this.target = { x: this.manualTarget.x, y: this.manualTarget.y, obj: null, intent: 'manual' };
+      this.state = CS.MOVING;
+      this.statusText = 'Following command';
+      this.manualTarget.ttl -= 0.25;
+      this.decisionCooldown = 0.25;
+      return;
+    }
+
+    if (this.health <= 42) {
+      const sources = sim.healingNodes();
+      if (sources.length > 0) {
+        const node = nearestObj(this, sources);
+        this.target = { x: node.cx, y: node.cy, obj: node, intent: 'heal' };
+        this.state = CS.MOVING;
+        this.statusText = 'Falling back to heal';
+        this.decisionCooldown = rand(0.35, 0.75);
+        return;
+      }
+    }
+
+    const foes = sim.characters.filter(c => c.active && c !== this && c.health > 0);
+    if (foes.length > 0) {
+      const foe = foes.reduce((best, c) => dist(this, c) < dist(this, best) ? c : best, foes[0]);
+      this.target = {
+        x: clamp(foe.x + rand(-16, 16), 20, RW - 20),
+        y: clamp(foe.y + rand(-16, 16), 20, RH - 20),
+        obj: null,
+        intent: 'hunt',
+      };
+      this.state = CS.MOVING;
+      this.statusText = `Hunting ${foe.name}`;
+      this.decisionCooldown = rand(0.28, 0.7);
+    }
+  }
+
   _wander() {
     this.target = { x: rand(50, RW - 50), y: rand(50, RH - 50), obj: null };
     this.state  = CS.WANDER;
@@ -876,12 +929,14 @@ class Character {
       this.vx = 0; this.vy = 0;
       if (this.target.obj) {
         // Begin working at this object
-        this.workDuration = this.behaviors.workDuration || 3;
+        this.workDuration = this.target.intent === 'heal' ? rand(1.4, 2.4) : (this.behaviors.workDuration || 3);
         this.actionTimer  = this.workDuration;
         this.workProgress = 0;
         this.state = CS.WORKING;
-        if (this.behaviors.onArrive) this.behaviors.onArrive(this, sim);
+        if (this.target.intent === 'heal') this.statusText = 'Stabilizing...';
+        else if (this.behaviors.onArrive) this.behaviors.onArrive(this, sim);
       } else {
+        if (this.target?.intent === 'manual') this.manualTarget = null;
         this._goIdle(rand(0.3, 1.4));
       }
     } else {
@@ -892,6 +947,18 @@ class Character {
   }
 
   _finishWork(sim) {
+    if (sim.running && this.target?.intent === 'heal') {
+      const source = this.target.obj;
+      const boost = source?.state === STATE.EFFICIENT ? 1.35 : 1;
+      const healAmt = rand(18, 30) * boost;
+      this.health = clamp(this.health + healAmt, 0, 100);
+      this.statusText = 'Recovered';
+      if (source?.state === STATE.NORMAL && Math.random() < 0.35) source.makeEfficient();
+      sim.addEvent(`${this.name} recovered ${Math.round(healAmt)} HP at ${source?.label || 'a station'}`);
+      this.fightCooldown = Math.max(this.fightCooldown, 0.3);
+      this._goIdle(rand(0.25, 0.6));
+      return;
+    }
     if (this.behaviors.onComplete) this.behaviors.onComplete(this, sim);
     this.workProgress = 0;
     this._goIdle(rand(0.3, 1.2));
@@ -1000,6 +1067,116 @@ class Character {
 
     if (this.andyBoost > 0) { ctx.power += 0.08; ctx.speed += 0.08; }
     if (this.altinCalm > 0) { ctx.chaos = Math.max(0, ctx.chaos - 0.06); ctx.dodge += 0.02; }
+
+    ctx.armor = clamp(ctx.armor, -0.1, 0.55);
+    return ctx;
+  }
+
+  _dashToward(tx, ty, amount = 84) {
+    const dx = tx - this.x;
+    const dy = ty - this.y;
+    const d = Math.max(1, Math.hypot(dx, dy));
+    this.x = clamp(this.x + (dx / d) * amount, 22, RW - 22);
+    this.y = clamp(this.y + (dy / d) * amount, 22, RH - 22);
+    this.hitFlash = Math.max(this.hitFlash, 0.2);
+  }
+
+  _maybeUseAbility(sim) {
+    if (!sim.running || this.abilityCooldown > 0 || this.health <= 0) return;
+    const foes = sim.characters.filter(c => c.active && c !== this && c.health > 0);
+    const nearby = foes.filter(c => dist(this, c) < 110);
+
+    switch (this.name) {
+      case 'Joe':
+        this.health = clamp(this.health + 12, 0, 100);
+        this.armorSurge = 4.2;
+        this.abilityCooldown = 11.5;
+        sim.addEvent(`Joe used Field Patch (+HP, +armor)`);
+        break;
+      case 'Charlie':
+        if (nearby.length > 0) {
+          for (const foe of nearby) this._dealDamage(foe, rand(8, 12), sim, 'Charlie\'s Chaos Burst');
+          this.powerSurge = 2.6;
+          this.abilityCooldown = 13;
+          sim.addEvent(`Charlie detonated a Chaos Burst`);
+        } else return;
+        break;
+      case 'Kurt':
+        this.armorSurge = 5.5;
+        this.evadeSurge = 3.2;
+        this.abilityCooldown = 12;
+        sim.addEvent(`Kurt activated Guard Stance`);
+        break;
+      case 'Altin': {
+        if (foes.length === 0) return;
+        const threat = nearestObj(this, foes);
+        this._dashToward(this.x - (threat.x - this.x), this.y - (threat.y - this.y), 96);
+        this.evadeSurge = 4;
+        this.health = clamp(this.health + 7, 0, 100);
+        this.abilityCooldown = 11;
+        sim.addEvent(`Altin blinked out of danger`);
+        break;
+      }
+      case 'Jai': {
+        if (foes.length === 0) return;
+        const weak = foes.reduce((best, c) => c.health < best.health ? c : best, foes[0]);
+        this._dashToward(weak.x, weak.y, 88);
+        this.powerSurge = 2.8;
+        this.hasteSurge = 2.8;
+        this.abilityCooldown = 12.5;
+        sim.addEvent(`Jai executed Tactical Dash`);
+        break;
+      }
+      case 'Liam':
+        this.powerSurge = 3.5;
+        this.armorSurge = 3.5;
+        this.health = clamp(this.health + 5, 0, 100);
+        this.abilityCooldown = 12;
+        sim.addEvent(`Liam adapted mid-fight (+power/+armor)`);
+        break;
+      case 'Andy':
+        for (const ally of sim.characters.filter(c => c.active && c !== this && dist(this, c) < 140)) {
+          ally.hasteSurge = Math.max(ally.hasteSurge, 3);
+          ally.powerSurge = Math.max(ally.powerSurge, 3);
+        }
+        this.abilityCooldown = 14;
+        sim.addEvent(`Andy called a Rally Pulse`);
+        break;
+      default:
+        this.abilityCooldown = 10;
+    }
+  }
+
+  _combatContext(sim) {
+    const ctx = {
+      power: 1,
+      armor: 0,
+      crit: 0,
+      dodge: 0,
+      speed: 1,
+      chaos: 0,
+    };
+
+    const nearby = sim.objects.filter(o => dist(this, o) < 135);
+    for (const o of nearby) {
+      const mult = o.state === STATE.EFFICIENT ? 1.2 : o.state === STATE.DISRUPTED ? 0.85 : 1;
+      if (o.type === 'laptop')  { ctx.power += 0.08 * mult; ctx.crit += 0.02; }
+      if (o.type === 'tablet')  { ctx.crit += 0.05 * mult; }
+      if (o.type === 'phone')   { ctx.dodge += 0.03 * mult; }
+      if (o.type === 'server')  { ctx.power += 0.12 * mult; ctx.armor += 0.05 * mult; }
+      if (o.type === 'station') { ctx.power += 0.1 * mult; ctx.speed += 0.05 * mult; }
+      if (o.type === 'charger') { ctx.armor += 0.04 * mult; }
+
+      if (o.state === STATE.EFFICIENT) ctx.armor += 0.03;
+      if (o.state === STATE.DISRUPTED) { ctx.chaos += 0.08; ctx.armor -= 0.04; }
+    }
+
+    if (this.andyBoost > 0) { ctx.power += 0.08; ctx.speed += 0.08; }
+    if (this.altinCalm > 0) { ctx.chaos = Math.max(0, ctx.chaos - 0.06); ctx.dodge += 0.02; }
+    if (this.powerSurge > 0) ctx.power += 0.13;
+    if (this.armorSurge > 0) ctx.armor += 0.1;
+    if (this.hasteSurge > 0) ctx.speed += 0.14;
+    if (this.evadeSurge > 0) ctx.dodge += 0.08;
 
     ctx.armor = clamp(ctx.armor, -0.1, 0.55);
     return ctx;
@@ -1456,6 +1633,12 @@ class Simulation {
   get tables()      { return this.objects.filter(o => o.type === 'table'); }
   get interactive() { return this.objects.filter(o => o.interactive !== false); }
   get activeChars() { return this.characters.filter(c => c.active); }
+  healingNodes() {
+    return this.objects.filter(o =>
+      (o.type === 'station' || o.type === 'server' || o.type === 'laptop' || o.type === 'tablet')
+      && o.state !== STATE.DISRUPTED
+    );
+  }
 
   _buildCharacters() {
     return Object.keys(BEHAVIORS).map(name =>
@@ -1654,6 +1837,9 @@ function updateSpawnButtons(characters) {
     const name = btn.dataset.char;
     const c    = characters.find(ch => ch.name === name);
     btn.classList.toggle('active', !!(c && c.active));
+    btn.style.boxShadow = selectedCommander === name
+      ? '0 0 0 2px #fff inset, 0 0 8px rgba(255,255,255,0.55)'
+      : '';
   });
 }
 
@@ -1677,6 +1863,7 @@ let sim         = new Simulation();
 let lastTime    = null;
 let imagesReady = false;
 let imageMapCache = {};
+let selectedCommander = null;
 
 // Assign images to character objects once loaded
 loadCharImages().then(imageMap => {
@@ -1758,6 +1945,7 @@ btnPlayPause.addEventListener('click', () => {
 // ── Reset ──
 document.getElementById('btn-reset').addEventListener('click', () => {
   sim.reset();
+  selectedCommander = null;
   btnPlayPause.textContent       = '▶ PLAY';
   btnPlayPause.style.background  = 'linear-gradient(135deg,var(--volt-dark),var(--volt))';
   btnPlayPause.style.borderColor = 'var(--volt)';
@@ -1775,7 +1963,7 @@ document.querySelectorAll('.btn-speed').forEach(btn => {
   });
 });
 
-// ── Spawn / Despawn ──
+// ── Spawn + Select Commander ──
 document.querySelectorAll('.spawn-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     if (sim.running) {
@@ -1788,8 +1976,19 @@ document.querySelectorAll('.spawn-btn').forEach(btn => {
     const c    = sim.characters.find(ch => ch.name === name);
     if (!c) return;
     if (c.active) {
-      sim.despawn(name);
+      selectedCommander = selectedCommander === name ? null : name;
+      overlay.style.display = '';
+      overlay.querySelector('.big').textContent = selectedCommander ? `${name} SELECTED` : 'COMMAND CLEARED';
+      overlay.querySelector('.small').textContent = selectedCommander
+        ? 'Tap inside the arena to send them there.'
+        : 'Select an active character to issue move commands.';
     } else {
+      if (sim.running) {
+        overlay.style.display = '';
+        overlay.querySelector('.big').textContent = 'FIGHT IN PROGRESS';
+        overlay.querySelector('.small').textContent = 'Cannot spawn new contenders mid-fight.';
+        return;
+      }
       if (!imagesReady) {
         overlay.style.display = '';
         overlay.querySelector('.big').textContent = 'SPRITES LOADING';
@@ -1798,8 +1997,30 @@ document.querySelectorAll('.spawn-btn').forEach(btn => {
       }
       c.image = imageMapCache[name] || createFallbackSprite(c.name, c.color);
       sim.spawn(name);
+      selectedCommander = name;
     }
   });
+});
+
+canvas.addEventListener('click', ev => {
+  if (!selectedCommander) return;
+  const c = sim.characters.find(ch => ch.name === selectedCommander && ch.active);
+  if (!c) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = clamp((ev.clientX - rect.left) * scaleX, 22, RW - 22);
+  const y = clamp((ev.clientY - rect.top) * scaleY, 22, RH - 22);
+
+  c.manualTarget = { x, y, ttl: 14 };
+  c.target = { x, y, obj: null, intent: 'manual' };
+  c.state = CS.MOVING;
+  c.statusText = 'Moving to command point';
+  sim.addEvent(`${c.name} received move command`);
+  overlay.style.display = '';
+  overlay.querySelector('.big').textContent = `${c.name} MOVING`;
+  overlay.querySelector('.small').textContent = 'Command accepted. Tap again to reposition.';
 });
 
 // Hide overlay once user interacts
