@@ -189,7 +189,7 @@ body {
 }
 .spawn-btn:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2); }
 .spawn-btn:active { transform: scale(0.97); }
-.spawn-btn.active { opacity: 0.45; cursor: default; pointer-events: none; }
+.spawn-btn.active { opacity: 0.82; border-color: rgba(0,255,204,0.45); }
 
 .spawn-dot {
   width: 10px;
@@ -480,11 +480,11 @@ body {
   <div id="canvas-wrap">
     <canvas id="sim-canvas"></canvas>
     <div id="overlay-msg">
-      <div class="big">SCOUT ROOM SIM</div>
-      <div class="small">Spawn characters, then press PLAY</div>
+      <div class="big">SCOUT BATTLE ROYALE</div>
+      <div class="small">Spawn contenders, then press PLAY</div>
     </div>
     <div id="stats-bar">
-      <div class="stat-chip">Active: <span id="stat-active">0</span></div>
+      <div class="stat-chip">Alive: <span id="stat-active">0</span></div>
       <div class="stat-chip">OK: <span id="stat-ok">0</span></div>
       <div class="stat-chip">Disrupted: <span id="stat-disrupted">0</span></div>
       <div class="stat-chip">Efficient: <span id="stat-efficient">0</span></div>
@@ -791,6 +791,17 @@ class Character {
     this.health = 100;
     this.fightCooldown = rand(0.6, 1.8);
     this.hitFlash = 0;
+    this.eliminated = false;
+    this.eliminations = 0;
+    this.decisionCooldown = 0;
+    this.manualTarget = null; // user-directed move target
+
+    // Ability state
+    this.abilityCooldown = rand(4, 9);
+    this.powerSurge = 0;
+    this.armorSurge = 0;
+    this.hasteSurge = 0;
+    this.evadeSurge = 0;
   }
 
   // ── Update ──────────────────────────────────
@@ -806,12 +817,26 @@ class Character {
     if (this.altinCalm  > 0) this.altinCalm  -= dt;
     if (this.fightCooldown > 0) this.fightCooldown -= dt;
     if (this.hitFlash > 0) this.hitFlash -= dt;
+    if (this.decisionCooldown > 0) this.decisionCooldown -= dt;
+    if (this.abilityCooldown > 0) this.abilityCooldown -= dt;
+    if (this.powerSurge > 0) this.powerSurge -= dt;
+    if (this.armorSurge > 0) this.armorSurge -= dt;
+    if (this.hasteSurge > 0) this.hasteSurge -= dt;
+    if (this.evadeSurge > 0) this.evadeSurge -= dt;
+
+    if (sim.running) {
+      this._decideBattleGoal(sim);
+      this._maybeUseAbility(sim);
+    }
 
     switch (this.state) {
       case CS.IDLE:
         this.vx = 0; this.vy = 0;
         this.idleTimer -= dt;
-        if (this.idleTimer <= 0) this._pickGoal(sim);
+        if (this.idleTimer <= 0) {
+          if (sim.running) this._decideBattleGoal(sim);
+          else this._pickGoal(sim);
+        }
         break;
 
       case CS.WANDER:
@@ -857,6 +882,45 @@ class Character {
     }
   }
 
+  _decideBattleGoal(sim) {
+    if (this.state === CS.WORKING || this.decisionCooldown > 0) return;
+
+    if (this.manualTarget && this.manualTarget.ttl > 0) {
+      this.target = { x: this.manualTarget.x, y: this.manualTarget.y, obj: null, intent: 'manual' };
+      this.state = CS.MOVING;
+      this.statusText = 'Following command';
+      this.manualTarget.ttl -= 0.25;
+      this.decisionCooldown = 0.25;
+      return;
+    }
+
+    if (this.health <= 42) {
+      const sources = sim.healingNodes();
+      if (sources.length > 0) {
+        const node = nearestObj(this, sources);
+        this.target = { x: node.cx, y: node.cy, obj: node, intent: 'heal' };
+        this.state = CS.MOVING;
+        this.statusText = 'Falling back to heal';
+        this.decisionCooldown = rand(0.35, 0.75);
+        return;
+      }
+    }
+
+    const foes = sim.characters.filter(c => c.active && c !== this && c.health > 0);
+    if (foes.length > 0) {
+      const foe = foes.reduce((best, c) => dist(this, c) < dist(this, best) ? c : best, foes[0]);
+      this.target = {
+        x: clamp(foe.x + rand(-16, 16), 20, RW - 20),
+        y: clamp(foe.y + rand(-16, 16), 20, RH - 20),
+        obj: null,
+        intent: 'hunt',
+      };
+      this.state = CS.MOVING;
+      this.statusText = `Hunting ${foe.name}`;
+      this.decisionCooldown = rand(0.28, 0.7);
+    }
+  }
+
   _wander() {
     this.target = { x: rand(50, RW - 50), y: rand(50, RH - 50), obj: null };
     this.state  = CS.WANDER;
@@ -874,12 +938,14 @@ class Character {
       this.vx = 0; this.vy = 0;
       if (this.target.obj) {
         // Begin working at this object
-        this.workDuration = this.behaviors.workDuration || 3;
+        this.workDuration = this.target.intent === 'heal' ? rand(1.4, 2.4) : (this.behaviors.workDuration || 3);
         this.actionTimer  = this.workDuration;
         this.workProgress = 0;
         this.state = CS.WORKING;
-        if (this.behaviors.onArrive) this.behaviors.onArrive(this, sim);
+        if (this.target.intent === 'heal') this.statusText = 'Stabilizing...';
+        else if (this.behaviors.onArrive) this.behaviors.onArrive(this, sim);
       } else {
+        if (this.target?.intent === 'manual') this.manualTarget = null;
         this._goIdle(rand(0.3, 1.4));
       }
     } else {
@@ -890,6 +956,18 @@ class Character {
   }
 
   _finishWork(sim) {
+    if (sim.running && this.target?.intent === 'heal') {
+      const source = this.target.obj;
+      const boost = source?.state === STATE.EFFICIENT ? 1.35 : 1;
+      const healAmt = rand(18, 30) * boost;
+      this.health = clamp(this.health + healAmt, 0, 100);
+      this.statusText = 'Recovered';
+      if (source?.state === STATE.NORMAL && Math.random() < 0.35) source.makeEfficient();
+      sim.addEvent(`${this.name} recovered ${Math.round(healAmt)} HP at ${source?.label || 'a station'}`);
+      this.fightCooldown = Math.max(this.fightCooldown, 0.3);
+      this._goIdle(rand(0.25, 0.6));
+      return;
+    }
     if (this.behaviors.onComplete) this.behaviors.onComplete(this, sim);
     this.workProgress = 0;
     this._goIdle(rand(0.3, 1.2));
@@ -918,15 +996,32 @@ class Character {
 
   _battleNearby(sim, dt) {
     if (this.fightCooldown > 0 || this.health <= 0) return;
-    const foes = sim.characters.filter(c => c.active && c !== this && c.health > 0 && dist(this, c) < 48);
+    const foes = sim.characters.filter(c => c.active && c !== this && c.health > 0 && dist(this, c) < 52);
     if (foes.length === 0) return;
 
     const foe = pick(foes);
-    const damage = rand(4, 12);
-    foe.health = clamp(foe.health - damage, 0, 100);
+    const attackerCtx = this._combatContext(sim);
+    const defenderCtx = foe._combatContext(sim);
+    const chaos = clamp(0.12 + attackerCtx.chaos + defenderCtx.chaos, 0.1, 0.55);
+    const baseDamage = rand(5.5, 11.5);
+    const variableDamage = rand(baseDamage * (1 - chaos), baseDamage * (1 + chaos));
+    const critChance = clamp(0.08 + attackerCtx.crit, 0.05, 0.45);
+    const dodgeChance = clamp(defenderCtx.dodge, 0, 0.35);
+    const dodged = Math.random() < dodgeChance;
+    const isCrit = !dodged && Math.random() < critChance;
+    const damage = dodged
+      ? 0
+      : Math.max(1, variableDamage * attackerCtx.power * (isCrit ? 1.7 : 1) * (1 - defenderCtx.armor));
+
+    foe.statusText = dodged
+      ? pick(['Dodged it!', 'Slipped away!', 'Too quick!'])
+      : pick(['Taking hits!', 'Defending!', 'Countering!']);
+    this.statusText = isCrit
+      ? pick(['Critical strike!', 'Massive hit!', 'Big damage!'])
+      : pick(['Throwing hands!', 'Scout showdown!', 'Battle mode!']);
+    this._dealDamage(foe, damage, sim, `${this.name}${isCrit ? ' (CRIT)' : ''}`);
     foe.hitFlash = 0.35;
-    foe.statusText = pick(['Taking hits!', 'Defending!', 'Countering!']);
-    this.statusText = pick(['Throwing hands!', 'Scout showdown!', 'Battle mode!']);
+    if (!foe.active) return;
 
     // Knockback
     const dx = foe.x - this.x;
@@ -935,19 +1030,139 @@ class Character {
     foe.vx += (dx / d) * 95;
     foe.vy += (dy / d) * 95;
 
-    this.fightCooldown = rand(0.7, 1.6);
+    this.fightCooldown = rand(0.55, 1.45) * (1 / attackerCtx.speed);
 
-    if (Math.random() < 0.35) {
-      sim.addEvent(`${this.name} landed a hit on ${foe.name} (-${Math.round(damage)} HP)`);
+    if (Math.random() < 0.38) {
+      if (dodged) sim.addEvent(`${foe.name} dodged ${this.name}'s strike`);
+      else sim.addEvent(`${this.name} hit ${foe.name}${isCrit ? ' with a CRIT' : ''} (-${Math.round(damage)} HP)`);
     }
 
-    if (foe.health <= 0) {
-      foe.health = 35;
-      foe.state = CS.IDLE;
-      foe.idleTimer = rand(1.2, 2.6);
-      foe.statusText = 'Respawning...';
-      sim.addEvent(`${foe.name} got KO'd by ${this.name} and jumped back in!`);
+  }
+
+  _dealDamage(target, damage, sim, sourceName) {
+    target.health = clamp(target.health - damage, 0, 100);
+    if (target.health <= 0 && target.active) {
+      target.health = 0;
+      target.active = false;
+      target.eliminated = true;
+      target.state = CS.IDLE;
+      target.idleTimer = 0;
+      target.vx = 0; target.vy = 0;
+      target.statusText = 'OUT';
+      this.eliminations += 1;
+      sim.addEvent(`${target.name} was eliminated by ${sourceName}!`);
+      sim.checkForWinner();
     }
+  }
+
+  _dashToward(tx, ty, amount = 84) {
+    const dx = tx - this.x;
+    const dy = ty - this.y;
+    const d = Math.max(1, Math.hypot(dx, dy));
+    this.x = clamp(this.x + (dx / d) * amount, 22, RW - 22);
+    this.y = clamp(this.y + (dy / d) * amount, 22, RH - 22);
+    this.hitFlash = Math.max(this.hitFlash, 0.2);
+  }
+
+  _maybeUseAbility(sim) {
+    if (!sim.running || this.abilityCooldown > 0 || this.health <= 0) return;
+    const foes = sim.characters.filter(c => c.active && c !== this && c.health > 0);
+    const nearby = foes.filter(c => dist(this, c) < 110);
+
+    switch (this.name) {
+      case 'Joe':
+        this.health = clamp(this.health + 12, 0, 100);
+        this.armorSurge = 4.2;
+        this.abilityCooldown = 11.5;
+        sim.addEvent(`Joe used Field Patch (+HP, +armor)`);
+        break;
+      case 'Charlie':
+        if (nearby.length > 0) {
+          for (const foe of nearby) this._dealDamage(foe, rand(8, 12), sim, 'Charlie\'s Chaos Burst');
+          this.powerSurge = 2.6;
+          this.abilityCooldown = 13;
+          sim.addEvent(`Charlie detonated a Chaos Burst`);
+        } else return;
+        break;
+      case 'Kurt':
+        this.armorSurge = 5.5;
+        this.evadeSurge = 3.2;
+        this.abilityCooldown = 12;
+        sim.addEvent(`Kurt activated Guard Stance`);
+        break;
+      case 'Altin': {
+        if (foes.length === 0) return;
+        const threat = nearestObj(this, foes);
+        this._dashToward(this.x - (threat.x - this.x), this.y - (threat.y - this.y), 96);
+        this.evadeSurge = 4;
+        this.health = clamp(this.health + 7, 0, 100);
+        this.abilityCooldown = 11;
+        sim.addEvent(`Altin blinked out of danger`);
+        break;
+      }
+      case 'Jai': {
+        if (foes.length === 0) return;
+        const weak = foes.reduce((best, c) => c.health < best.health ? c : best, foes[0]);
+        this._dashToward(weak.x, weak.y, 88);
+        this.powerSurge = 2.8;
+        this.hasteSurge = 2.8;
+        this.abilityCooldown = 12.5;
+        sim.addEvent(`Jai executed Tactical Dash`);
+        break;
+      }
+      case 'Liam':
+        this.powerSurge = 3.5;
+        this.armorSurge = 3.5;
+        this.health = clamp(this.health + 5, 0, 100);
+        this.abilityCooldown = 12;
+        sim.addEvent(`Liam adapted mid-fight (+power/+armor)`);
+        break;
+      case 'Andy':
+        for (const ally of sim.characters.filter(c => c.active && c !== this && dist(this, c) < 140)) {
+          ally.hasteSurge = Math.max(ally.hasteSurge, 3);
+          ally.powerSurge = Math.max(ally.powerSurge, 3);
+        }
+        this.abilityCooldown = 14;
+        sim.addEvent(`Andy called a Rally Pulse`);
+        break;
+      default:
+        this.abilityCooldown = 10;
+    }
+  }
+
+  _combatContext(sim) {
+    const ctx = {
+      power: 1,
+      armor: 0,
+      crit: 0,
+      dodge: 0,
+      speed: 1,
+      chaos: 0,
+    };
+
+    const nearby = sim.objects.filter(o => dist(this, o) < 135);
+    for (const o of nearby) {
+      const mult = o.state === STATE.EFFICIENT ? 1.2 : o.state === STATE.DISRUPTED ? 0.85 : 1;
+      if (o.type === 'laptop')  { ctx.power += 0.08 * mult; ctx.crit += 0.02; }
+      if (o.type === 'tablet')  { ctx.crit += 0.05 * mult; }
+      if (o.type === 'phone')   { ctx.dodge += 0.03 * mult; }
+      if (o.type === 'server')  { ctx.power += 0.12 * mult; ctx.armor += 0.05 * mult; }
+      if (o.type === 'station') { ctx.power += 0.1 * mult; ctx.speed += 0.05 * mult; }
+      if (o.type === 'charger') { ctx.armor += 0.04 * mult; }
+
+      if (o.state === STATE.EFFICIENT) ctx.armor += 0.03;
+      if (o.state === STATE.DISRUPTED) { ctx.chaos += 0.08; ctx.armor -= 0.04; }
+    }
+
+    if (this.andyBoost > 0) { ctx.power += 0.08; ctx.speed += 0.08; }
+    if (this.altinCalm > 0) { ctx.chaos = Math.max(0, ctx.chaos - 0.06); ctx.dodge += 0.02; }
+    if (this.powerSurge > 0) ctx.power += 0.13;
+    if (this.armorSurge > 0) ctx.armor += 0.1;
+    if (this.hasteSurge > 0) ctx.speed += 0.14;
+    if (this.evadeSurge > 0) ctx.dodge += 0.08;
+
+    ctx.armor = clamp(ctx.armor, -0.1, 0.55);
+    return ctx;
   }
 
   _pushFromTables(tables) {
@@ -1394,11 +1609,19 @@ class Simulation {
     this.running    = false;
     this.speed      = 1;
     this.simTime    = 0; // seconds (scaled)
+    this.winner     = null;
+    this.matchOver  = false;
   }
 
   get tables()      { return this.objects.filter(o => o.type === 'table'); }
   get interactive() { return this.objects.filter(o => o.interactive !== false); }
   get activeChars() { return this.characters.filter(c => c.active); }
+  healingNodes() {
+    return this.objects.filter(o =>
+      (o.type === 'station' || o.type === 'server' || o.type === 'laptop' || o.type === 'tablet')
+      && o.state !== STATE.DISRUPTED
+    );
+  }
 
   _buildCharacters() {
     return Object.keys(BEHAVIORS).map(name =>
@@ -1418,13 +1641,24 @@ class Simulation {
     c.active = true;
     c.x = rand(280, 520); c.y = rand(195, 345);
     c.state = CS.IDLE; c.idleTimer = rand(0.5, 2);
-    c.statusText = 'Ready';
-    this.addEvent(`${name} joined the scouting room!`);
+    c.health = 100;
+    c.eliminated = false;
+    c.eliminations = 0;
+    c.manualTarget = null;
+    c.fightCooldown = rand(0.4, 1.2);
+    c.abilityCooldown = rand(3, 8);
+    c.statusText = 'Ready to fight';
+    this.addEvent(`${name} entered the arena!`);
   }
 
   despawn(name) {
     const c = this.characters.find(ch => ch.name === name);
-    if (c) { c.active = false; c.state = CS.IDLE; c.target = null; }
+    if (c) {
+      c.active = false; c.state = CS.IDLE; c.target = null;
+      c.eliminated = false;
+      c.manualTarget = null;
+      c.statusText = 'Ready';
+    }
   }
 
   update(dt) {
@@ -1435,6 +1669,7 @@ class Simulation {
     for (const obj of this.objects)    obj.update(scaled);
     this._randomGlitches(scaled);
     for (const c   of this.characters) c.update(scaled, this);
+    this.checkForWinner();
   }
 
   _randomGlitches(dt) {
@@ -1462,11 +1697,16 @@ class Simulation {
 
   reset() {
     this.running = false; this.simTime = 0; this.events = [];
+    this.winner = null; this.matchOver = false;
     for (const o of this.objects)    o.reset();
     for (const c of this.characters) {
       c.active = false; c.state = CS.IDLE; c.target = null;
       c.statusText = 'Ready'; c.workProgress = 0;
       c.andyBoost = 0; c.altinCalm = 0; c.health = 100; c.fightCooldown = rand(0.6, 1.8); c.hitFlash = 0;
+      c.eliminated = false; c.eliminations = 0;
+      c.manualTarget = null;
+      c.powerSurge = 0; c.armorSurge = 0; c.hasteSurge = 0; c.evadeSurge = 0;
+      c.abilityCooldown = rand(4, 9);
       c._passiveTimer = rand(5, 15);
     }
     renderEventLog([]);
@@ -1477,11 +1717,24 @@ class Simulation {
   stats() {
     const inter = this.interactive;
     return {
-      active:    this.activeChars.length,
+      active:    this.activeChars.filter(c => c.health > 0).length,
       ok:        inter.filter(o => o.state === STATE.NORMAL).length,
       disrupted: inter.filter(o => o.state === STATE.DISRUPTED).length,
       efficient: inter.filter(o => o.state === STATE.EFFICIENT).length,
     };
+  }
+
+  checkForWinner() {
+    if (this.matchOver) return;
+    const alive = this.characters.filter(c => c.active && c.health > 0);
+    const totalInMatch = alive.length + this.characters.filter(c => c.eliminated).length;
+    if (this.running && totalInMatch >= 2 && alive.length === 1) {
+      this.winner = alive[0];
+      this.matchOver = true;
+      this.running = false;
+      this.winner.statusText = 'LAST ONE STANDING 👑';
+      this.addEvent(`🏆 ${this.winner.name} is the last one standing!`);
+    }
   }
 }
 
@@ -1553,7 +1806,7 @@ function renderEventLog(events) {
 
 function renderCharPanel(characters) {
   const el = document.getElementById('char-status-list');
-  const active = characters.filter(c => c.active);
+  const active = characters.filter(c => c.active || c.eliminated);
   if (active.length === 0) {
     el.innerHTML = '<div style="font-family:\'Share Tech Mono\',monospace;font-size:9px;color:var(--text-muted);padding:4px">No characters spawned</div>';
     return;
@@ -1562,8 +1815,8 @@ function renderCharPanel(characters) {
     `<div class="char-status-item">
       <div class="char-status-dot" style="background:${c.color}"></div>
       <div>
-        <div class="char-status-name">${c.name}</div>
-        <div class="char-status-action">${c.statusText}</div>
+        <div class="char-status-name">${c.name}${c.eliminated ? ' ☠️' : ''}</div>
+        <div class="char-status-action">${c.statusText} · HP ${Math.round(c.health)} · KOs ${c.eliminations}</div>
       </div>
     </div>`
   ).join('');
@@ -1574,6 +1827,9 @@ function updateSpawnButtons(characters) {
     const name = btn.dataset.char;
     const c    = characters.find(ch => ch.name === name);
     btn.classList.toggle('active', !!(c && c.active));
+    btn.style.boxShadow = selectedCommander === name
+      ? '0 0 0 2px #fff inset, 0 0 8px rgba(255,255,255,0.55)'
+      : '';
   });
 }
 
@@ -1597,6 +1853,7 @@ let sim         = new Simulation();
 let lastTime    = null;
 let imagesReady = false;
 let imageMapCache = {};
+let selectedCommander = null;
 
 // Assign images to character objects once loaded
 loadCharImages().then(imageMap => {
@@ -1622,6 +1879,16 @@ function loop(ts) {
   ctx.clearRect(0, 0, RW, RH);
   renderRoom(ctx, sim);
 
+  if (sim.matchOver && sim.winner) {
+    btnPlayPause.textContent = '▶ PLAY';
+    btnPlayPause.style.background  = 'linear-gradient(135deg,var(--volt-dark),var(--volt))';
+    btnPlayPause.style.borderColor = 'var(--volt)';
+    btnPlayPause.style.color       = '#000';
+    overlay.style.display = '';
+    overlay.querySelector('.big').textContent = `${sim.winner.name} WINS`;
+    overlay.querySelector('.small').textContent = 'Press RESET to run another battle royale';
+  }
+
   // Update UI panels every frame (cheap DOM ops)
   renderCharPanel(sim.characters);
   updateSpawnButtons(sim.characters);
@@ -1636,9 +1903,19 @@ const btnPlayPause = document.getElementById('btn-playpause');
 const overlay      = document.getElementById('overlay-msg');
 
 btnPlayPause.addEventListener('click', () => {
+  if (sim.matchOver) {
+    overlay.style.display = '';
+    overlay.querySelector('.big').textContent = 'MATCH COMPLETE';
+    overlay.querySelector('.small').textContent = 'Press RESET to start a new round.';
+    return;
+  }
   if (sim.activeChars.length === 0 && !sim.running) {
     // Helpful nudge
     overlay.querySelector('.small').textContent = 'Spawn at least one character first!';
+    return;
+  }
+  if (sim.activeChars.length < 2 && !sim.running) {
+    overlay.querySelector('.small').textContent = 'Spawn at least two contenders for last-one-standing.';
     return;
   }
   sim.running = !sim.running;
@@ -1658,13 +1935,14 @@ btnPlayPause.addEventListener('click', () => {
 // ── Reset ──
 document.getElementById('btn-reset').addEventListener('click', () => {
   sim.reset();
+  selectedCommander = null;
   btnPlayPause.textContent       = '▶ PLAY';
   btnPlayPause.style.background  = 'linear-gradient(135deg,var(--volt-dark),var(--volt))';
   btnPlayPause.style.borderColor = 'var(--volt)';
   btnPlayPause.style.color       = '#000';
   overlay.style.display = '';
-  overlay.querySelector('.big').textContent   = 'SCOUT ROOM SIM';
-  overlay.querySelector('.small').textContent = 'Spawn characters, then press PLAY';
+  overlay.querySelector('.big').textContent   = 'SCOUT BATTLE ROYALE';
+  overlay.querySelector('.small').textContent = 'Spawn contenders, then press PLAY';
 });
 
 // ── Speed ──
@@ -1675,15 +1953,26 @@ document.querySelectorAll('.btn-speed').forEach(btn => {
   });
 });
 
-// ── Spawn / Despawn ──
+// ── Spawn + Select Commander ──
 document.querySelectorAll('.spawn-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const name = btn.dataset.char;
     const c    = sim.characters.find(ch => ch.name === name);
     if (!c) return;
     if (c.active) {
-      sim.despawn(name);
+      selectedCommander = selectedCommander === name ? null : name;
+      overlay.style.display = '';
+      overlay.querySelector('.big').textContent = selectedCommander ? `${name} SELECTED` : 'COMMAND CLEARED';
+      overlay.querySelector('.small').textContent = selectedCommander
+        ? 'Tap inside the arena to send them there.'
+        : 'Select an active character to issue move commands.';
     } else {
+      if (sim.running) {
+        overlay.style.display = '';
+        overlay.querySelector('.big').textContent = 'FIGHT IN PROGRESS';
+        overlay.querySelector('.small').textContent = 'Cannot spawn new contenders mid-fight.';
+        return;
+      }
       if (!imagesReady) {
         overlay.style.display = '';
         overlay.querySelector('.big').textContent = 'SPRITES LOADING';
@@ -1692,8 +1981,30 @@ document.querySelectorAll('.spawn-btn').forEach(btn => {
       }
       c.image = imageMapCache[name] || createFallbackSprite(c.name, c.color);
       sim.spawn(name);
+      selectedCommander = name;
     }
   });
+});
+
+canvas.addEventListener('click', ev => {
+  if (!selectedCommander) return;
+  const c = sim.characters.find(ch => ch.name === selectedCommander && ch.active);
+  if (!c) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = clamp((ev.clientX - rect.left) * scaleX, 22, RW - 22);
+  const y = clamp((ev.clientY - rect.top) * scaleY, 22, RH - 22);
+
+  c.manualTarget = { x, y, ttl: 14 };
+  c.target = { x, y, obj: null, intent: 'manual' };
+  c.state = CS.MOVING;
+  c.statusText = 'Moving to command point';
+  sim.addEvent(`${c.name} received move command`);
+  overlay.style.display = '';
+  overlay.querySelector('.big').textContent = `${c.name} MOVING`;
+  overlay.querySelector('.small').textContent = 'Command accepted. Tap again to reposition.';
 });
 
 // Hide overlay once user interacts
