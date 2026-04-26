@@ -422,49 +422,49 @@ body {
           <div class="spawn-dot" style="background:#FF6B00"></div>
           <div>
             <div class="spawn-name">Joe</div>
-            <div class="spawn-role">Fixer</div>
+            <div class="spawn-role">Hunter</div>
           </div>
         </button>
         <button class="spawn-btn" data-char="Charlie">
           <div class="spawn-dot" style="background:#FF3366"></div>
           <div>
             <div class="spawn-name">Charlie</div>
-            <div class="spawn-role">Tinkerer</div>
+            <div class="spawn-role">Glass Cannon</div>
           </div>
         </button>
         <button class="spawn-btn" data-char="Kurt">
           <div class="spawn-dot" style="background:#4488FF"></div>
           <div>
             <div class="spawn-name">Kurt</div>
-            <div class="spawn-role">Restorer</div>
+            <div class="spawn-role">Iron Wall</div>
           </div>
         </button>
         <button class="spawn-btn" data-char="Altin">
           <div class="spawn-dot" style="background:#00FFCC"></div>
           <div>
             <div class="spawn-name">Altin</div>
-            <div class="spawn-role">Chill Presence</div>
+            <div class="spawn-role">Ghost</div>
           </div>
         </button>
         <button class="spawn-btn" data-char="Jai">
           <div class="spawn-dot" style="background:#FFD700"></div>
           <div>
             <div class="spawn-name">Jai</div>
-            <div class="spawn-role">Coordinator</div>
+            <div class="spawn-role">Skirmisher</div>
           </div>
         </button>
         <button class="spawn-btn" data-char="Liam">
           <div class="spawn-dot" style="background:#CC88FF"></div>
           <div>
             <div class="spawn-name">Liam</div>
-            <div class="spawn-role">Contributor</div>
+            <div class="spawn-role">Opportunist</div>
           </div>
         </button>
         <button class="spawn-btn" data-char="Andy">
           <div class="spawn-dot" style="background:#FF8C42"></div>
           <div>
             <div class="spawn-name">Andy</div>
-            <div class="spawn-role">Lead</div>
+            <div class="spawn-role">Commander</div>
           </div>
         </button>
       </div>
@@ -485,9 +485,9 @@ body {
     </div>
     <div id="stats-bar">
       <div class="stat-chip">Alive: <span id="stat-active">0</span></div>
-      <div class="stat-chip">OK: <span id="stat-ok">0</span></div>
-      <div class="stat-chip">Disrupted: <span id="stat-disrupted">0</span></div>
-      <div class="stat-chip">Efficient: <span id="stat-efficient">0</span></div>
+      <div class="stat-chip">KOs: <span id="stat-ok">0</span></div>
+      <div class="stat-chip">Avg HP: <span id="stat-disrupted">–</span></div>
+      <div class="stat-chip">Items: <span id="stat-efficient">0</span></div>
     </div>
   </div>
 
@@ -793,6 +793,14 @@ class Character {
     this.hitFlash = 0;
     this.eliminated = false;
     this.eliminations = 0;
+
+    // Combat buffs from item use
+    this.powerBuff    = 0;
+    this.speedBuff    = 0;
+    this.armorBuff    = 0;
+    this.critBuff     = 0;
+    this.healCooldown = 0;
+    this.itemsUsed    = 0;
   }
 
   // ── Update ──────────────────────────────────
@@ -803,9 +811,14 @@ class Character {
     if (this.behaviors.onPassive) this.behaviors.onPassive(this, sim, dt);
 
     // Work rate modified by Andy's leadership boost
-    const workRate = this.andyBoost > 0 ? 1.6 : 1.0;
-    if (this.andyBoost  > 0) this.andyBoost  -= dt;
-    if (this.altinCalm  > 0) this.altinCalm  -= dt;
+    const workRate = 1.0;
+    if (this.andyBoost    > 0) this.andyBoost    -= dt;
+    if (this.altinCalm    > 0) this.altinCalm    -= dt;
+    if (this.powerBuff    > 0) this.powerBuff    -= dt;
+    if (this.speedBuff    > 0) this.speedBuff    -= dt;
+    if (this.armorBuff    > 0) this.armorBuff    -= dt;
+    if (this.critBuff     > 0) this.critBuff     -= dt;
+    if (this.healCooldown > 0) this.healCooldown -= dt;
     if (this.fightCooldown > 0) this.fightCooldown -= dt;
     if (this.hitFlash > 0) this.hitFlash -= dt;
 
@@ -882,10 +895,10 @@ class Character {
         this.state = CS.WORKING;
         if (this.behaviors.onArrive) this.behaviors.onArrive(this, sim);
       } else {
-        this._goIdle(rand(0.3, 1.4));
+        this._goIdle(rand(0.08, 0.28));
       }
     } else {
-      const spd = this.speed;
+      const spd = this.speed * (this.speedBuff > 0 ? 1.35 : 1.0);
       this.vx = (dx / d) * spd;
       this.vy = (dy / d) * spd;
     }
@@ -975,33 +988,39 @@ class Character {
   }
 
   _combatContext(sim) {
+    const style = this.behaviors.combatStyle || {};
     const ctx = {
-      power: 1,
-      armor: 0,
-      crit: 0,
-      dodge: 0,
-      speed: 1,
-      chaos: 0,
+      power: 1 + (style.power || 0),
+      armor: style.armor || 0,
+      crit:  style.crit  || 0,
+      dodge: style.dodge || 0,
+      speed: 1 + (style.speedMult || 0),
+      chaos: style.chaos || 0,
     };
 
+    // Active item buffs
+    if (this.powerBuff > 0) { ctx.power += 0.22; ctx.crit += 0.05; }
+    if (this.speedBuff > 0) { ctx.speed += 0.20; ctx.dodge += 0.05; }
+    if (this.armorBuff > 0) { ctx.armor += 0.18; }
+    if (this.critBuff  > 0) { ctx.crit  += 0.15; }
+
+    // Environmental bonuses from nearby objects
     const nearby = sim.objects.filter(o => dist(this, o) < 135);
     for (const o of nearby) {
       const mult = o.state === STATE.EFFICIENT ? 1.2 : o.state === STATE.DISRUPTED ? 0.85 : 1;
-      if (o.type === 'laptop')  { ctx.power += 0.08 * mult; ctx.crit += 0.02; }
-      if (o.type === 'tablet')  { ctx.crit += 0.05 * mult; }
-      if (o.type === 'phone')   { ctx.dodge += 0.03 * mult; }
-      if (o.type === 'server')  { ctx.power += 0.12 * mult; ctx.armor += 0.05 * mult; }
-      if (o.type === 'station') { ctx.power += 0.1 * mult; ctx.speed += 0.05 * mult; }
-      if (o.type === 'charger') { ctx.armor += 0.04 * mult; }
-
-      if (o.state === STATE.EFFICIENT) ctx.armor += 0.03;
-      if (o.state === STATE.DISRUPTED) { ctx.chaos += 0.08; ctx.armor -= 0.04; }
+      if (o.type === 'laptop')  { ctx.power += 0.05 * mult; ctx.crit += 0.01; }
+      if (o.type === 'tablet')  { ctx.crit  += 0.04 * mult; }
+      if (o.type === 'phone')   { ctx.dodge += 0.02 * mult; }
+      if (o.type === 'server')  { ctx.power += 0.08 * mult; ctx.armor += 0.04 * mult; }
+      if (o.type === 'station') { ctx.power += 0.06 * mult; ctx.speed += 0.04 * mult; }
+      if (o.type === 'charger') { ctx.armor += 0.03 * mult; }
+      if (o.state === STATE.DISRUPTED) { ctx.chaos += 0.06; ctx.armor -= 0.03; }
     }
 
-    if (this.andyBoost > 0) { ctx.power += 0.08; ctx.speed += 0.08; }
-    if (this.altinCalm > 0) { ctx.chaos = Math.max(0, ctx.chaos - 0.06); ctx.dodge += 0.02; }
+    if (this.andyBoost > 0) { ctx.power += 0.07; ctx.speed += 0.07; }
+    if (this.altinCalm > 0) { ctx.chaos = Math.max(0, ctx.chaos - 0.05); ctx.dodge += 0.02; }
 
-    ctx.armor = clamp(ctx.armor, -0.1, 0.55);
+    ctx.armor = clamp(ctx.armor, -0.15, 0.55);
     return ctx;
   }
 
@@ -1132,262 +1151,350 @@ class Character {
 
 const BEHAVIORS = {
 
-  // ── Joe: Fixer / Optimizer ──────────────────
+  // ── Joe: Relentless Hunter ──────────────────
+  // Chases the most wounded enemy. Uses laptops for damage spikes.
+  // Aggressive brawler — high power, fights straight up, doesn't back down.
   Joe: {
-    workDuration: 3.5,
-    selectTarget(char, sim) {
-      const disrupted = sim.interactive.filter(o => o.state === STATE.DISRUPTED);
-      if (disrupted.length > 0) {
-        const t = nearestObj(char, disrupted);
-        return { x: t.cx, y: t.cy, obj: t, statusText: 'Found an issue' };
-      }
-      const normal = sim.interactive.filter(o => o.state === STATE.NORMAL);
-      if (normal.length > 0 && Math.random() < 0.4) {
-        const t = pick(normal);
-        return { x: t.cx, y: t.cy, obj: t, statusText: 'Optimizing...' };
-      }
-      return null;
-    },
-    onArrive(char) {
-      char.statusText = char.target?.obj?.state === STATE.DISRUPTED
-        ? 'Repairing...' : 'Boosting efficiency...';
-    },
-    onComplete(char, sim) {
-      const obj = char.target?.obj;
-      if (!obj) return;
-      if (obj.state === STATE.DISRUPTED) {
-        obj.repair();
-        sim.addEvent(pick([
-          `Joe patched up ${obj.label} like a pro`,
-          `Joe fixed ${obj.label} in record time`,
-          `${obj.label} works perfectly again — thanks Joe`,
-        ]));
-      } else if (obj.state === STATE.NORMAL) {
-        obj.makeEfficient();
-        sim.addEvent(pick([
-          `Joe optimized ${obj.label} — peak efficiency unlocked`,
-          `Joe upgraded ${obj.label}. It's running 20% faster now`,
-        ]));
-      }
-      char.statusText = 'Done!';
-    },
-  },
-
-  // ── Charlie: Chaotic Tinkerer ───────────────
-  Charlie: {
-    workDuration: 2.8,
-    selectTarget(char, sim) {
-      const available = sim.interactive.filter(o => o.state !== STATE.DISRUPTED);
-      if (available.length > 0) {
-        const t = pick(available);
-        return { x: t.cx, y: t.cy, obj: t, statusText: 'Spotted something...' };
-      }
-      return null;
-    },
-    onArrive(char) { char.statusText = 'Tinkering...'; },
-    onComplete(char, sim) {
-      const obj = char.target?.obj;
-      if (obj && obj.state !== STATE.DISRUPTED) {
-        obj.disrupt();
-        sim.addEvent(pick([
-          `Charlie gave ${obj.label} a "creative" new configuration`,
-          `Charlie discovered an undocumented feature on ${obj.label}`,
-          `Charlie performed unsanctioned improvements on ${obj.label}`,
-          `Charlie installed something on ${obj.label}. Nobody asked. It happened.`,
-          `${obj.label} is now running Charlie's custom firmware`,
-        ]));
-        char.statusText = 'Mission accomplished!';
-      } else {
-        char.statusText = 'Already done here...';
-      }
-    },
-  },
-
-  // ── Kurt: Order Restorer ────────────────────
-  Kurt: {
     workDuration: 3.0,
+    combatStyle: { power: 0.25, armor: 0.05, crit: 0.08, dodge: 0.0, speedMult: 0.1, chaos: 0.0 },
     selectTarget(char, sim) {
-      const disrupted = sim.interactive.filter(o => o.state === STATE.DISRUPTED);
-      if (disrupted.length > 0) {
-        const t = nearestObj(char, disrupted);
-        return { x: t.cx, y: t.cy, obj: t, statusText: 'Restoring order...' };
-      }
-      // Patrol between random waypoints
-      return null;
-    },
-    onArrive(char) { char.statusText = 'Fixing...'; },
-    onComplete(char, sim) {
-      const obj = char.target?.obj;
-      if (obj && obj.state === STATE.DISRUPTED) {
-        obj.repair();
-        sim.addEvent(pick([
-          `Kurt restored order at ${obj.label} with surgical precision`,
-          `Kurt quietly corrected ${obj.label}. Of course he did.`,
-          `${obj.label} is back to normal. Kurt was on it before anyone noticed.`,
-          `Kurt walked over to ${obj.label} and calmly fixed everything`,
-        ]));
-        char.statusText = 'Order restored.';
-      } else {
-        char.statusText = 'All clear here.';
-      }
-    },
-  },
-
-  // ── Altin: Chill Presence ───────────────────
-  Altin: {
-    workDuration: 2.0,
-    selectTarget(char, sim) {
-      // Drift toward groups or stay near tables
-      const active = sim.characters.filter(c => c.active && c !== char);
-      if (active.length > 0 && Math.random() < 0.5) {
-        const t = pick(active);
-        return { x: t.x + rand(-70, 70), y: t.y + rand(-70, 70), obj: null, statusText: 'Vibing nearby' };
-      }
-      return null;
-    },
-    onArrive(char) { char.statusText = 'Just hanging out'; },
-    onComplete(char) { char.statusText = 'Relaxing'; },
-    onPassive(char, sim, dt) {
-      // Calm aura: passively reduce nearby characters' idle randomness
-      for (const c of sim.characters) {
-        if (c === char || !c.active) continue;
-        if (dist(char, c) < 110) c.altinCalm = Math.min(c.altinCalm + dt, 0.5);
-      }
-      // Passive event
-      char._passiveTimer -= dt;
-      if (char._passiveTimer <= 0) {
-        char._passiveTimer = rand(18, 30);
-        if (sim.running) {
-          sim.addEvent(pick([
-            `Altin's chill energy spread through the room`,
-            `Everyone near Altin felt weirdly productive`,
-            `Altin somehow made chaos 15% less chaotic just by existing`,
-          ]));
+      const alive = sim.characters.filter(c => c.active && c !== char && c.health > 0);
+      if (char.health < 30 && char.healCooldown <= 0) {
+        const phones = sim.interactive.filter(o => o.type === 'phone');
+        if (phones.length > 0) {
+          const p = nearestObj(char, phones);
+          return { x: p.cx, y: p.cy, obj: p, statusText: 'Need a fix!' };
         }
       }
-    },
-  },
-
-  // ── Jai: Active Coordinator ─────────────────
-  Jai: {
-    workDuration: 1.8,
-    selectTarget(char, sim) {
-      // Head toward a character or active object
-      const active = sim.characters.filter(c => c.active && c !== char);
-      if (active.length > 0 && Math.random() < 0.65) {
-        const t = pick(active);
-        return { x: t.x + rand(-25, 25), y: t.y + rand(-25, 25), obj: null, statusText: 'Coordinating...' };
-      }
-      const objs = sim.interactive;
-      if (objs.length > 0 && Math.random() < 0.5) {
-        const t = pick(objs);
-        return { x: t.cx, y: t.cy, obj: null, statusText: 'Checking status...' };
-      }
-      return null;
-    },
-    onArrive(char, sim) {
-      // Nudge nearby characters toward disrupted objects
-      const nearby = sim.characters.filter(c => c.active && c !== char && dist(char, c) < 130);
-      const disrupted = sim.interactive.filter(o => o.state === STATE.DISRUPTED);
-      if (nearby.length > 0 && disrupted.length > 0) {
-        const target = pick(nearby.filter(c => c.state !== CS.WORKING) || nearby);
-        const obj    = disrupted[0];
-        if (target && target.state !== CS.WORKING) {
-          target.target = { x: obj.cx, y: obj.cy, obj, statusText: '(Jai said go)' };
-          target.state  = CS.MOVING;
-          sim.addEvent(`Jai redirected ${target.name} toward ${obj.label}`);
-          char.statusText = 'Delegated!';
-          return;
+      if (char.powerBuff <= 0 && alive.length > 0 && Math.random() < 0.12) {
+        const laptops = sim.interactive.filter(o => o.type === 'laptop');
+        if (laptops.length > 0) {
+          const l = nearestObj(char, laptops);
+          if (dist(char, l) < 220) return { x: l.cx, y: l.cy, obj: l, statusText: 'Powering up...' };
         }
       }
-      if (nearby.length > 0) {
-        sim.addEvent(`Jai checked in with ${nearby.map(c => c.name).join(' & ')}`);
-        char.statusText = 'Checked in!';
-      }
-    },
-    onComplete(char) { char.statusText = 'What\'s next?'; },
-  },
-
-  // ── Liam: Flexible Contributor ──────────────
-  Liam: {
-    workDuration: 3.2,
-    selectTarget(char, sim) {
-      const disrupted = sim.interactive.filter(o => o.state === STATE.DISRUPTED);
-      const normal    = sim.interactive.filter(o => o.state === STATE.NORMAL);
-      // Random chance to switch tasks
-      if (disrupted.length > 0) {
-        // Sometimes pick a different one than the current target
-        const pool = disrupted.filter(o => o !== char.target?.obj);
-        const t = pool.length > 0 ? (Math.random() < 0.4 ? pick(pool) : disrupted[0]) : disrupted[0];
-        return { x: t.cx, y: t.cy, obj: t, statusText: 'On it!' };
-      }
-      if (normal.length > 0) {
-        const t = pick(normal);
-        return { x: t.cx, y: t.cy, obj: t, statusText: 'Helping out...' };
+      if (alive.length > 0) {
+        const target = alive.reduce((a, b) => a.health < b.health ? a : b);
+        return { x: target.x + rand(-10, 10), y: target.y + rand(-10, 10), obj: null, statusText: pick(['Hunting...', 'Coming for you.', 'No mercy!']) };
       }
       return null;
     },
-    onArrive(char) { char.statusText = 'Working on it...'; },
+    onArrive(char) { char.statusText = char.target?.obj ? 'Overclocking...' : 'Moving in!'; },
     onComplete(char, sim) {
       const obj = char.target?.obj;
       if (!obj) return;
-      if (obj.state === STATE.DISRUPTED) {
-        obj.repair();
-        sim.addEvent(pick([
-          `Liam quietly fixed ${obj.label}`,
-          `Liam helped out at ${obj.label} — no big deal`,
-          `${obj.label} is back up. Liam was already moving to the next thing.`,
-        ]));
-      } else {
-        if (Math.random() < 0.45) {
-          obj.makeEfficient();
-          sim.addEvent(`Liam gave ${obj.label} a small boost`);
-        } else {
-          sim.addEvent(`Liam checked on ${obj.label} — all good!`);
-        }
+      if (obj.type === 'phone') {
+        const heal = rand(22, 32);
+        char.health = Math.min(100, char.health + heal);
+        char.healCooldown = 25;
+        char.itemsUsed++;
+        sim.addEvent(pick([`Joe patched himself up (+${Math.round(heal)} HP)`, `Joe grabbed the phone — back in it`]));
+        char.statusText = 'Fixed!';
+      } else if (obj.type === 'laptop') {
+        char.powerBuff = 9;
+        char.itemsUsed++;
+        sim.addEvent(pick([`Joe overclocked — incoming pain`, `Joe's damage just spiked. Watch out.`]));
+        char.statusText = 'Powered up!';
       }
-      char.statusText = Math.random() < 0.5 ? 'Done! What\'s next?' : 'Moving on...';
     },
   },
 
-  // ── Andy: Respected Lead ────────────────────
-  Andy: {
+  // ── Charlie: Chaotic Glass Cannon ──────────
+  // Unpredictable targeting — picks enemies randomly. Uses tablets for crit bursts.
+  // High chaos and crit chance. Fragile but hits wildly hard.
+  Charlie: {
     workDuration: 2.5,
+    combatStyle: { power: 0.0, armor: -0.05, crit: 0.18, dodge: 0.06, speedMult: 0.15, chaos: 0.18 },
     selectTarget(char, sim) {
-      const disrupted = sim.interactive.filter(o => o.state === STATE.DISRUPTED);
-      // Head toward busy/disrupted areas to stabilize
-      if (disrupted.length >= 2) {
-        const cx = disrupted.reduce((s, o) => s + o.cx, 0) / disrupted.length;
-        const cy = disrupted.reduce((s, o) => s + o.cy, 0) / disrupted.length;
-        return { x: cx + rand(-50, 50), y: cy + rand(-50, 50), obj: null, statusText: 'Monitoring...' };
+      const alive = sim.characters.filter(c => c.active && c !== char && c.health > 0);
+      if (char.health < 42 && char.healCooldown <= 0) {
+        const phones = sim.interactive.filter(o => o.type === 'phone');
+        if (phones.length > 0) {
+          const p = nearestObj(char, phones);
+          return { x: p.cx, y: p.cy, obj: p, statusText: 'Retreating...' };
+        }
+      }
+      if (char.critBuff <= 0 && alive.length > 0 && Math.random() < 0.15) {
+        const tablets = sim.interactive.filter(o => o.type === 'tablet');
+        if (tablets.length > 0) {
+          const t = nearestObj(char, tablets);
+          if (dist(char, t) < 250) return { x: t.cx, y: t.cy, obj: t, statusText: 'Setting something up...' };
+        }
+      }
+      if (alive.length > 0) {
+        const target = pick(alive);
+        return { x: target.x + rand(-28, 28), y: target.y + rand(-28, 28), obj: null, statusText: pick(['Incoming!', 'Surprise!', 'Let\'s cause problems!']) };
       }
       return null;
     },
-    onArrive(char, sim) {
-      const nearby = sim.characters.filter(c => c.active && c !== char && dist(char, c) < 160);
-      if (nearby.length > 0) {
-        for (const c of nearby) c.andyBoost = Math.max(c.andyBoost, 5);
-        sim.addEvent(pick([
-          `Andy's presence boosted the whole team's focus`,
-          `Everyone near Andy suddenly became 40% more productive`,
-          `Andy strolled over. Productivity went up. Nobody questioned it.`,
-        ]));
-        char.statusText = 'Leading!';
+    onArrive(char) { char.statusText = char.target?.obj ? 'Tinkering...' : pick(['Got you!', 'Boo.', 'Hi.']); },
+    onComplete(char, sim) {
+      const obj = char.target?.obj;
+      if (!obj) return;
+      if (obj.type === 'phone') {
+        const heal = rand(18, 28);
+        char.health = Math.min(100, char.health + heal);
+        char.healCooldown = 22;
+        char.itemsUsed++;
+        sim.addEvent(pick([`Charlie snuck a heal (+${Math.round(heal)} HP)`, `Charlie is NOT eliminated today`]));
+        char.statusText = 'Back at it!';
+      } else if (obj.type === 'tablet') {
+        char.critBuff = 8;
+        char.itemsUsed++;
+        sim.addEvent(pick([`Charlie set something up. Looks unstable.`, `Charlie's crits just got a lot more chaotic`]));
+        char.statusText = 'Chaos mode!';
       }
     },
-    onComplete(char) { char.statusText = 'Keeping watch'; },
+  },
+
+  // ── Kurt: Iron Wall ────────────────────────
+  // Methodical tank. Targets whoever has the most eliminations — the biggest threat.
+  // Extremely high armor, slow, steady damage. Uses chargers to fortify.
+  Kurt: {
+    workDuration: 3.5,
+    combatStyle: { power: 0.1, armor: 0.22, crit: 0.02, dodge: -0.03, speedMult: -0.18, chaos: -0.05 },
+    selectTarget(char, sim) {
+      const alive = sim.characters.filter(c => c.active && c !== char && c.health > 0);
+      if (char.health < 25 && char.healCooldown <= 0) {
+        const phones = sim.interactive.filter(o => o.type === 'phone');
+        if (phones.length > 0) {
+          const p = nearestObj(char, phones);
+          return { x: p.cx, y: p.cy, obj: p, statusText: 'Sustaining...' };
+        }
+      }
+      if (char.armorBuff <= 0 && alive.length > 0 && Math.random() < 0.13) {
+        const chargers = sim.objects.filter(o => o.type === 'charger');
+        if (chargers.length > 0) {
+          const c = nearestObj(char, chargers);
+          if (dist(char, c) < 220) return { x: c.cx, y: c.cy, obj: c, statusText: 'Fortifying...' };
+        }
+      }
+      if (alive.length > 0) {
+        const target = alive.reduce((a, b) => b.eliminations > a.eliminations ? b : a);
+        return { x: target.x + rand(-8, 8), y: target.y + rand(-8, 8), obj: null, statusText: pick(['On your six.', 'Engaging.', 'You\'re the target.']) };
+      }
+      return null;
+    },
+    onArrive(char) { char.statusText = char.target?.obj ? 'Reinforcing...' : 'Engaging.'; },
+    onComplete(char, sim) {
+      const obj = char.target?.obj;
+      if (!obj) return;
+      if (obj.type === 'phone') {
+        const heal = rand(20, 30);
+        char.health = Math.min(100, char.health + heal);
+        char.healCooldown = 30;
+        char.itemsUsed++;
+        sim.addEvent(pick([`Kurt patched the damage (+${Math.round(heal)} HP)`, `Kurt took a moment. Just a moment.`]));
+        char.statusText = 'Back in position.';
+      } else if (obj.type === 'charger') {
+        char.armorBuff = 10;
+        char.itemsUsed++;
+        sim.addEvent(pick([`Kurt is basically a wall now`, `Kurt's armor is maxed. Good luck critting him.`]));
+        char.statusText = 'Fortified.';
+      }
+    },
+  },
+
+  // ── Altin: The Ghost ───────────────────────
+  // Evasive survivor. Avoids groups, circles isolated targets, heals proactively.
+  // High dodge and speed, low damage. Hard to kill, hard to catch.
+  Altin: {
+    workDuration: 2.2,
+    combatStyle: { power: -0.22, armor: -0.04, crit: 0.05, dodge: 0.18, speedMult: 0.25, chaos: 0.02 },
+    selectTarget(char, sim) {
+      const alive = sim.characters.filter(c => c.active && c !== char && c.health > 0);
+      if (char.health < 58 && char.healCooldown <= 0) {
+        const phones = sim.interactive.filter(o => o.type === 'phone');
+        if (phones.length > 0) {
+          const p = nearestObj(char, phones);
+          return { x: p.cx, y: p.cy, obj: p, statusText: 'Vibing... carefully.' };
+        }
+      }
+      if (alive.length > 0) {
+        const isolated = alive.filter(e => alive.filter(o => o !== e && dist(e, o) < 120).length === 0);
+        const target = isolated.length > 0 ? pick(isolated) : alive.reduce((a, b) => a.health < b.health ? a : b);
+        const dx = char.x - target.x, dy = char.y - target.y;
+        const d  = Math.hypot(dx, dy) || 1;
+        const ax = clamp(target.x + (dx / d) * 75 + rand(-30, 30), 40, RW - 40);
+        const ay = clamp(target.y + (dy / d) * 75 + rand(-30, 30), 40, RH - 40);
+        return { x: ax, y: ay, obj: null, statusText: pick(['Circling...', 'Wait for it...', 'Staying fluid']) };
+      }
+      return null;
+    },
+    onArrive(char) { char.statusText = char.target?.obj ? 'Healing up...' : 'Repositioning'; },
+    onComplete(char, sim) {
+      const obj = char.target?.obj;
+      if (!obj) return;
+      if (obj.type === 'phone') {
+        const heal = rand(28, 38);
+        char.health = Math.min(100, char.health + heal);
+        char.healCooldown = 18;
+        char.itemsUsed++;
+        sim.addEvent(pick([`Altin healed up (+${Math.round(heal)} HP) and vanished again`, `Altin took a chill moment to recover`]));
+        char.statusText = 'Refreshed.';
+      }
+    },
     onPassive(char, sim, dt) {
-      // Passive leadership aura
       for (const c of sim.characters) {
         if (c === char || !c.active) continue;
-        if (dist(char, c) < 130) c.andyBoost = Math.max(c.andyBoost, 1.5);
+        if (dist(char, c) < 90) c.altinCalm = Math.min(c.altinCalm + dt * 0.5, 0.3);
       }
-      char._passiveTimer -= dt;
-      if (char._passiveTimer <= 0) {
-        char._passiveTimer = rand(20, 35);
-        if (sim.running && sim.characters.some(c => c.active && c !== char)) {
-          sim.addEvent(`Andy did a quiet room scan. The team felt seen.`);
+    },
+  },
+
+  // ── Jai: Hit-and-Run Skirmisher ─────────────
+  // Fastest fighter. Always targets the weakest enemy — finishes off the wounded.
+  // Uses stations for speed bursts. Quick cooldown, burst damage, always moving.
+  Jai: {
+    workDuration: 2.0,
+    combatStyle: { power: -0.08, armor: 0.0, crit: 0.10, dodge: 0.10, speedMult: 0.35, chaos: 0.04 },
+    selectTarget(char, sim) {
+      const alive = sim.characters.filter(c => c.active && c !== char && c.health > 0);
+      if (char.health < 38 && char.healCooldown <= 0) {
+        const phones = sim.interactive.filter(o => o.type === 'phone');
+        if (phones.length > 0) {
+          const p = nearestObj(char, phones);
+          return { x: p.cx, y: p.cy, obj: p, statusText: 'Quick pit stop' };
         }
+      }
+      if (char.speedBuff <= 0 && alive.length > 0 && Math.random() < 0.18) {
+        const stations = sim.interactive.filter(o => o.type === 'station');
+        if (stations.length > 0) {
+          const s = nearestObj(char, stations);
+          if (dist(char, s) < 280) return { x: s.cx, y: s.cy, obj: s, statusText: 'Boosting!' };
+        }
+      }
+      if (alive.length > 0) {
+        const target = alive.reduce((a, b) => a.health < b.health ? a : b);
+        return { x: target.x + rand(-12, 12), y: target.y + rand(-12, 12), obj: null, statusText: pick(['Target acquired!', 'Quick strike!', 'On the move!']) };
+      }
+      return null;
+    },
+    onArrive(char) { char.statusText = char.target?.obj ? 'Boosting...' : 'Strike!'; },
+    onComplete(char, sim) {
+      const obj = char.target?.obj;
+      if (!obj) return;
+      if (obj.type === 'phone') {
+        const heal = rand(20, 30);
+        char.health = Math.min(100, char.health + heal);
+        char.healCooldown = 22;
+        char.itemsUsed++;
+        sim.addEvent(pick([`Jai grabbed a quick heal (+${Math.round(heal)} HP)`, `Jai's back in action`]));
+        char.statusText = 'Back in!';
+      } else if (obj.type === 'station') {
+        char.speedBuff = 8;
+        char.itemsUsed++;
+        sim.addEvent(pick([`Jai is now moving at terrifying speed`, `Jai hit the station — nobody's catching them`]));
+        char.statusText = 'Blazing!';
+      }
+    },
+  },
+
+  // ── Liam: Adaptive Opportunist ──────────────
+  // Balanced all-rounder. Targets enemies already fighting someone else.
+  // Heals conservatively, uses any nearby item for small edges.
+  Liam: {
+    workDuration: 3.0,
+    combatStyle: { power: 0.0, armor: 0.06, crit: 0.06, dodge: 0.06, speedMult: 0.0, chaos: 0.0 },
+    selectTarget(char, sim) {
+      const alive = sim.characters.filter(c => c.active && c !== char && c.health > 0);
+      if (char.health < 48 && char.healCooldown <= 0) {
+        const phones = sim.interactive.filter(o => o.type === 'phone');
+        if (phones.length > 0) {
+          const p = nearestObj(char, phones);
+          return { x: p.cx, y: p.cy, obj: p, statusText: 'Smart play — healing' };
+        }
+      }
+      if (char.health > 65 && Math.random() < 0.10) {
+        const items = sim.interactive.filter(o => ['laptop', 'tablet', 'station'].includes(o.type));
+        const nearby = items.filter(o => dist(char, o) < 180);
+        if (nearby.length > 0) {
+          const item = pick(nearby);
+          return { x: item.cx, y: item.cy, obj: item, statusText: 'Quick advantage...' };
+        }
+      }
+      if (alive.length > 0) {
+        const inFight = alive.filter(e => e.fightCooldown < 0.3);
+        const target  = inFight.length > 0 ? pick(inFight) : pick(alive);
+        return { x: target.x + rand(-15, 15), y: target.y + rand(-15, 15), obj: null, statusText: pick(['Picking my moment', 'Now!', 'Moving in']) };
+      }
+      return null;
+    },
+    onArrive(char) { char.statusText = char.target?.obj ? 'Working an angle...' : 'Let\'s go!'; },
+    onComplete(char, sim) {
+      const obj = char.target?.obj;
+      if (!obj) return;
+      if (obj.type === 'phone') {
+        const heal = rand(22, 32);
+        char.health = Math.min(100, char.health + heal);
+        char.healCooldown = 20;
+        char.itemsUsed++;
+        sim.addEvent(pick([`Liam healed up — smart call (+${Math.round(heal)} HP)`, `Liam takes a breather`]));
+        char.statusText = 'Good to go!';
+      } else if (obj.type === 'laptop') {
+        char.powerBuff = 7; char.itemsUsed++;
+        sim.addEvent(`Liam grabbed an edge — power boost active`);
+        char.statusText = 'Boosted!';
+      } else if (obj.type === 'tablet') {
+        char.critBuff = 7; char.itemsUsed++;
+        sim.addEvent(`Liam set up for crits`);
+        char.statusText = 'Ready!';
+      } else if (obj.type === 'station') {
+        char.speedBuff = 7; char.itemsUsed++;
+        sim.addEvent(`Liam's picking up speed`);
+        char.statusText = 'Moving!';
+      }
+    },
+  },
+
+  // ── Andy: The Commander ─────────────────────
+  // Dominant brawler. Targets the highest-HP enemy — goes for the strongest.
+  // Uses the server for a massive power+armor spike. High damage, high durability.
+  Andy: {
+    workDuration: 3.2,
+    combatStyle: { power: 0.20, armor: 0.12, crit: 0.05, dodge: 0.02, speedMult: -0.05, chaos: -0.03 },
+    selectTarget(char, sim) {
+      const alive = sim.characters.filter(c => c.active && c !== char && c.health > 0);
+      if (char.health < 28 && char.healCooldown <= 0) {
+        const phones = sim.interactive.filter(o => o.type === 'phone');
+        if (phones.length > 0) {
+          const p = nearestObj(char, phones);
+          return { x: p.cx, y: p.cy, obj: p, statusText: 'Brief retreat' };
+        }
+      }
+      if (char.powerBuff <= 0 && char.armorBuff <= 0 && alive.length > 0 && Math.random() < 0.14) {
+        const servers = sim.interactive.filter(o => o.type === 'server');
+        if (servers.length > 0 && dist(char, servers[0]) < 300) {
+          return { x: servers[0].cx, y: servers[0].cy, obj: servers[0], statusText: 'Pulling rank...' };
+        }
+      }
+      if (alive.length > 0) {
+        const target = alive.reduce((a, b) => b.health > a.health ? b : a);
+        return { x: target.x + rand(-10, 10), y: target.y + rand(-10, 10), obj: null, statusText: pick(['Taking charge.', 'Front and center.', 'I\'ve got this.']) };
+      }
+      return null;
+    },
+    onArrive(char) { char.statusText = char.target?.obj ? 'Accessing server...' : 'Engaging.'; },
+    onComplete(char, sim) {
+      const obj = char.target?.obj;
+      if (!obj) return;
+      if (obj.type === 'phone') {
+        const heal = rand(20, 30);
+        char.health = Math.min(100, char.health + heal);
+        char.healCooldown = 28;
+        char.itemsUsed++;
+        sim.addEvent(pick([`Andy stepped back to recover (+${Math.round(heal)} HP)`, `Andy's back at full strength`]));
+        char.statusText = 'Back in command.';
+      } else if (obj.type === 'server') {
+        char.powerBuff = 12; char.armorBuff = 12; char.itemsUsed++;
+        sim.addEvent(pick([`Andy pulled server access — massive power spike`, `Andy at full command capacity. This is bad for everyone else.`]));
+        char.statusText = 'Full power!';
+      }
+    },
+    onPassive(char, sim, dt) {
+      for (const c of sim.characters) {
+        if (c === char || !c.active) continue;
+        if (dist(char, c) < 100) c.andyBoost = Math.max(c.andyBoost, 1.0);
       }
     },
   },
@@ -1462,8 +1569,8 @@ class Simulation {
       new Character({
         name,
         color: CHAR_COLORS[name],
-        speed: name === 'Altin' ? 50 : name === 'Jai' ? 115 : name === 'Kurt' ? 100 : 85,
-        role:  { Joe:'Fixer', Charlie:'Tinkerer', Kurt:'Restorer', Altin:'Chill Presence', Jai:'Coordinator', Liam:'Contributor', Andy:'Lead' }[name],
+        speed: { Joe:95, Charlie:100, Kurt:72, Altin:110, Jai:125, Liam:90, Andy:85 }[name] || 90,
+        role:  { Joe:'Hunter', Charlie:'Glass Cannon', Kurt:'Iron Wall', Altin:'Ghost', Jai:'Skirmisher', Liam:'Opportunist', Andy:'Commander' }[name],
         behaviors: BEHAVIORS[name],
       })
     );
@@ -1473,7 +1580,7 @@ class Simulation {
     const c = this.characters.find(ch => ch.name === name);
     if (!c || c.active) return;
     c.active = true;
-    c.x = rand(280, 520); c.y = rand(195, 345);
+    c.x = rand(60, RW - 60); c.y = rand(60, RH - 60);
     c.state = CS.IDLE; c.idleTimer = rand(0.5, 2);
     c.health = 100;
     c.eliminated = false;
@@ -1534,6 +1641,8 @@ class Simulation {
       c.statusText = 'Ready'; c.workProgress = 0;
       c.andyBoost = 0; c.altinCalm = 0; c.health = 100; c.fightCooldown = rand(0.6, 1.8); c.hitFlash = 0;
       c.eliminated = false; c.eliminations = 0;
+      c.powerBuff = 0; c.speedBuff = 0; c.armorBuff = 0; c.critBuff = 0;
+      c.healCooldown = 0; c.itemsUsed = 0;
       c._passiveTimer = rand(5, 15);
     }
     renderEventLog([]);
@@ -1542,13 +1651,11 @@ class Simulation {
   }
 
   stats() {
-    const inter = this.interactive;
-    return {
-      active:    this.activeChars.filter(c => c.health > 0).length,
-      ok:        inter.filter(o => o.state === STATE.NORMAL).length,
-      disrupted: inter.filter(o => o.state === STATE.DISRUPTED).length,
-      efficient: inter.filter(o => o.state === STATE.EFFICIENT).length,
-    };
+    const alive = this.activeChars.filter(c => c.health > 0);
+    const totalKOs    = this.characters.reduce((s, c) => s + c.eliminations, 0);
+    const avgHP       = alive.length > 0 ? Math.round(alive.reduce((s, c) => s + c.health, 0) / alive.length) : 0;
+    const totalItems  = this.characters.reduce((s, c) => s + c.itemsUsed, 0);
+    return { active: alive.length, ok: totalKOs, disrupted: avgHP, efficient: totalItems };
   }
 
   checkForWinner() {
@@ -1661,7 +1768,7 @@ function updateStats(sim) {
   const s = sim.stats();
   document.getElementById('stat-active').textContent    = s.active;
   document.getElementById('stat-ok').textContent        = s.ok;
-  document.getElementById('stat-disrupted').textContent = s.disrupted;
+  document.getElementById('stat-disrupted').textContent = s.active > 0 ? s.disrupted : '–';
   document.getElementById('stat-efficient').textContent = s.efficient;
 }
 
