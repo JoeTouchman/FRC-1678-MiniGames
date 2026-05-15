@@ -391,7 +391,7 @@ function setCtrlMode(mode){
   checkOrientation();
 }
 function checkOrientation(){
-  if(!mobileMode||!gameRunning){document.getElementById('rotate-overlay').style.display='none';return;}
+  if(!mobileMode){document.getElementById('rotate-overlay').style.display='none';return;}
   document.getElementById('rotate-overlay').style.display=(window.innerHeight>window.innerWidth)?'flex':'none';
 }
 function updateMobileUI(){
