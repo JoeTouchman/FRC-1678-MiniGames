@@ -11,8 +11,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 #gc{display:block;position:fixed;top:50%;left:50%;transform-origin:center center;}
 
 /* BOOT */
-#boot{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;gap:10px;padding:20px;pointer-events:auto;overflow-y:auto;}
-@media(max-height:520px){#boot{justify-content:flex-start;padding:8px 16px;gap:5px;}.blogo{font-size:clamp(22px,5vh,40px);letter-spacing:4px;}.bsub{display:none;}.bstory{font-size:9px;line-height:1.5;padding:6px 12px;max-width:420px;}.bctrl{display:none;}.bigbtn{padding:7px 22px;}.brow-top{margin-top:2px;}}
+#boot{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;gap:10px;padding:20px;pointer-events:auto;}
 .blogo{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,7vw,82px);color:#f5a623;letter-spacing:8px;text-align:center;line-height:1.0;animation:bglitch 4.2s infinite;text-shadow:0 0 30px rgba(245,166,35,0.45)}
 @keyframes bglitch{0%,88%{transform:none;text-shadow:0 0 30px rgba(245,166,35,.45);}89%{transform:translateX(-4px);text-shadow:-4px 0 rgba(255,0,80,.7),4px 0 rgba(0,220,255,.7);}90%{transform:translateX(4px);text-shadow:4px 0 rgba(255,0,80,.7),-4px 0 rgba(0,220,255,.7);}91%{transform:none;text-shadow:0 0 30px rgba(245,166,35,.45);}94%{transform:scaleX(1.015) translateY(-2px);filter:blur(.6px);}95%{transform:none;filter:none;}}
 .bsub{font-size:10px;color:#303068;letter-spacing:3px;text-align:center;animation:bsubfade 2s ease forwards}
@@ -168,6 +167,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     <a href="../index.html" class="smbtn" style="text-decoration:none">← HOME</a>
     <button class="bigbtn" id="startbtn">Avoid Responsibility</button>
     <button class="mutebtn-title" id="tmutebtn" onclick="toggleMute()">🔊 Music</button>
+    <button class="mutebtn-title" id="fsbtn" onclick="toggleFullscreen()">⛶ Full</button>
   </div>
 </div>
 
@@ -377,6 +377,18 @@ function toggleMute(){
   document.getElementById('mutebtn').textContent=ic;
   const tb=document.getElementById('tmutebtn');if(tb)tb.textContent=musicMuted?'🔇 Muted':'🔊 Music';
 }
+function toggleFullscreen(){
+  const el=document.documentElement;
+  const isFs=!!(document.fullscreenElement||document.webkitFullscreenElement);
+  if(!isFs){(el.requestFullscreen||el.webkitRequestFullscreen).call(el).catch(()=>{});}
+  else{(document.exitFullscreen||document.webkitExitFullscreen).call(document).catch(()=>{});}
+}
+document.addEventListener('fullscreenchange',()=>{
+  const btn=document.getElementById('fsbtn');if(btn)btn.textContent=document.fullscreenElement?'✕ Exit Full':'⛶ Full';
+});
+document.addEventListener('webkitfullscreenchange',()=>{
+  const btn=document.getElementById('fsbtn');if(btn)btn.textContent=document.webkitFullscreenElement?'✕ Exit Full':'⛶ Full';
+});
 
 // ═══════════════════════════════════
 // CTRL MODE (keyboard vs touch)
@@ -385,10 +397,12 @@ let mobileMode=false;
 let gameRunning=false;
 const joystickState={active:false,dx:0,dy:0,touchId:null};
 function setCtrlMode(mode){
-  localStorage.setItem('deviceMode',mode==='touch'?'mobile':'desktop');
+  try{localStorage.setItem('deviceMode',mode==='touch'?'mobile':'desktop');}catch(e){}
   mobileMode=(mode==='touch');
   document.getElementById('cmbtn-kb').classList.toggle('active',!mobileMode);
   document.getElementById('cmbtn-touch').classList.toggle('active',mobileMode);
+  document.querySelector('.bstory').style.display=mobileMode?'none':'';
+  document.querySelector('.bctrl').style.display=mobileMode?'none':'';
   updateMobileUI();
   checkOrientation();
 }
