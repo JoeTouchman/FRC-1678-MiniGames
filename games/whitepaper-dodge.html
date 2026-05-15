@@ -361,6 +361,8 @@ function toggleMute(){
 // ═══════════════════════════════════
 // CTRL MODE (keyboard vs touch)
 // ═══════════════════════════════════
+let mobileMode=false;
+const joystickState={active:false,dx:0,dy:0,touchId:null};
 function setCtrlMode(mode){
   localStorage.setItem('deviceMode',mode==='touch'?'mobile':'desktop');
   mobileMode=(mode==='touch');
@@ -370,7 +372,7 @@ function setCtrlMode(mode){
   checkOrientation();
 }
 function checkOrientation(){
-  if(!mobileMode){document.getElementById('rotate-overlay').style.display='none';return;}
+  if(!mobileMode||!gameRunning){document.getElementById('rotate-overlay').style.display='none';return;}
   document.getElementById('rotate-overlay').style.display=(window.innerHeight>window.innerWidth)?'flex':'none';
 }
 function updateMobileUI(){
@@ -443,8 +445,6 @@ let round,docsNeeded,docsSubmitted;
 let minigameActive,currentMGAI,mgTimer,mgTimerMax;
 let mgSimonSeq,mgSimonStep,mgSimonPlayerTurn,mgMemAnswer,mgMathAnswer;
 let secondEnemyRound;
-let mobileMode=false;
-const joystickState={active:false,dx:0,dy:0,touchId:null};
 
 // ═══════════════════════════════════
 // START GAME
