@@ -619,9 +619,11 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeGamesModal();
 });
 
-function isMobileUA(){return/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);}
+function isMobileDevice(){
+  return window.matchMedia('(pointer:coarse)').matches||navigator.maxTouchPoints>0&&/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
 function setDeviceMode(mode){
-  localStorage.setItem('deviceMode',mode);
+  try{localStorage.setItem('deviceMode',mode);}catch(e){}
   document.querySelectorAll('[data-mobile]').forEach(c=>{
     c.style.display=(mode==='mobile'&&c.dataset.mobile!=='true')?'none':'';
   });
@@ -629,8 +631,8 @@ function setDeviceMode(mode){
   document.getElementById('dt-mob').className='dtbtn'+(mode==='mobile'?' active-mob':'');
 }
 (function(){
-  const saved=localStorage.getItem('deviceMode')||(isMobileUA()?'mobile':'desktop');
-  setDeviceMode(saved);
+  let saved=null;try{saved=localStorage.getItem('deviceMode');}catch(e){}
+  setDeviceMode(saved||(isMobileDevice()?'mobile':'desktop'));
 })();
 
 // Animated background — grid with drifting particles

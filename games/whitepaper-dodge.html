@@ -438,10 +438,10 @@ function updateMobileUI(){
   if(mobileMode){jz.style.display='block';ma.style.display='grid';ab.style.display='none';}
   else{jz.style.display='none';ma.style.display='none';ab.style.display='flex';}
 }
-// Init — use pointer:coarse (reliable touch detection, catches iPad OS which fakes Mac UA)
+// Init — pointer:coarse catches touch-first devices including iPad OS (which fakes desktop UA)
 (function(){
-  const saved=localStorage.getItem('deviceMode');
-  const isTouchDevice=window.matchMedia('(pointer:coarse)').matches||/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  let saved=null;try{saved=localStorage.getItem('deviceMode');}catch(e){}
+  const isTouchDevice=window.matchMedia('(pointer:coarse)').matches||(navigator.maxTouchPoints>0&&/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
   const mode=(saved==='mobile'||(saved!=='desktop'&&isTouchDevice))?'touch':'keyboard';
   setCtrlMode(mode);
 })();
