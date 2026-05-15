@@ -146,7 +146,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   <div class="blogo">WHITEPAPER<br>DODGE</div>
   <div class="bsub">FRC 1678 — Citrus Circuits — Software Division</div>
   <div class="bstory">
-    The <b>Software Scouting Whitepaper</b> is due in 24 hours.<br>
+    The <b id="dbg-trigger" style="cursor:pointer;user-select:none;">Software Scouting Whitepaper</b> is due in 24 hours.<br>
     Your plan: convince AI to write it for you. The leads are hunting you down.<br><br>
     Find AI terminals, complete their challenges, collect the docs.<br>Bring docs to the <b>COMPUTER</b> each round to compile the paper.<br><br>
     How many rounds can you survive? <b>High score wins.</b>
@@ -254,7 +254,26 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   </div>
 </div>
 
+<div id="dbglog" style="display:none;position:fixed;bottom:0;left:0;right:0;max-height:220px;overflow-y:auto;background:rgba(0,0,0,0.92);color:#0f0;font:11px monospace;padding:4px 8px 28px;z-index:9999;white-space:pre-wrap;"></div>
+<button id="dbgclose" style="display:none;position:fixed;bottom:4px;right:8px;z-index:10000;background:#333;color:#fff;border:1px solid #666;padding:2px 10px;font:11px monospace;cursor:pointer;">✕ close</button>
 <script>
+(function(){
+  const dl=document.getElementById('dbglog');
+  const dc=document.getElementById('dbgclose');
+  function dbg(msg,color){const el=document.createElement('div');el.style.color=color||'#0f0';el.textContent='['+new Date().toISOString().slice(11,23)+'] '+msg;dl.appendChild(el);dl.scrollTop=dl.scrollHeight;}
+  window._dbg=dbg;
+  window.addEventListener('error',e=>{dbg('ERROR: '+e.message+' line:'+e.lineno+' col:'+e.colno,'#f55');});
+  window.addEventListener('unhandledrejection',e=>{dbg('REJECTION: '+e.reason,'#f55');});
+  dc.addEventListener('click',()=>{dl.style.display='none';dc.style.display='none';});
+  let tapCount=0,tapTimer=null;
+  document.getElementById('dbg-trigger').addEventListener('click',()=>{
+    tapCount++;
+    clearTimeout(tapTimer);
+    tapTimer=setTimeout(()=>{tapCount=0;},1500);
+    if(tapCount>=5){tapCount=0;dl.style.display='block';dc.style.display='block';dbg('Debug panel opened');}
+  });
+  dbg('Script starting...');
+})();
 // ═══════════════════════════════════
 // CANVAS
 // ═══════════════════════════════════
