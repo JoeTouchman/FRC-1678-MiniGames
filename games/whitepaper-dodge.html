@@ -121,9 +121,10 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 
 /* MOBILE BUTTONS */
 #mobile-actions{position:fixed;bottom:16px;right:12px;display:none;grid-template-columns:1fr 1fr;gap:8px;z-index:60;}
-.mob-btn{width:64px;height:64px;border-radius:50%;border:1.5px solid rgba(245,166,35,0.3);background:rgba(8,8,26,0.88);color:#f5a623;font-size:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;gap:0px;user-select:none;}
+.mob-btn{position:relative;width:64px;height:64px;border-radius:50%;border:1.5px solid rgba(245,166,35,0.3);background:rgba(8,8,26,0.88);color:#f5a623;font-size:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;gap:0px;user-select:none;}
 .mob-btn .mlbl{font-family:'Space Mono',monospace;font-size:6px;letter-spacing:1px;color:rgba(245,166,35,0.5);margin-top:1px;}
 .mob-btn.rdy{border-color:#f5a623;background:rgba(245,166,35,0.1);}
+.mob-cnt{position:absolute;top:3px;right:5px;font-size:9px;font-family:'Space Mono',monospace;color:rgba(245,166,35,0.6);line-height:1;}
 
 /* CONTROL MODE TOGGLE (title screen) */
 .ctrlrow{display:flex;gap:5px;align-items:center}
@@ -208,15 +209,16 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   <div class="ri">📱</div>
   <div class="rt">Rotate to Landscape</div>
   <div style="font-size:9px;color:#404070;letter-spacing:2px;margin-top:-8px">for best experience</div>
+  <a href="../index.html" class="smbtn" style="text-decoration:none;margin-top:8px">← HOME</a>
 </div>
 <!-- Virtual joystick -->
 <div id="joystick-zone"><div id="joystick-stick"></div></div>
 <!-- Mobile action buttons -->
 <div id="mobile-actions">
   <div class="mob-btn" id="mbtn-int"><span style="font-size:18px">🔑</span><span class="mlbl">INTERACT</span></div>
-  <div class="mob-btn" id="mbtn-hide"><span style="font-size:18px">🌑</span><span class="mlbl">HIDE</span></div>
-  <div class="mob-btn" id="mbtn-dist"><span style="font-size:18px">📢</span><span class="mlbl">DISTRACT</span></div>
-  <div class="mob-btn" id="mbtn-cof"><span style="font-size:18px">🥤</span><span class="mlbl">SPRINT</span></div>
+  <div class="mob-btn" id="mbtn-hide"><span style="font-size:18px">🌑</span><span class="mlbl">HIDE</span><span class="mob-cnt" id="mc-hide">3</span></div>
+  <div class="mob-btn" id="mbtn-dist"><span style="font-size:18px">📢</span><span class="mlbl">DISTRACT</span><span class="mob-cnt" id="mc-dist">0</span></div>
+  <div class="mob-btn" id="mbtn-cof"><span style="font-size:18px">🥤</span><span class="mlbl">SPRINT</span><span class="mob-cnt" id="mc-cof">0</span></div>
 </div>
 
 <!-- Round Banner -->
@@ -389,6 +391,9 @@ document.addEventListener('fullscreenchange',()=>{
 document.addEventListener('webkitfullscreenchange',()=>{
   const btn=document.getElementById('fsbtn');if(btn)btn.textContent=document.webkitFullscreenElement?'✕ Exit Full':'⛶ Full';
 });
+if(!document.documentElement.requestFullscreen&&!document.documentElement.webkitRequestFullscreen){
+  const btn=document.getElementById('fsbtn');if(btn)btn.style.display='none';
+}
 
 // ═══════════════════════════════════
 // CTRL MODE (keyboard vs touch)
@@ -1165,6 +1170,12 @@ function updateHUD(){
   document.getElementById('cCof').textContent=coffees;
   const inShad=shadows.some(z=>pInZ(z));
   sr('sHide',hidesLeft>0&&inShad);sr('sExc',excuses>0);sr('sCof',coffees>0);
+  document.getElementById('mc-hide').textContent=hidesLeft;
+  document.getElementById('mc-dist').textContent=excuses;
+  document.getElementById('mc-cof').textContent=coffees;
+  document.getElementById('mbtn-hide').classList.toggle('rdy',hidesLeft>0&&inShad);
+  document.getElementById('mbtn-dist').classList.toggle('rdy',excuses>0);
+  document.getElementById('mbtn-cof').classList.toggle('rdy',coffees>0);
 }
 function sr(id,v){document.getElementById(id).classList.toggle('rdy',v);}
 
