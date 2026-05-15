@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
 <title>Whitepaper Dodge — FRC 1678</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap');
 html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#080810;font-family:'Space Mono',monospace;color:#e0e0ff;user-select:none}
-*{box-sizing:border-box}
+*{box-sizing:border-box;touch-action:manipulation}
 #gc{display:block;position:fixed;top:50%;left:50%;transform-origin:center center;}
 
 /* BOOT */
@@ -362,10 +362,12 @@ function toggleMute(){
 // CTRL MODE (keyboard vs touch)
 // ═══════════════════════════════════
 function setCtrlMode(mode){
-  localStorage.setItem('deviceMode',mode);
+  localStorage.setItem('deviceMode',mode==='touch'?'mobile':'desktop');
   mobileMode=(mode==='touch');
-  document.getElementById('cmbtn-kb').classList.toggle('active',mode!=='touch');
-  document.getElementById('cmbtn-touch').classList.toggle('active',mode==='touch');
+  document.getElementById('cmbtn-kb').classList.toggle('active',!mobileMode);
+  document.getElementById('cmbtn-touch').classList.toggle('active',mobileMode);
+  updateMobileUI();
+  checkOrientation();
 }
 function checkOrientation(){
   if(!mobileMode){document.getElementById('rotate-overlay').style.display='none';return;}
@@ -378,11 +380,12 @@ function updateMobileUI(){
   if(mobileMode){jz.style.display='block';ma.style.display='grid';ab.style.display='none';}
   else{jz.style.display='none';ma.style.display='none';ab.style.display='flex';}
 }
-// Init ctrl mode from localStorage or UA detection
+// Init — use pointer:coarse (reliable touch detection, catches iPad OS which fakes Mac UA)
 (function(){
   const saved=localStorage.getItem('deviceMode');
-  const auto=(/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent))?'touch':'keyboard';
-  setCtrlMode(saved&&saved!=='desktop'&&saved!=='keyboard'?(saved==='mobile'?'touch':saved):saved||auto);
+  const isTouchDevice=window.matchMedia('(pointer:coarse)').matches||/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const mode=(saved==='mobile'||(saved!=='desktop'&&isTouchDevice))?'touch':'keyboard';
+  setCtrlMode(mode);
 })();
 
 // ═══════════════════════════════════
