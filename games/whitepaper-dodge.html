@@ -254,16 +254,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   </div>
 </div>
 
-<div id="dbglog" style="position:fixed;bottom:0;left:0;right:0;max-height:200px;overflow-y:auto;background:rgba(0,0,0,0.85);color:#0f0;font:11px monospace;padding:4px 8px;z-index:9999;pointer-events:none;white-space:pre-wrap;"></div>
 <script>
-(function(){
-  const dl=document.getElementById('dbglog');
-  function dbg(msg,color){const el=document.createElement('div');el.style.color=color||'#0f0';el.textContent='['+new Date().toISOString().slice(11,23)+'] '+msg;dl.appendChild(el);dl.scrollTop=dl.scrollHeight;}
-  window._dbg=dbg;
-  window.addEventListener('error',e=>{dbg('ERROR: '+e.message+' line:'+e.lineno+' col:'+e.colno,'#f55');});
-  window.addEventListener('unhandledrejection',e=>{dbg('PROMISE REJECTION: '+e.reason,'#f55');});
-  dbg('Script starting...');
-})();
 // ═══════════════════════════════════
 // CANVAS
 // ═══════════════════════════════════
@@ -1457,15 +1448,10 @@ function drawDangerBar(){
 // ═══════════════════════════════════
 // BUTTON LISTENERS
 // ═══════════════════════════════════
-_dbg('Registering button listeners...');
 document.getElementById('startbtn').addEventListener('click',()=>{
-  _dbg('Start button clicked!','#ff0');
   document.getElementById('boot').style.display='none';
-  _dbg('Boot hidden, calling bgm.play()','#ff0');
-  bgm.play().catch(e=>{_dbg('bgm.play error: '+e,'#f55');});
-  _dbg('Calling startGame()','#ff0');
+  bgm.play().catch(()=>{});
   startGame();
-  _dbg('startGame() returned','#ff0');
 });
 document.getElementById('restbtn').addEventListener('click',()=>{
   document.getElementById('ends').style.display='none';
