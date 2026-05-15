@@ -423,6 +423,11 @@
     .modal-box { padding: 28px 16px 20px; }
     .modal-games .game-card { width: min(280px, 100%); }
   }
+
+  .device-toggle-bar{display:flex;gap:3px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:3px;}
+  .dtbtn{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1.5px;padding:7px 18px;border-radius:5px;border:none;cursor:pointer;background:transparent;color:rgba(255,255,255,0.35);transition:all 0.18s;text-transform:uppercase;}
+  .dtbtn.active-desk{background:rgba(255,107,0,0.18);color:#FFB347;}
+  .dtbtn.active-mob{background:rgba(0,255,200,0.15);color:#00FFCC;}
 </style>
 </head>
 <body>
@@ -433,12 +438,16 @@
     <div class="team-badge">Team 1678 · Citrus Robotics</div>
     <div class="arcade-title">CITRUS ARCADE</div>
     <div class="arcade-subtitle">FRC Minigames Collection</div>
+    <div class="device-toggle-bar" id="devToggle">
+      <button class="dtbtn" id="dt-desk" onclick="setDeviceMode('desktop')">💻 Desktop</button>
+      <button class="dtbtn" id="dt-mob"  onclick="setDeviceMode('mobile')">📱 Mobile</button>
+    </div>
   </div>
 
   <div class="games-grid">
 
     <!-- 2 Player Games folder -->
-    <div class="game-card card-orange" onclick="openGamesModal()">
+    <div class="game-card card-orange" data-mobile="false" onclick="openGamesModal()">
       <div class="card-icon">🎮</div>
       <div class="card-title">2 PLAYER GAMES</div>
       <div class="card-desc">Head-to-head multiplayer — local or online</div>
@@ -457,7 +466,7 @@
       <div class="card-cta">SELECT GAME</div>
     </div>
 
-    <a href="games/scouting-sim.html" class="game-card card-teal">
+    <a href="games/scouting-sim.html" class="game-card card-teal" data-mobile="true">
       <div class="card-icon">🖥️</div>
       <div class="card-title">SCOUT ROOM SIM</div>
       <div class="card-desc">
@@ -476,7 +485,7 @@
       <div class="card-cta">PLAY NOW</div>
     </a>
 
-    <a href="games/citrus-crunch.html" class="game-card card-lime">
+    <a href="games/citrus-crunch.html" class="game-card card-lime" data-mobile="true">
       <div class="card-icon">⚙</div>
       <div class="card-title">CITRUS CRUNCH</div>
       <div class="card-desc">
@@ -495,7 +504,7 @@
       <div class="card-cta">PLAY NOW</div>
     </a>
 
-    <a href="games/whitepaper-dodge.html" class="game-card card-purple">
+    <a href="games/whitepaper-dodge.html" class="game-card card-purple" data-mobile="true">
       <div class="card-icon">📋</div>
       <div class="card-title">WHITEPAPER DODGE</div>
       <div class="card-desc">
@@ -509,13 +518,14 @@
       </div>
       <div class="card-devices">
         <span class="device-badge highlight">&#x1F4BB; Computer</span>
+        <span class="device-badge highlight">&#x1F4F1; Mobile</span>
       </div>
       <div class="card-cta">PLAY NOW</div>
     </a>
 
   </div>
 
-  <div class="footer">2-Player: WASD vs Arrow Keys · Local or Online on separate computers · Whitepaper Dodge: Computer only</div>
+  <div class="footer">2-Player: WASD vs Arrow Keys · Local or Online · Whitepaper Dodge: Mobile &amp; Desktop</div>
 </div>
 
 <!-- 2 Player Games Modal -->
@@ -608,6 +618,20 @@ function handleModalClick(e) {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeGamesModal();
 });
+
+function isMobileUA(){return/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);}
+function setDeviceMode(mode){
+  localStorage.setItem('deviceMode',mode);
+  document.querySelectorAll('[data-mobile]').forEach(c=>{
+    c.style.display=(mode==='mobile'&&c.dataset.mobile!=='true')?'none':'';
+  });
+  document.getElementById('dt-desk').className='dtbtn'+(mode==='desktop'?' active-desk':'');
+  document.getElementById('dt-mob').className='dtbtn'+(mode==='mobile'?' active-mob':'');
+}
+(function(){
+  const saved=localStorage.getItem('deviceMode')||(isMobileUA()?'mobile':'desktop');
+  setDeviceMode(saved);
+})();
 
 // Animated background — grid with drifting particles
 const canvas = document.getElementById('bg-canvas');

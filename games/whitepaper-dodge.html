@@ -108,6 +108,33 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 .estat{display:grid;grid-template-columns:repeat(3,1fr);gap:7px 20px;font-size:9px;color:#383870;text-align:center;border:1px solid #12122a;padding:12px 20px;background:#06060e}
 .estat span{color:#c0c0e0;font-size:13px;display:block}
 .brow{display:flex;gap:10px;margin-top:6px}
+
+/* ROTATE OVERLAY */
+#rotate-overlay{position:fixed;inset:0;background:#080810;z-index:500;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#f5a623;font-family:'Space Mono',monospace;text-align:center;padding:24px}
+#rotate-overlay .ri{font-size:52px;animation:rota 1.6s ease-in-out infinite alternate}
+@keyframes rota{from{transform:rotate(-80deg)}to{transform:rotate(10deg)}}
+#rotate-overlay .rt{font-size:13px;letter-spacing:3px;text-transform:uppercase}
+
+/* JOYSTICK */
+#joystick-zone{position:fixed;bottom:20px;left:20px;width:120px;height:120px;border-radius:50%;background:rgba(245,166,35,0.04);border:2px solid rgba(245,166,35,0.18);z-index:60;touch-action:none;display:none;}
+#joystick-stick{position:absolute;width:50px;height:50px;border-radius:50%;background:rgba(245,166,35,0.28);border:2px solid rgba(245,166,35,0.58);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
+
+/* MOBILE BUTTONS */
+#mobile-actions{position:fixed;bottom:16px;right:12px;display:none;grid-template-columns:1fr 1fr;gap:8px;z-index:60;}
+.mob-btn{width:64px;height:64px;border-radius:50%;border:1.5px solid rgba(245,166,35,0.3);background:rgba(8,8,26,0.88);color:#f5a623;font-size:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;gap:0px;user-select:none;}
+.mob-btn .mlbl{font-family:'Space Mono',monospace;font-size:6px;letter-spacing:1px;color:rgba(245,166,35,0.5);margin-top:1px;}
+.mob-btn.rdy{border-color:#f5a623;background:rgba(245,166,35,0.1);}
+
+/* CONTROL MODE TOGGLE (title screen) */
+.ctrlrow{display:flex;gap:5px;align-items:center}
+.ctrlbtn{background:transparent;border:1px solid #252558;color:#484878;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;padding:6px 14px;cursor:pointer;transition:all .18s;text-transform:uppercase;}
+.ctrlbtn.active{border-color:#f5a623;color:#f5a623;}
+
+/* TYPING DISPLAY */
+#mgtyping{display:none;font-family:'Space Mono',monospace;font-size:12px;letter-spacing:0.5px;line-height:2;padding:7px 12px;background:#050510;border-left:2px solid #202050;word-break:break-all;min-height:30px;}
+.tc-ok{color:#4ade80}
+.tc-err{color:#ff4444;text-decoration:underline wavy #ff4040}
+.tc-left{color:#2a2a58}
 </style>
 </head>
 <body>
@@ -132,7 +159,12 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     <div><span>SPACE</span> — Hide (shadow zone)</div>
     <div><span>M</span> — Mute Music</div>
   </div>
+  <div class="ctrlrow">
+    <button class="ctrlbtn active" id="cmbtn-kb" onclick="setCtrlMode('keyboard')">💻 Keyboard</button>
+    <button class="ctrlbtn" id="cmbtn-touch" onclick="setCtrlMode('touch')">📱 Touch</button>
+  </div>
   <div class="brow-top">
+    <a href="../index.html" class="smbtn" style="text-decoration:none">← HOME</a>
     <button class="bigbtn" id="startbtn">Avoid Responsibility</button>
     <button class="mutebtn-title" id="tmutebtn" onclick="toggleMute()">🔊 Music</button>
   </div>
@@ -170,6 +202,21 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 <div id="notif"></div>
 <div id="rfl"></div>
 <div id="gfl"></div>
+<!-- Rotate prompt (mobile portrait) -->
+<div id="rotate-overlay">
+  <div class="ri">📱</div>
+  <div class="rt">Rotate to Landscape</div>
+  <div style="font-size:9px;color:#404070;letter-spacing:2px;margin-top:-8px">for best experience</div>
+</div>
+<!-- Virtual joystick -->
+<div id="joystick-zone"><div id="joystick-stick"></div></div>
+<!-- Mobile action buttons -->
+<div id="mobile-actions">
+  <div class="mob-btn" id="mbtn-int"><span style="font-size:18px">🔑</span><span class="mlbl">INTERACT</span></div>
+  <div class="mob-btn" id="mbtn-hide"><span style="font-size:18px">🌑</span><span class="mlbl">HIDE</span></div>
+  <div class="mob-btn" id="mbtn-dist"><span style="font-size:18px">📢</span><span class="mlbl">DISTRACT</span></div>
+  <div class="mob-btn" id="mbtn-cof"><span style="font-size:18px">🥤</span><span class="mlbl">SPRINT</span></div>
+</div>
 
 <!-- Round Banner -->
 <div id="rbanner">
@@ -184,7 +231,8 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     <div id="mgsubtitle">Complete the challenge to get the doc</div>
     <div id="mgtimer"><div id="mgtimerF"></div></div>
     <div id="mgprompt"></div>
-    <textarea id="mginput" autocomplete="off" spellcheck="false" placeholder="Type here..."></textarea>
+    <div id="mgtyping"></div>
+    <textarea id="mginput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="text" placeholder="Type here..."></textarea>
     <div id="mgmatch"></div>
     <div id="mgchoices"></div>
     <div id="mgsimon"></div>
@@ -219,7 +267,7 @@ function resize(){
   canvas.style.transform=`translate(-50%,-50%) scale(${sc})`;
 }
 resize();
-window.addEventListener('resize',()=>{resize();if(!gameRunning)startTitleAnim();});
+window.addEventListener('resize',()=>{resize();checkOrientation();if(!gameRunning)startTitleAnim();});
 
 function rrect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
 
@@ -240,6 +288,25 @@ window.addEventListener('keydown',e=>{
   if(!keys[e.code]){keys[e.code]=true;onKeyPress(e.code);}
 });
 window.addEventListener('keyup',e=>{keys[e.code]=false;});
+
+// ═══════════════════════════════════
+// JOYSTICK & MOBILE BUTTONS
+// ═══════════════════════════════════
+const _jz=document.getElementById('joystick-zone');
+const _js=document.getElementById('joystick-stick');
+function _jUpdate(tx,ty){
+  const r=_jz.getBoundingClientRect();
+  const cx=r.left+r.width/2,cy=r.top+r.height/2;
+  const dx=tx-cx,dy=ty-cy,d=Math.hypot(dx,dy)||1;
+  const maxR=36,cl=Math.min(d,maxR);
+  joystickState.dx=(dx/d)*cl/maxR;joystickState.dy=(dy/d)*cl/maxR;
+  _js.style.transform=`translate(calc(-50% + ${(dx/d)*cl}px),calc(-50% + ${(dy/d)*cl}px))`;
+}
+_jz.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];joystickState.touchId=t.identifier;joystickState.active=true;_jUpdate(t.clientX,t.clientY);},{passive:false});
+_jz.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches)if(t.identifier===joystickState.touchId)_jUpdate(t.clientX,t.clientY);},{passive:false});
+_jz.addEventListener('touchend',()=>{joystickState.active=false;joystickState.dx=0;joystickState.dy=0;_js.style.transform='translate(-50%,-50%)';});
+function _mba(id,fn){document.getElementById(id).addEventListener('touchstart',e=>{e.preventDefault();if(gameRunning&&!minigameActive)fn();},{passive:false});}
+_mba('mbtn-int',doInteract);_mba('mbtn-hide',doHide);_mba('mbtn-dist',doDistract);_mba('mbtn-cof',doCoffee);
 
 // ═══════════════════════════════════
 // RAYCASTING / LOS
@@ -290,6 +357,33 @@ function toggleMute(){
   document.getElementById('mutebtn').textContent=ic;
   const tb=document.getElementById('tmutebtn');if(tb)tb.textContent=musicMuted?'🔇 Muted':'🔊 Music';
 }
+
+// ═══════════════════════════════════
+// CTRL MODE (keyboard vs touch)
+// ═══════════════════════════════════
+function setCtrlMode(mode){
+  localStorage.setItem('deviceMode',mode);
+  mobileMode=(mode==='touch');
+  document.getElementById('cmbtn-kb').classList.toggle('active',mode!=='touch');
+  document.getElementById('cmbtn-touch').classList.toggle('active',mode==='touch');
+}
+function checkOrientation(){
+  if(!mobileMode){document.getElementById('rotate-overlay').style.display='none';return;}
+  document.getElementById('rotate-overlay').style.display=(window.innerHeight>window.innerWidth)?'flex':'none';
+}
+function updateMobileUI(){
+  const jz=document.getElementById('joystick-zone');
+  const ma=document.getElementById('mobile-actions');
+  const ab=document.getElementById('abar');
+  if(mobileMode){jz.style.display='block';ma.style.display='grid';ab.style.display='none';}
+  else{jz.style.display='none';ma.style.display='none';ab.style.display='flex';}
+}
+// Init ctrl mode from localStorage or UA detection
+(function(){
+  const saved=localStorage.getItem('deviceMode');
+  const auto=(/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent))?'touch':'keyboard';
+  setCtrlMode(saved&&saved!=='desktop'&&saved!=='keyboard'?(saved==='mobile'?'touch':saved):saved||auto);
+})();
 
 // ═══════════════════════════════════
 // TITLE ANIMATION
@@ -346,6 +440,8 @@ let round,docsNeeded,docsSubmitted;
 let minigameActive,currentMGAI,mgTimer,mgTimerMax;
 let mgSimonSeq,mgSimonStep,mgSimonPlayerTurn,mgMemAnswer,mgMathAnswer;
 let secondEnemyRound;
+let mobileMode=false;
+const joystickState={active:false,dx:0,dy:0,touchId:null};
 
 // ═══════════════════════════════════
 // START GAME
@@ -363,6 +459,8 @@ function startGame(){
   particles=[];aiPickups=[];shockwaves=[];
 
   buildMap();
+  updateMobileUI();
+  checkOrientation();
 
   shadows=[
     {x:18,y:18,w:195,h:155,label:'Server Room',server:true},
@@ -607,8 +705,14 @@ function movePlayer(dt){
   if(keys['KeyS']||keys['ArrowDown'])dy+=1;
   if(keys['KeyA']||keys['ArrowLeft']){dx-=1;player.facing=-1;}
   if(keys['KeyD']||keys['ArrowRight']){dx+=1;player.facing=1;}
-  if(dx&&dy){dx*=.707;dy*=.707;}
-  if(dx||dy)player.wc+=.2*dt;
+  if(joystickState.active){
+    dx+=joystickState.dx;dy+=joystickState.dy;
+    if(joystickState.dx<-0.15)player.facing=-1;
+    if(joystickState.dx>0.15)player.facing=1;
+  }
+  const mag=Math.hypot(dx,dy);
+  if(mag>1){dx/=mag;dy/=mag;}else if(dx&&dy&&!joystickState.active){dx*=.707;dy*=.707;}
+  if(mag>0.01)player.wc+=.2*dt;
   const spd=(boosting?5.8:3.0)*dt;
   let nx=player.x+dx*spd,ny=player.y+dy*spd;
   for(const w of walls){
@@ -844,6 +948,7 @@ function openMinigame(aiPickup){
   document.getElementById('mgchoices').style.display='none';
   document.getElementById('mgsimon').style.display='none';
   document.getElementById('mgmatch').textContent='';
+  document.getElementById('mgtyping').style.display='none';document.getElementById('mgtyping').innerHTML='';
   document.getElementById('mgsubmit').style.display='';
   mgSimonPlayerTurn=false;mgSimonStep=0;mgMemAnswer='';mgMathAnswer=0;
 
@@ -854,15 +959,18 @@ function openMinigame(aiPickup){
   switch(aiPickup.challenge){
     case 'typing':{
       const target=aiPickup.prompts[Math.floor(Math.random()*aiPickup.prompts.length)];
-      prompt.textContent=`Type this: "${target}"`;
+      prompt.textContent='Type this phrase exactly:';
+      const tyd=document.getElementById('mgtyping');tyd.style.display='block';
+      updateTypingDisplay('',target);
       inp.style.display='block';inp.placeholder='Start typing...';inp.style.height='50px';
       mgTimerMax=15*60;
-      setTimeout(()=>inp.focus(),50);
+      setTimeout(()=>inp.focus(),mobileMode?250:50);
       inp.oninput=()=>{
+        updateTypingDisplay(inp.value,target);
         const pct=calcMatch(inp.value,target);
         const m=document.getElementById('mgmatch');
-        m.textContent=pct+'% match';m.style.color=pct>=85?'#4ade80':'#383870';
-        if(pct>=85){closeMinigame(true);}
+        m.textContent=pct+'% match';m.style.color=pct>=85?'#4ade80':'#484870';
+        if(pct>=85&&inp.value.length>=target.length){closeMinigame(true);}
       };
       break;
     }
@@ -953,6 +1061,7 @@ function closeMinigame(success){
   if(!minigameActive)return;
   minigameActive=false;mgTimer=0;
   document.getElementById('mg').style.display='none';
+  document.getElementById('mgtyping').style.display='none';
   // Clear all keys so player doesn't get stuck moving
   Object.keys(keys).forEach(k=>keys[k]=false);
   if(success){
@@ -977,6 +1086,20 @@ function calcMatch(input,target){
   if(!b.length)return 100;if(!a.length)return 0;
   let m=0;for(let i=0;i<Math.min(a.length,b.length);i++){if(a[i]===b[i])m++;}
   return Math.round(m/b.length*100);
+}
+
+function updateTypingDisplay(input,target){
+  const el=document.getElementById('mgtyping');
+  let html='';
+  for(let i=0;i<target.length;i++){
+    const ch=target[i]===' '?'&nbsp;':target[i];
+    if(i<input.length){
+      html+=`<span class="${input[i].toLowerCase()===target[i].toLowerCase()?'tc-ok':'tc-err'}">${ch}</span>`;
+    }else{
+      html+=`<span class="tc-left">${ch}</span>`;
+    }
+  }
+  el.innerHTML=html;
 }
 
 // ═══════════════════════════════════
@@ -1019,6 +1142,8 @@ function pop(msg,type){
 // ═══════════════════════════════════
 function endGame(){
   gameRunning=false;cancelAnimationFrame(animId);
+  document.getElementById('joystick-zone').style.display='none';
+  document.getElementById('mobile-actions').style.display='none';
   document.getElementById('rfl').style.opacity='0';document.getElementById('gfl').style.opacity='0';
   document.getElementById('mg').style.display='none';
   const es=document.getElementById('ends');
