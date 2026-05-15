@@ -18,6 +18,9 @@
     --volt-dark: #00BBAA;
     --lime: #C8E600;
     --lime-dark: #8FAA00;
+    --purple: #8855FF;
+    --purple-light: #BB99FF;
+    --purple-dark: #5522CC;
   }
 
   body {
@@ -139,6 +142,9 @@
   .card-teal::before {
     background: radial-gradient(ellipse at 50% 0%, rgba(0,255,204,0.12) 0%, transparent 70%);
   }
+  .card-purple::before {
+    background: radial-gradient(ellipse at 50% 0%, rgba(136,85,255,0.12) 0%, transparent 70%);
+  }
 
   .game-card:hover::before { opacity: 1; }
   .card-orange:hover {
@@ -166,6 +172,11 @@
     box-shadow: 0 0 40px rgba(0,255,204,0.2), 0 8px 32px rgba(0,0,0,0.4);
     transform: translateY(-4px);
   }
+  .card-purple:hover {
+    border-color: rgba(136,85,255,0.5);
+    box-shadow: 0 0 40px rgba(136,85,255,0.2), 0 8px 32px rgba(0,0,0,0.4);
+    transform: translateY(-4px);
+  }
 
   .card-icon {
     font-size: 40px;
@@ -184,6 +195,7 @@
   .card-volt   .card-title { color: var(--volt); }
   .card-lime   .card-title { color: var(--lime); }
   .card-teal   .card-title { color: var(--volt); }
+  .card-purple .card-title { color: var(--purple-light); }
 
   .card-desc {
     font-family: 'Rajdhani', sans-serif;
@@ -214,6 +226,7 @@
   .card-volt   .card-tag { background: rgba(0,255,200,0.12); border: 1px solid rgba(0,255,200,0.3); color: var(--volt); }
   .card-lime   .card-tag { background: rgba(200,230,0,0.12); border: 1px solid rgba(200,230,0,0.3); color: var(--lime); }
   .card-teal   .card-tag { background: rgba(0,255,204,0.10); border: 1px solid rgba(0,255,204,0.3); color: var(--volt); }
+  .card-purple .card-tag { background: rgba(136,85,255,0.15); border: 1px solid rgba(136,85,255,0.3); color: var(--purple-light); }
 
   .card-devices {
     display: flex;
@@ -280,12 +293,116 @@
     color: #000;
     box-shadow: 0 4px 16px rgba(0,255,204,0.3);
   }
+  .card-purple .card-cta {
+    background: linear-gradient(135deg, var(--purple-dark), var(--purple));
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(136,85,255,0.3);
+  }
   .game-card:hover .card-cta { transform: scale(1.05); }
   .card-orange:hover .card-cta { box-shadow: 0 6px 24px rgba(255,107,0,0.5); }
   .card-blue:hover   .card-cta { box-shadow: 0 6px 24px rgba(0,102,255,0.5); }
   .card-volt:hover   .card-cta { box-shadow: 0 6px 24px rgba(0,255,200,0.5); }
   .card-lime:hover   .card-cta { box-shadow: 0 6px 24px rgba(200,230,0,0.5); }
   .card-teal:hover   .card-cta { box-shadow: 0 6px 24px rgba(0,255,204,0.5); }
+  .card-purple:hover .card-cta { box-shadow: 0 6px 24px rgba(136,85,255,0.5); }
+
+  /* Folder card game list */
+  .folder-games {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 100%;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    border: 1px solid rgba(255,107,0,0.15);
+  }
+  .folder-game-item {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.55);
+    text-align: left;
+    padding: 3px 4px;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.88);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .modal-box {
+    background: #0d1117;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 36px 32px 32px;
+    max-width: 1000px;
+    width: 100%;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 28px;
+  }
+  .modal-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--citrus-light);
+    letter-spacing: 3px;
+    text-align: center;
+  }
+  .modal-subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.25);
+    text-transform: uppercase;
+  }
+  .modal-close {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.35);
+    font-size: 22px;
+    cursor: pointer;
+    font-family: 'Share Tech Mono', monospace;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .modal-close:hover { color: white; background: rgba(255,255,255,0.08); }
+  .modal-games {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .modal-games .game-card {
+    width: clamp(220px, calc(33% - 12px), 280px);
+  }
 
   .footer {
     font-family: 'Share Tech Mono', monospace;
@@ -303,6 +420,8 @@
     .card-title { font-size: 15px; letter-spacing: 1px; }
     .card-desc { font-size: 13px; }
     .team-badge { font-size: 10px; letter-spacing: 2px; }
+    .modal-box { padding: 28px 16px 20px; }
+    .modal-games .game-card { width: min(280px, 100%); }
   }
 </style>
 </head>
@@ -317,67 +436,25 @@
   </div>
 
   <div class="games-grid">
-    <div class="game-card card-orange" style="cursor:default">
-      <div class="card-icon">🎵</div>
-      <div class="card-title">CRESCENDO CLASH</div>
-      <div class="card-desc">
-        Race to collect glowing notes and score in your goal zone.<br>
-        Contest the AMP Stage for quadruple points!
-      </div>
-      <div class="card-tags">
-        <span class="card-tag">2 Players</span>
-        <span class="card-tag">Score Attack</span>
-        <span class="card-tag">AMP Mode</span>
-      </div>
-      <div class="card-devices">
-        <span class="device-badge highlight">&#x1F4BB; Computer</span>
-      </div>
-      <div style="display:flex;gap:8px;width:100%;margin-top:4px">
-        <a href="games/crescendo-clash.html" class="card-cta" style="flex:1;text-align:center;text-decoration:none">LOCAL</a>
-        <a href="games/crescendo-clash.html?online=1" class="card-cta" style="flex:1;text-align:center;text-decoration:none;background:linear-gradient(135deg,#0066FF,#0099FF);color:#fff;box-shadow:0 4px 16px rgba(0,102,255,0.3)">🌐 ONLINE</a>
-      </div>
-    </div>
 
-    <div class="game-card card-blue" style="cursor:default">
-      <div class="card-icon">🤖</div>
-      <div class="card-title">IRON RING</div>
-      <div class="card-desc">
-        Push your opponent out of the sumo ring to win!<br>
-        Charge up for a devastating SUPERCHARGED hit!
+    <!-- 2 Player Games folder -->
+    <div class="game-card card-orange" onclick="openGamesModal()">
+      <div class="card-icon">🎮</div>
+      <div class="card-title">2 PLAYER GAMES</div>
+      <div class="card-desc">Head-to-head multiplayer — local or online</div>
+      <div class="folder-games">
+        <div class="folder-game-item">🎵 CRESCENDO CLASH — Score Attack</div>
+        <div class="folder-game-item">🤖 IRON RING — Sumo Battle</div>
+        <div class="folder-game-item">⚡ CIRCUIT BREAKER — Ranged Combat</div>
       </div>
       <div class="card-tags">
-        <span class="card-tag">2 Players</span>
-        <span class="card-tag">Sumo</span>
-        <span class="card-tag">Sudden Death</span>
+        <span class="card-tag">3 Games</span>
+        <span class="card-tag">Local & Online</span>
       </div>
       <div class="card-devices">
         <span class="device-badge highlight">&#x1F4BB; Computer</span>
       </div>
-      <div style="display:flex;gap:8px;width:100%;margin-top:4px">
-        <a href="games/iron-ring.html" class="card-cta" style="flex:1;text-align:center;text-decoration:none">LOCAL</a>
-        <a href="games/iron-ring.html?online=1" class="card-cta" style="flex:1;text-align:center;text-decoration:none;background:linear-gradient(135deg,#FF6B00,#FF9500);color:#000;box-shadow:0 4px 16px rgba(255,107,0,0.3)">🌐 ONLINE</a>
-      </div>
-    </div>
-
-    <div class="game-card card-volt" style="cursor:default">
-      <div class="card-icon">⚡</div>
-      <div class="card-title">CIRCUIT BREAKER</div>
-      <div class="card-desc">
-        Fire bouncing shock bolts to drain your rival's battery!<br>
-        Hit 100% to OVERCHARGE — your next tackle is an instant disable!
-      </div>
-      <div class="card-tags">
-        <span class="card-tag">2 Players</span>
-        <span class="card-tag">Ranged Combat</span>
-        <span class="card-tag">Overcharge</span>
-      </div>
-      <div class="card-devices">
-        <span class="device-badge highlight">&#x1F4BB; Computer</span>
-      </div>
-      <div style="display:flex;gap:8px;width:100%;margin-top:4px">
-        <a href="games/circuit-breaker.html" class="card-cta" style="flex:1;text-align:center;text-decoration:none">LOCAL</a>
-        <a href="games/circuit-breaker.html?online=1" class="card-cta" style="flex:1;text-align:center;text-decoration:none;background:linear-gradient(135deg,#00BBAA,#00FFCC);color:#000;box-shadow:0 4px 16px rgba(0,255,200,0.3)">🌐 ONLINE</a>
-      </div>
+      <div class="card-cta">SELECT GAME</div>
     </div>
 
     <a href="games/scouting-sim.html" class="game-card card-teal">
@@ -417,12 +494,121 @@
       </div>
       <div class="card-cta">PLAY NOW</div>
     </a>
+
+    <a href="games/whitepaper-dodge.html" class="game-card card-purple">
+      <div class="card-icon">📋</div>
+      <div class="card-title">WHITEPAPER DODGE</div>
+      <div class="card-desc">
+        The scouting whitepaper has gone sentient — and it's hunting you!<br>
+        Dodge leads, collect excuses, and escape the building.
+      </div>
+      <div class="card-tags">
+        <span class="card-tag">1 Player</span>
+        <span class="card-tag">Stealth</span>
+        <span class="card-tag">Dodge</span>
+      </div>
+      <div class="card-devices">
+        <span class="device-badge highlight">&#x1F4BB; Computer</span>
+      </div>
+      <div class="card-cta">PLAY NOW</div>
+    </a>
+
   </div>
 
-  <div class="footer">LOCAL: WASD vs Arrow Keys · ONLINE: Both players use WASD or Arrows on separate computers · Citrus Crunch &amp; Scout Room Sim are single-player</div>
+  <div class="footer">2-Player: WASD vs Arrow Keys · Local or Online on separate computers · Whitepaper Dodge: Computer only</div>
+</div>
+
+<!-- 2 Player Games Modal -->
+<div class="modal-overlay" id="gamesModal" onclick="handleModalClick(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeGamesModal()">✕</button>
+    <div class="modal-header">
+      <div class="modal-title">⚔ 2 PLAYER GAMES</div>
+      <div class="modal-subtitle">WASD vs Arrow Keys · Local or Online</div>
+    </div>
+    <div class="modal-games">
+
+      <div class="game-card card-orange" style="cursor:default">
+        <div class="card-icon">🎵</div>
+        <div class="card-title">CRESCENDO CLASH</div>
+        <div class="card-desc">
+          Race to collect glowing notes and score in your goal zone.<br>
+          Contest the AMP Stage for quadruple points!
+        </div>
+        <div class="card-tags">
+          <span class="card-tag">2 Players</span>
+          <span class="card-tag">Score Attack</span>
+          <span class="card-tag">AMP Mode</span>
+        </div>
+        <div class="card-devices">
+          <span class="device-badge highlight">&#x1F4BB; Computer</span>
+        </div>
+        <div style="display:flex;gap:8px;width:100%;margin-top:4px">
+          <a href="games/crescendo-clash.html" class="card-cta" style="flex:1;text-align:center;text-decoration:none">LOCAL</a>
+          <a href="games/crescendo-clash.html?online=1" class="card-cta" style="flex:1;text-align:center;text-decoration:none;background:linear-gradient(135deg,#0066FF,#0099FF);color:#fff;box-shadow:0 4px 16px rgba(0,102,255,0.3)">🌐 ONLINE</a>
+        </div>
+      </div>
+
+      <div class="game-card card-blue" style="cursor:default">
+        <div class="card-icon">🤖</div>
+        <div class="card-title">IRON RING</div>
+        <div class="card-desc">
+          Push your opponent out of the sumo ring to win!<br>
+          Charge up for a devastating SUPERCHARGED hit!
+        </div>
+        <div class="card-tags">
+          <span class="card-tag">2 Players</span>
+          <span class="card-tag">Sumo</span>
+          <span class="card-tag">Sudden Death</span>
+        </div>
+        <div class="card-devices">
+          <span class="device-badge highlight">&#x1F4BB; Computer</span>
+        </div>
+        <div style="display:flex;gap:8px;width:100%;margin-top:4px">
+          <a href="games/iron-ring.html" class="card-cta" style="flex:1;text-align:center;text-decoration:none">LOCAL</a>
+          <a href="games/iron-ring.html?online=1" class="card-cta" style="flex:1;text-align:center;text-decoration:none;background:linear-gradient(135deg,#FF6B00,#FF9500);color:#000;box-shadow:0 4px 16px rgba(255,107,0,0.3)">🌐 ONLINE</a>
+        </div>
+      </div>
+
+      <div class="game-card card-volt" style="cursor:default">
+        <div class="card-icon">⚡</div>
+        <div class="card-title">CIRCUIT BREAKER</div>
+        <div class="card-desc">
+          Fire bouncing shock bolts to drain your rival's battery!<br>
+          Hit 100% to OVERCHARGE — your next tackle is an instant disable!
+        </div>
+        <div class="card-tags">
+          <span class="card-tag">2 Players</span>
+          <span class="card-tag">Ranged Combat</span>
+          <span class="card-tag">Overcharge</span>
+        </div>
+        <div class="card-devices">
+          <span class="device-badge highlight">&#x1F4BB; Computer</span>
+        </div>
+        <div style="display:flex;gap:8px;width:100%;margin-top:4px">
+          <a href="games/circuit-breaker.html" class="card-cta" style="flex:1;text-align:center;text-decoration:none">LOCAL</a>
+          <a href="games/circuit-breaker.html?online=1" class="card-cta" style="flex:1;text-align:center;text-decoration:none;background:linear-gradient(135deg,#00BBAA,#00FFCC);color:#000;box-shadow:0 4px 16px rgba(0,255,200,0.3)">🌐 ONLINE</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
 
 <script>
+function openGamesModal() {
+  document.getElementById('gamesModal').classList.add('open');
+}
+function closeGamesModal() {
+  document.getElementById('gamesModal').classList.remove('open');
+}
+function handleModalClick(e) {
+  if (e.target === document.getElementById('gamesModal')) closeGamesModal();
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeGamesModal();
+});
+
 // Animated background — grid with drifting particles
 const canvas = document.getElementById('bg-canvas');
 const ctx = canvas.getContext('2d');
