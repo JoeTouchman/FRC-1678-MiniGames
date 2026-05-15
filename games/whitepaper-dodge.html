@@ -11,7 +11,8 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 #gc{display:block;position:fixed;top:50%;left:50%;transform-origin:center center;}
 
 /* BOOT */
-#boot{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;gap:10px;padding:20px;pointer-events:auto}
+#boot{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;gap:10px;padding:20px;pointer-events:auto;overflow-y:auto;}
+@media(max-height:520px){#boot{justify-content:flex-start;padding:8px 16px;gap:5px;}.blogo{font-size:clamp(22px,5vh,40px);letter-spacing:4px;}.bsub{display:none;}.bstory{font-size:9px;line-height:1.5;padding:6px 12px;max-width:420px;}.bctrl{display:none;}.bigbtn{padding:7px 22px;}.brow-top{margin-top:2px;}}
 .blogo{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,7vw,82px);color:#f5a623;letter-spacing:8px;text-align:center;line-height:1.0;animation:bglitch 4.2s infinite;text-shadow:0 0 30px rgba(245,166,35,0.45)}
 @keyframes bglitch{0%,88%{transform:none;text-shadow:0 0 30px rgba(245,166,35,.45);}89%{transform:translateX(-4px);text-shadow:-4px 0 rgba(255,0,80,.7),4px 0 rgba(0,220,255,.7);}90%{transform:translateX(4px);text-shadow:4px 0 rgba(255,0,80,.7),-4px 0 rgba(0,220,255,.7);}91%{transform:none;text-shadow:0 0 30px rgba(245,166,35,.45);}94%{transform:scaleX(1.015) translateY(-2px);filter:blur(.6px);}95%{transform:none;filter:none;}}
 .bsub{font-size:10px;color:#303068;letter-spacing:3px;text-align:center;animation:bsubfade 2s ease forwards}
@@ -381,6 +382,7 @@ function toggleMute(){
 // CTRL MODE (keyboard vs touch)
 // ═══════════════════════════════════
 let mobileMode=false;
+let gameRunning=false;
 const joystickState={active:false,dx:0,dy:0,touchId:null};
 function setCtrlMode(mode){
   localStorage.setItem('deviceMode',mode==='touch'?'mobile':'desktop');
@@ -398,6 +400,7 @@ function updateMobileUI(){
   const jz=document.getElementById('joystick-zone');
   const ma=document.getElementById('mobile-actions');
   const ab=document.getElementById('abar');
+  if(!gameRunning){jz.style.display='none';ma.style.display='none';ab.style.display='none';return;}
   if(mobileMode){jz.style.display='block';ma.style.display='grid';ab.style.display='none';}
   else{jz.style.display='none';ma.style.display='none';ab.style.display='flex';}
 }
@@ -455,7 +458,7 @@ const AI_TYPES=[
 // GAME STATE
 // ═══════════════════════════════════
 let player,enemies,pickups,aiPickups,shockwaves,particles,shadows,walls,roomZones;
-let surviveTime,score,danger,dangerSafeTimer,gameRunning,animId,lastTime;
+let surviveTime,score,danger,dangerSafeTimer,animId,lastTime;
 let hidesLeft,excuses,coffees;
 let boosting,boostTimer;
 let serverDone,alarmOn,alarmTimer;
@@ -1166,6 +1169,7 @@ function endGame(){
   gameRunning=false;cancelAnimationFrame(animId);
   document.getElementById('joystick-zone').style.display='none';
   document.getElementById('mobile-actions').style.display='none';
+  document.getElementById('abar').style.display='none';
   document.getElementById('rfl').style.opacity='0';document.getElementById('gfl').style.opacity='0';
   document.getElementById('mg').style.display='none';
   const es=document.getElementById('ends');
