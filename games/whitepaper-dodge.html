@@ -185,7 +185,10 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     <div id="h-score">0</div>
   </div>
   <div id="hud-right">
-    <button id="mutebtn" onclick="toggleMute()">🔊</button>
+    <div style="display:flex;gap:5px;justify-content:flex-end">
+      <button id="mutebtn" onclick="toggleMute()">🔊</button>
+      <button id="backbtn" onclick="quitToTitle()" style="pointer-events:auto;background:transparent;border:1px solid #252555;color:#404070;cursor:pointer;font-size:10px;padding:3px 7px;transition:all .18s;font-family:'Space Mono',monospace;letter-spacing:1px;" onmouseover="this.style.borderColor='#f55';this.style.color='#f55'" onmouseout="this.style.borderColor='#252555';this.style.color='#404070'">✕ QUIT</button>
+    </div>
     <div class="hl" style="margin-top:6px">Survived</div>
     <div class="hv" id="htim">0s</div>
     <div class="hl" style="margin-top:4px">Excuses</div>
@@ -688,12 +691,10 @@ function update(dt){
     if(mgTimer<=0){closeMinigame(false);pop('⏰ Time\'s up!','b');}
     for(const en of enemies){if(en.stunned){en.stunT-=dt;if(en.stunT<=0){en.stunned=false;}}else if(!alarmOn)updateEnemy(en,dt);}
     if(alarmOn){alarmTimer-=dt;if(alarmTimer<=0){alarmOn=false;}}
-    score+=dt*.25;
     updateHUD();return;
   }
 
   surviveTime+=dt/60;
-  score+=dt*.8;
 
   if(boosting){boostTimer-=dt;if(boostTimer<=0)boosting=false;}
   if(alarmOn){alarmTimer-=dt;if(alarmTimer<=0){alarmOn=false;pop('Enemies returning...','b');}}
@@ -1188,6 +1189,21 @@ function pop(msg,type){
 }
 
 // ═══════════════════════════════════
+// QUIT TO TITLE
+// ═══════════════════════════════════
+function quitToTitle(){
+  if(!confirm('Quit to title screen? Your current run will be lost.'))return;
+  gameRunning=false;cancelAnimationFrame(animId);
+  stopTitleAnim();
+  document.getElementById('joystick-zone').style.display='none';
+  document.getElementById('mobile-actions').style.display='none';
+  document.getElementById('abar').style.display='none';
+  document.getElementById('mg').style.display='none';
+  document.getElementById('ends').style.display='none';
+  document.getElementById('boot').style.display='flex';
+  startTitleAnim();
+}
+
 // END GAME
 // ═══════════════════════════════════
 function endGame(){
