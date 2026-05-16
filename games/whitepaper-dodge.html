@@ -95,6 +95,12 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 .sk.lit{border-color:#f5a623;background:rgba(245,166,35,.15);color:#f5a623;transform:scale(1.1)}
 .sk.ok{border-color:#4ade80;background:rgba(74,222,128,.12);color:#4ade80}
 .sk.bad{border-color:#ff4040;background:rgba(255,64,64,.12);color:#ff4040}
+#cstm-kb{display:none;flex-direction:column;gap:3px;padding:4px 0;user-select:none;-webkit-user-select:none}
+.ck-row{display:flex;gap:2px}
+.ck{background:#0a0a22;border:1px solid #252555;color:#c0c0e0;font-family:'Space Mono',monospace;font-size:11px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:3px;flex:1;min-width:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.ck:active{background:#1a1a42;border-color:#f5a623;color:#f5a623}
+.ck.ck-wide{flex:5}
+.ck.ck-back{flex:1.5;font-size:15px}
 #mgactions{display:flex;gap:8px}
 .mgbtn{background:transparent;border:1px solid #282858;color:#484880;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;padding:8px 16px;cursor:pointer;flex:1;transition:all .18s;text-transform:uppercase}
 .mgbtn.pri{border-color:#f5a623;color:#f5a623}
@@ -242,6 +248,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     <div id="mgtyping"></div>
     <textarea id="mginput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="text" placeholder="Type here..."></textarea>
     <div id="mgmatch"></div>
+    <div id="cstm-kb"></div>
     <div id="mgchoices"></div>
     <div id="mgsimon"></div>
     <div id="mgactions">
@@ -406,7 +413,15 @@ if(window.visualViewport){
   window.visualViewport.addEventListener('scroll',adjustMGForKeyboard);
 }
 
-function playTitleMusic(){bgm.pause();bgm.currentTime=0;titleBgm.muted=musicMuted;titleBgm.play().catch(()=>{});}
+function playTitleMusic(){
+  bgm.pause();bgm.currentTime=0;
+  titleBgm.muted=musicMuted;
+  titleBgm.play().catch(()=>{
+    const resume=()=>{if(!gameRunning&&titleBgm.paused){titleBgm.muted=musicMuted;titleBgm.play().catch(()=>{});}};
+    document.addEventListener('pointerdown',resume,{once:true});
+    document.addEventListener('keydown',resume,{once:true});
+  });
+}
 function playGameMusic(){titleBgm.pause();titleBgm.currentTime=0;bgm.muted=musicMuted;bgm.play().catch(()=>{});}
 function toggleMute(){
   musicMuted=!musicMuted;bgm.muted=musicMuted;titleBgm.muted=musicMuted;
@@ -546,6 +561,7 @@ let rflT,gflT,dangerSndT;
 let round,docsNeeded,docsSubmitted;
 let minigameActive,currentMGAI,mgTimer,mgTimerMax;
 let mgSimonSeq,mgSimonStep,mgSimonPlayerTurn,mgMemAnswer,mgMathAnswer;
+let ckbTarget='';
 let secondEnemyRound;
 
 // ═══════════════════════════════════
@@ -1049,6 +1065,45 @@ function pInZ(z){return player.x>z.x&&player.x<z.x+z.w&&player.y>z.y&&player.y<z
 function burst(x,y,color,n){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=1+Math.random()*3;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1,life:35+Math.random()*40,maxLife:75,color,r:2+Math.random()*2.5});}}
 
 // ═══════════════════════════════════
+// CUSTOM KEYBOARD (mobile typing)
+// ═══════════════════════════════════
+function buildCustomKB(){
+  const kb=document.getElementById('cstm-kb');
+  kb.innerHTML='';
+  const rows=[
+    ['1','2','3','4','5','6','7','8','9','0'],
+    ['q','w','e','r','t','y','u','i','o','p'],
+    ['a','s','d','f','g','h','j','k','l'],
+    ['z','x','c','v','b','n','m','⌫'],
+  ];
+  for(const row of rows){
+    const rd=document.createElement('div');rd.className='ck-row';
+    for(const ch of row){
+      const b=document.createElement('button');
+      b.className='ck'+(ch==='⌫'?' ck-back':'');
+      b.textContent=ch;b.type='button';
+      b.addEventListener('pointerdown',e=>{e.preventDefault();ckbPress(ch);});
+      rd.appendChild(b);
+    }
+    kb.appendChild(rd);
+  }
+  const sr=document.createElement('div');sr.className='ck-row';
+  const sb=document.createElement('button');
+  sb.className='ck ck-wide';sb.textContent='SPACE';sb.type='button';
+  sb.addEventListener('pointerdown',e=>{e.preventDefault();ckbPress(' ');});
+  sr.appendChild(sb);kb.appendChild(sr);
+}
+function ckbPress(ch){
+  const inp=document.getElementById('mginput');
+  if(ch==='⌫'){inp.value=inp.value.slice(0,-1);}else{inp.value+=ch;}
+  updateTypingDisplay(inp.value,ckbTarget);
+  const pct=calcMatch(inp.value,ckbTarget);
+  const m=document.getElementById('mgmatch');
+  m.textContent=pct+'% match';m.style.color=pct>=85?'#4ade80':'#484870';
+  if(pct>=85&&inp.value.length>=ckbTarget.length)setTimeout(()=>closeMinigame(true),100);
+}
+
+// ═══════════════════════════════════
 // MINIGAME
 // ═══════════════════════════════════
 function openMinigame(aiPickup){
@@ -1061,6 +1116,7 @@ function openMinigame(aiPickup){
   document.getElementById('mginput').style.display='none';
   document.getElementById('mgchoices').style.display='none';
   document.getElementById('mgsimon').style.display='none';
+  document.getElementById('cstm-kb').style.display='none';
   document.getElementById('mgmatch').textContent='';
   document.getElementById('mgtyping').style.display='none';document.getElementById('mgtyping').innerHTML='';
   document.getElementById('mgsubmit').style.display='';
@@ -1076,16 +1132,23 @@ function openMinigame(aiPickup){
       prompt.textContent='Type this phrase exactly:';
       const tyd=document.getElementById('mgtyping');tyd.style.display='block';
       updateTypingDisplay('',target);
-      inp.style.display='block';inp.placeholder='Start typing...';inp.style.height='50px';
       mgTimerMax=15*60;
-      setTimeout(()=>inp.focus(),mobileMode?250:50);
-      inp.oninput=()=>{
-        updateTypingDisplay(inp.value,target);
-        const pct=calcMatch(inp.value,target);
-        const m=document.getElementById('mgmatch');
-        m.textContent=pct+'% match';m.style.color=pct>=85?'#4ade80':'#484870';
-        if(pct>=85&&inp.value.length>=target.length){closeMinigame(true);}
-      };
+      if(mobileMode){
+        ckbTarget=target;
+        buildCustomKB();
+        document.getElementById('cstm-kb').style.display='flex';
+        inp.style.display='none';
+      } else {
+        inp.style.display='block';inp.placeholder='Start typing...';inp.style.height='50px';
+        setTimeout(()=>inp.focus(),50);
+        inp.oninput=()=>{
+          updateTypingDisplay(inp.value,target);
+          const pct=calcMatch(inp.value,target);
+          const m=document.getElementById('mgmatch');
+          m.textContent=pct+'% match';m.style.color=pct>=85?'#4ade80':'#484870';
+          if(pct>=85&&inp.value.length>=target.length){closeMinigame(true);}
+        };
+      }
       break;
     }
     case 'memory':{
@@ -1175,7 +1238,9 @@ function mgChoose(idx,correct){
 function closeMinigame(success){
   if(!minigameActive)return;
   minigameActive=false;mgTimer=0;
-  document.getElementById('mg').style.display='none';resetMGSize();
+  document.getElementById('mg').style.display='none';
+  document.getElementById('cstm-kb').style.display='none';
+  resetMGSize();
   document.getElementById('mgtyping').style.display='none';
   // Clear all keys so player doesn't get stuck moving
   Object.keys(keys).forEach(k=>keys[k]=false);
