@@ -140,7 +140,8 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 </head>
 <body>
 <canvas id="gc"></canvas>
-<audio id="bgm" src="../public/music/Whitepaper.mp3" loop></audio>
+<audio id="bgm" src="../public/music/Whitepaper-dodge/Whitepaper.mp3" loop></audio>
+<audio id="title-bgm" src="../public/music/Whitepaper-dodge/WhitepaperTitle.mp3" loop></audio>
 
 <!-- BOOT -->
 <div id="boot">
@@ -388,8 +389,11 @@ function canSeePlayer(en){
 // ═══════════════════════════════════
 let musicMuted=false;
 const bgm=document.getElementById('bgm');
+const titleBgm=document.getElementById('title-bgm');
+function playTitleMusic(){bgm.pause();bgm.currentTime=0;titleBgm.muted=musicMuted;titleBgm.play().catch(()=>{});}
+function playGameMusic(){titleBgm.pause();titleBgm.currentTime=0;bgm.muted=musicMuted;bgm.play().catch(()=>{});}
 function toggleMute(){
-  musicMuted=!musicMuted;bgm.muted=musicMuted;
+  musicMuted=!musicMuted;bgm.muted=musicMuted;titleBgm.muted=musicMuted;
   const ic=musicMuted?'🔇':'🔊';
   document.getElementById('mutebtn').textContent=ic;
   const tb=document.getElementById('tmutebtn');if(tb)tb.textContent=musicMuted?'🔇 Muted':'🔊 Music';
@@ -409,6 +413,32 @@ document.addEventListener('webkitfullscreenchange',()=>{
 if(!document.documentElement.requestFullscreen&&!document.documentElement.webkitRequestFullscreen){
   const btn=document.getElementById('fsbtn');if(btn)btn.style.display='none';
 }
+
+// ═══════════════════════════════════
+// SOUNDS
+// ═══════════════════════════════════
+const SFX_PATH='../public/sounds/Whitepaper-dodge/';
+const SOUNDS={
+  pickup_excuse:    new Audio(SFX_PATH+'pickup_excuse.mp3'),
+  pickup_coffee:    new Audio(SFX_PATH+'pickup_coffee.mp3'),
+  hide:             new Audio(SFX_PATH+'hide.mp3'),
+  sprint:           new Audio(SFX_PATH+'sprint.mp3'),
+  distract:         new Audio(SFX_PATH+'distract.mp3'),
+  minigame_open:    new Audio(SFX_PATH+'minigame_open.mp3'),
+  minigame_success: new Audio(SFX_PATH+'minigame_success.mp3'),
+  minigame_fail:    new Audio(SFX_PATH+'minigame_fail.mp3'),
+  doc_submit:       new Audio(SFX_PATH+'doc_submit.mp3'),
+  round_start:      new Audio(SFX_PATH+'round_start.mp3'),
+  round_complete:   new Audio(SFX_PATH+'round_complete.mp3'),
+  enemy_alert:      new Audio(SFX_PATH+'enemy_alert.mp3'),
+  enemy_agro:       new Audio(SFX_PATH+'enemy_agro.mp3'),
+  enemy_stun:       new Audio(SFX_PATH+'enemy_stun.mp3'),
+  danger_high:      new Audio(SFX_PATH+'danger_high.mp3'),
+  caught:           new Audio(SFX_PATH+'caught.mp3'),
+  server_secure:    new Audio(SFX_PATH+'server_secure.mp3'),
+  ui_click:         new Audio(SFX_PATH+'ui_click.mp3'),
+};
+function playSound(name,vol){const s=SOUNDS[name];if(!s)return;s.volume=vol!=null?vol:1;s.currentTime=0;s.play().catch(()=>{});}
 
 // ═══════════════════════════════════
 // CTRL MODE (keyboard vs touch)
@@ -496,7 +526,7 @@ let surviveTime,score,danger,dangerSafeTimer,animId,lastTime;
 let hidesLeft,excuses,coffees;
 let boosting,boostTimer;
 let serverDone,alarmOn,alarmTimer;
-let rflT,gflT;
+let rflT,gflT,dangerSndT;
 let round,docsNeeded,docsSubmitted;
 let minigameActive,currentMGAI,mgTimer,mgTimerMax;
 let mgSimonSeq,mgSimonStep,mgSimonPlayerTurn,mgMemAnswer,mgMathAnswer;
@@ -511,7 +541,7 @@ function startGame(){
   hidesLeft=3;excuses=0;coffees=0;
   boosting=false;boostTimer=0;
   serverDone=false;alarmOn=false;alarmTimer=0;
-  rflT=0;gflT=0;
+  rflT=0;gflT=0;dangerSndT=0;
   round=0;docsNeeded=0;docsSubmitted=0;
   minigameActive=false;currentMGAI=null;mgTimer=0;
   secondEnemyRound=false;
@@ -634,6 +664,7 @@ function spawnP(type){
 
 function startRound(n){
   round=n;docsNeeded=n;docsSubmitted=0;
+  playSound('round_start',.8);
   player.docs=[];
   const comp=walls.find(w=>w.isComputer);if(comp)comp.docsIn=0;
 
@@ -796,6 +827,7 @@ function moveToward(en,tx,ty,rate,dt){
 function updateEnemy(en,dt){
   const cx=en.x+en.w/2,cy=en.y+en.h/2;
   const sees=canSeePlayer(en);
+  const prevPhase=en.phase;
 
   if(!en.baseSpeed)en.baseSpeed=en.speed;
 
@@ -828,6 +860,11 @@ function updateEnemy(en,dt){
   } else {
     // ── UNAWARE ───────────────────────
     en.vx+=(Math.random()-.5)*.1*dt;en.vy+=(Math.random()-.5)*.1*dt;
+  }
+
+  if(en.phase!==prevPhase){
+    if(en.phase==='agro')playSound('enemy_agro',.7);
+    else if(en.phase==='suspicious')playSound('enemy_alert',.5);
   }
 
   // Speed cap by phase
@@ -869,7 +906,8 @@ function updateDanger(dt){
     if(!seen){dangerSafeTimer+=dt;if(dangerSafeTimer>90)danger=Math.max(0,danger-1.3*dt);}
     else dangerSafeTimer=0;
   }
-  if(danger>78)rflT=Math.max(rflT,.5);
+  if(dangerSndT>0)dangerSndT-=dt;
+  if(danger>78){rflT=Math.max(rflT,.5);if(dangerSndT<=0){playSound('danger_high',.6);dangerSndT=90;}}
   if(!player.hidden&&!player.safe&&!alarmOn){
     for(const en of enemies){
       if(en.stunned)continue;
@@ -882,8 +920,8 @@ function updateDanger(dt){
 function collectP(p){
   p.dead=true;score+=20;
   burst(p.x,p.y,p.type==='excuse'?'#4ade80':'#00cfff',8);
-  if(p.type==='excuse'){excuses=Math.min(excuses+1,8);pop(p.label,'g');}
-  else if(p.type==='coffee'){coffees=Math.min(coffees+1,5);pop('🥤 Celsius acquired!','i');}
+  if(p.type==='excuse'){excuses=Math.min(excuses+1,8);pop(p.label,'g');playSound('pickup_excuse',.8);}
+  else if(p.type==='coffee'){coffees=Math.min(coffees+1,5);pop('🥤 Celsius acquired!','i');playSound('pickup_coffee',.8);}
 }
 
 // ═══════════════════════════════════
@@ -921,7 +959,7 @@ function doHide(){
   if(!z){pop('No shadow zone here!','b');return;}
   if(hidesLeft<=0){pop('No hides left!','b');return;}
   player.hidden=true;player.hideT=5*60;hidesLeft--;
-  dangerSafeTimer=0;gflT=3;pop('🌑 Hiding...','g');
+  dangerSafeTimer=0;gflT=3;pop('🌑 Hiding...','g');playSound('hide',.7);
 }
 
 function doDistract(){
@@ -929,7 +967,7 @@ function doDistract(){
   excuses--;
   const radius=255;
   shockwaves.push({x:player.x,y:player.y,r:0,maxR:radius,life:1,color:'#ffee00'});
-  burst(player.x,player.y,'#ffee00',10);
+  burst(player.x,player.y,'#ffee00',10);playSound('distract',.9);
   let stunned=0,alerted=0;
   for(const en of enemies){
     if(en.stunned)continue;
@@ -946,6 +984,7 @@ function doDistract(){
       en.patrolIdx=0;alerted++;
     }
   }
+  if(stunned)playSound('enemy_stun',.7);
   let msg='📢 DISTRACTION!';
   if(stunned)msg+=` Stunned ${stunned}.`;
   if(alerted)msg+=` ${alerted} enemy alerted.`;
@@ -956,7 +995,7 @@ function doDistract(){
 function doCoffee(){
   if(coffees<=0){pop('No Celsius! Find 🥤 pickups.','b');return;}
   coffees--;boosting=true;boostTimer=200;
-  burst(player.x,player.y,'#00cfff',10);pop('🥤 CELSIUS SPRINT!','w');
+  burst(player.x,player.y,'#00cfff',10);pop('🥤 CELSIUS SPRINT!','w');playSound('sprint',.8);
 }
 
 function doInteract(){
@@ -968,13 +1007,13 @@ function doInteract(){
     docsSubmitted+=n;comp.docsIn=docsSubmitted;
     score+=n*200;gflT=6;
     burst(comp.x+comp.w/2,comp.y+comp.h/2,'#4ade80',22);
-    pop(`📤 Submitted ${n} doc${n>1?'s':''}! (${docsSubmitted}/${docsNeeded})`,'g');
+    pop(`📤 Submitted ${n} doc${n>1?'s':''}! (${docsSubmitted}/${docsNeeded})`,'g');playSound('doc_submit',.9);
     player.docs=[];
     updateDotsUI();
     if(docsSubmitted>=docsNeeded){
       const bonus=600*round;score+=bonus;
       pop(`✅ ROUND ${round} DONE! +${bonus} pts`,'w');
-      gflT=10;
+      gflT=10;playSound('round_complete',1);
       setTimeout(()=>{if(gameRunning)startRound(round+1);},2600);
     }
     return;
@@ -986,7 +1025,7 @@ function doInteract(){
   }
   // Server room
   const s=shadows.find(z=>z.server&&pInZ(z));
-  if(s&&!serverDone){serverDone=true;player.safe=true;burst(player.x,player.y,'#4ade80',16);pop('🔒 Server room secured!','g');return;}
+  if(s&&!serverDone){serverDone=true;player.safe=true;burst(player.x,player.y,'#4ade80',16);pop('🔒 Server room secured!','g');playSound('server_secure',.9);return;}
   pop('Nothing to interact with.','i');
 }
 
@@ -998,6 +1037,7 @@ function burst(x,y,color,n){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2
 // ═══════════════════════════════════
 function openMinigame(aiPickup){
   currentMGAI=aiPickup;minigameActive=true;
+  playSound('minigame_open',.8);
   const box=document.getElementById('mgbox');
   box.style.borderColor=aiPickup.color;box.style.background=aiPickup.bg||'#080812';
   const nm=document.getElementById('mgname');nm.textContent=aiPickup.name;nm.style.color=aiPickup.color;
@@ -1127,12 +1167,12 @@ function closeMinigame(success){
     currentMGAI.dead=true;
     score+=100;gflT=4;
     burst(player.x,player.y,currentMGAI.color,16);
-    pop(`📄 Doc from ${currentMGAI.name}! Bring to COMPUTER.`,'g');
+    pop(`📄 Doc from ${currentMGAI.name}! Bring to COMPUTER.`,'g');playSound('minigame_success',1);
     updateDotsUI();
     const remaining=aiPickups.filter(a=>!a.dead).length;
     if(remaining===0&&player.docs.length<docsNeeded)pop('All AIs done—submit at the COMPUTER!','w');
   } else {
-    pop(`❌ Challenge failed. Try again.`,'b');
+    pop(`❌ Challenge failed. Try again.`,'b');playSound('minigame_fail',.8);
   }
   currentMGAI=null;
   document.getElementById('mginput').value='';
@@ -1217,13 +1257,14 @@ function confirmQuit(){
   document.getElementById('mg').style.display='none';
   document.getElementById('ends').style.display='none';
   document.getElementById('boot').style.display='flex';
-  startTitleAnim();
+  playTitleMusic();startTitleAnim();
 }
 
 // END GAME
 // ═══════════════════════════════════
 function endGame(){
   gameRunning=false;cancelAnimationFrame(animId);
+  bgm.pause();playSound('caught',1);
   document.getElementById('hud').style.display='none';
   document.getElementById('joystick-zone').style.display='none';
   document.getElementById('mobile-actions').style.display='none';
@@ -1533,21 +1574,25 @@ function drawDangerBar(){
 // BUTTON LISTENERS
 // ═══════════════════════════════════
 document.getElementById('startbtn').addEventListener('click',()=>{
+  playSound('ui_click',.6);
   document.getElementById('boot').style.display='none';
-  bgm.play().catch(()=>{});
+  playGameMusic();
   startGame();
 });
 document.getElementById('restbtn').addEventListener('click',()=>{
   document.getElementById('ends').style.display='none';
+  playGameMusic();
   startGame();
 });
 document.getElementById('menubtn').addEventListener('click',()=>{
   document.getElementById('ends').style.display='none';
   document.getElementById('boot').style.display='flex';
+  playTitleMusic();
   startTitleAnim();
 });
 
 startTitleAnim();
+playTitleMusic();
 </script>
 </body>
 </html>
