@@ -76,8 +76,9 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 #rbsub{font-size:12px;color:#f5a623;letter-spacing:3px;opacity:.7}
 
 /* MINIGAME OVERLAY */
-#mg{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:300}
-#mgbox{background:#080812;border:2px solid #f5a623;padding:22px 26px;width:min(460px,92vw);display:flex;flex-direction:column;gap:10px;font-family:'Space Mono',monospace;box-shadow:0 0 40px rgba(0,0,0,.8)}
+#mg{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:12px;z-index:300}
+#mgbox{background:#080812;border:2px solid #f5a623;padding:22px 26px;width:min(460px,100%);display:flex;flex-direction:column;gap:10px;font-family:'Space Mono',monospace;box-shadow:0 0 40px rgba(0,0,0,.8);margin:auto;overflow-y:auto}
+@media(max-width:600px){#mgbox{padding:14px 16px;gap:7px}#mgname{font-size:22px}#mgsubtitle{display:none}#mginput{height:44px;font-size:14px}#mgprompt{font-size:10px;min-height:32px;padding:6px 10px}#mgtyping{font-size:11px;padding:5px 10px}}
 #mgname{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:4px;line-height:1}
 #mgsubtitle{font-size:8px;letter-spacing:2px;color:#303060;text-transform:uppercase}
 #mgtimer{height:3px;background:#0e0e2a;margin:2px 0}
@@ -390,6 +391,21 @@ function canSeePlayer(en){
 let musicMuted=false;
 const bgm=document.getElementById('bgm');
 const titleBgm=document.getElementById('title-bgm');
+function adjustMGForKeyboard(){
+  const mg=document.getElementById('mg');
+  if(!mg||mg.style.display==='none')return;
+  const vv=window.visualViewport;
+  if(vv){mg.style.height=vv.height+'px';mg.style.top=(vv.offsetTop||0)+'px';}
+}
+function resetMGSize(){
+  const mg=document.getElementById('mg');
+  if(mg){mg.style.height='';mg.style.top='';}
+}
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',adjustMGForKeyboard);
+  window.visualViewport.addEventListener('scroll',adjustMGForKeyboard);
+}
+
 function playTitleMusic(){bgm.pause();bgm.currentTime=0;titleBgm.muted=musicMuted;titleBgm.play().catch(()=>{});}
 function playGameMusic(){titleBgm.pause();titleBgm.currentTime=0;bgm.muted=musicMuted;bgm.play().catch(()=>{});}
 function toggleMute(){
@@ -1132,6 +1148,7 @@ function openMinigame(aiPickup){
   }
   mgTimer=mgTimerMax;
   document.getElementById('mg').style.display='flex';
+  adjustMGForKeyboard();
 }
 
 function mgSubmit(){
@@ -1158,7 +1175,7 @@ function mgChoose(idx,correct){
 function closeMinigame(success){
   if(!minigameActive)return;
   minigameActive=false;mgTimer=0;
-  document.getElementById('mg').style.display='none';
+  document.getElementById('mg').style.display='none';resetMGSize();
   document.getElementById('mgtyping').style.display='none';
   // Clear all keys so player doesn't get stuck moving
   Object.keys(keys).forEach(k=>keys[k]=false);
