@@ -97,10 +97,21 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 .sk.bad{border-color:#ff4040;background:rgba(255,64,64,.12);color:#ff4040}
 #cstm-kb{display:none;flex-direction:column;gap:3px;padding:4px 0;user-select:none;-webkit-user-select:none}
 .ck-row{display:flex;gap:2px}
-.ck{background:#0a0a22;border:1px solid #252555;color:#c0c0e0;font-family:'Space Mono',monospace;font-size:11px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:3px;flex:1;min-width:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.ck{background:#0a0a22;border:1px solid #252555;color:#c0c0e0;font-family:'Space Mono',monospace;font-size:11px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:3px;flex:1;min-width:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .ck:active{background:#1a1a42;border-color:#f5a623;color:#f5a623}
 .ck.ck-wide{flex:5}
 .ck.ck-back{flex:1.5;font-size:15px}
+.ck.ck-shift{flex:1.5}
+.ck.ck-shift.ck-on{background:#1a1a42;border-color:#f5a623;color:#f5a623}
+#mgbox.mt{display:grid!important;grid-template-areas:"tmr tmr" "nm typ" "act typ" "key key";grid-template-columns:auto 1fr;grid-template-rows:auto auto 1fr auto;padding:10px;gap:5px}
+#mgbox.mt #mgtimer{grid-area:tmr}
+#mgbox.mt #mgname{grid-area:nm;font-size:13px;letter-spacing:1px;align-self:start;margin:0}
+#mgbox.mt #mgactions{grid-area:act;flex-direction:column;gap:4px;align-self:end;margin:0}
+#mgbox.mt #mgactions .mgbtn{padding:7px 6px;font-size:8px;letter-spacing:1px;flex:unset}
+#mgbox.mt #mgtyping{grid-area:typ;overflow-y:auto;font-size:11px;line-height:1.6;padding:6px 8px;min-height:50px;word-break:break-all;border-left:2px solid #202050;background:#050510}
+#mgbox.mt #cstm-kb{grid-area:key}
+#mgbox.mt #mgsubtitle,#mgbox.mt #mgprompt,#mgbox.mt #mginput,#mgbox.mt #mgmatch{display:none!important}
+#mgbox.mt .tc-left{color:#505090}
 #mgactions{display:flex;gap:8px}
 .mgbtn{background:transparent;border:1px solid #282858;color:#484880;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;padding:8px 16px;cursor:pointer;flex:1;transition:all .18s;text-transform:uppercase}
 .mgbtn.pri{border-color:#f5a623;color:#f5a623}
@@ -561,7 +572,7 @@ let rflT,gflT,dangerSndT;
 let round,docsNeeded,docsSubmitted;
 let minigameActive,currentMGAI,mgTimer,mgTimerMax;
 let mgSimonSeq,mgSimonStep,mgSimonPlayerTurn,mgMemAnswer,mgMathAnswer;
-let ckbTarget='';
+let ckbTarget='',ckbShift=false;
 let secondEnemyRound;
 
 // ═══════════════════════════════════
@@ -1068,19 +1079,22 @@ function burst(x,y,color,n){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2
 // CUSTOM KEYBOARD (mobile typing)
 // ═══════════════════════════════════
 function buildCustomKB(){
+  ckbShift=false;
   const kb=document.getElementById('cstm-kb');
   kb.innerHTML='';
   const rows=[
     ['1','2','3','4','5','6','7','8','9','0'],
     ['q','w','e','r','t','y','u','i','o','p'],
     ['a','s','d','f','g','h','j','k','l'],
-    ['z','x','c','v','b','n','m','⌫'],
+    ['⇧','z','x','c','v','b','n','m','⌫'],
   ];
   for(const row of rows){
     const rd=document.createElement('div');rd.className='ck-row';
     for(const ch of row){
       const b=document.createElement('button');
-      b.className='ck'+(ch==='⌫'?' ck-back':'');
+      if(ch==='⌫')b.className='ck ck-back';
+      else if(ch==='⇧')b.className='ck ck-shift';
+      else b.className='ck';
       b.textContent=ch;b.type='button';
       b.addEventListener('pointerdown',e=>{e.preventDefault();ckbPress(ch);});
       rd.appendChild(b);
@@ -1094,8 +1108,25 @@ function buildCustomKB(){
   sr.appendChild(sb);kb.appendChild(sr);
 }
 function ckbPress(ch){
+  if(ch==='⇧'){
+    ckbShift=!ckbShift;
+    document.querySelectorAll('.ck-shift').forEach(el=>el.classList.toggle('ck-on',ckbShift));
+    document.querySelectorAll('#cstm-kb .ck:not(.ck-back):not(.ck-shift):not(.ck-wide)').forEach(el=>{
+      if(/^[a-zA-Z]$/.test(el.textContent))el.textContent=ckbShift?el.textContent.toUpperCase():el.textContent.toLowerCase();
+    });
+    return;
+  }
   const inp=document.getElementById('mginput');
-  if(ch==='⌫'){inp.value=inp.value.slice(0,-1);}else{inp.value+=ch;}
+  let typed=ch;
+  if(ckbShift&&/^[a-z]$/.test(ch)){
+    typed=ch.toUpperCase();
+    ckbShift=false;
+    document.querySelectorAll('.ck-shift').forEach(el=>el.classList.remove('ck-on'));
+    document.querySelectorAll('#cstm-kb .ck:not(.ck-back):not(.ck-shift):not(.ck-wide)').forEach(el=>{
+      if(/^[A-Z]$/.test(el.textContent))el.textContent=el.textContent.toLowerCase();
+    });
+  }
+  if(ch==='⌫'){inp.value=inp.value.slice(0,-1);}else{inp.value+=typed;}
   updateTypingDisplay(inp.value,ckbTarget);
   const pct=calcMatch(inp.value,ckbTarget);
   const m=document.getElementById('mgmatch');
@@ -1137,6 +1168,7 @@ function openMinigame(aiPickup){
         ckbTarget=target;
         buildCustomKB();
         document.getElementById('cstm-kb').style.display='flex';
+        document.getElementById('mgbox').classList.add('mt');
         inp.style.display='none';
       } else {
         inp.style.display='block';inp.placeholder='Start typing...';inp.style.height='50px';
@@ -1240,6 +1272,7 @@ function closeMinigame(success){
   minigameActive=false;mgTimer=0;
   document.getElementById('mg').style.display='none';
   document.getElementById('cstm-kb').style.display='none';
+  document.getElementById('mgbox').classList.remove('mt');
   resetMGSize();
   document.getElementById('mgtyping').style.display='none';
   // Clear all keys so player doesn't get stuck moving
