@@ -1,1 +1,1 @@
-https://1678-mini-games.touchman.xyz/
+https://minigames.joeprojects.com/
