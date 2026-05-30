@@ -553,7 +553,7 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
 
-// ── MULTIPLAYER STATE ─────────────────────────────────────────────────────────
+// ── MULTIPLAYER STATE ─────────────────────────────────────────────────���───────
 const MP_SERVER = 'https://frc-1678-minigames.onrender.com';
 let mpMode = false;   // false | 'host' | 'client'
 let mpSocket = null;
@@ -747,7 +747,7 @@ function respawnPlayer(p) {
   addFloat(p.x, p.y - 22, 'ONLINE', p.color, 16);
 }
 
-// ── UPDATE PLAYER ────────────────────────────────────────────────────────────
+// ── UPDATE PLAYER ─────────────────���──────────────────────────────────────────
 function updatePlayer(p) {
   if (p.disabled) {
     p.disableTimer--;
@@ -1678,5 +1678,12 @@ if (new URLSearchParams(window.location.search).has('online')) { mpShowOnline();
 // Initial render
 resetGame(); draw(); updateHUD();
 </script>
+<script>
+  // Vercel Web Analytics - Initialization
+  window.va = window.va || function () {
+    (window.vaq = window.vaq || []).push(arguments);
+  };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
