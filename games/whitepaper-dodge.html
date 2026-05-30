@@ -202,10 +202,12 @@ const LeaderboardAPI=(()=>{
     if(!r.ok){const t=await r.text().catch(()=>'');throw new Error('HTTP '+r.status+': '+t);}
   }
   async function fetchTop(gameId,limit){
-    const url=window.SUPABASE_URL+'/rest/v1/leaderboard_scores?game_id=eq.'+encodeURIComponent(gameId)+'&order=score.desc&limit='+(limit||10)+'&select=player_name,score,metadata,created_at';
+    const n=limit||10;
+    const url=window.SUPABASE_URL+'/rest/v1/leaderboard_scores?game_id=eq.'+encodeURIComponent(gameId)+'&order=score.desc.nullslast&limit='+n+'&select=player_name,score,metadata,created_at';
     const r=await fetch(url,{headers:_h()});
     if(!r.ok)throw new Error('HTTP '+r.status);
-    return r.json();
+    const rows=await r.json();
+    return rows.sort((a,b)=>b.score-a.score).slice(0,n);
   }
   return{submitScore,fetchTop};
 })();
