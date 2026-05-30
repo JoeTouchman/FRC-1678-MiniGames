@@ -204,12 +204,10 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 .btn-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
 
 /* MIKE ANIMS */
-#mike-body{transform-origin:50% 90%;}
-.mike-idle{animation:mikeIdle 3s ease-in-out infinite;}
-.mike-annoy{animation:mikeAnnoy .45s ease-in-out infinite;}
-.mike-angry{animation:mikeAngry .25s ease-in-out infinite;}
-.mike-rage{animation:mikeRage .12s ease-in-out infinite;}
-@keyframes mikeIdle{0%,100%{transform:rotate(0deg)}50%{transform:rotate(1deg)}}
+#game-sprite{transform-origin:50% 50%;}
+.mike-annoy-sprite{animation:mikeAnnoy .45s ease-in-out infinite;}
+.mike-angry-sprite{animation:mikeAngry .25s ease-in-out infinite;}
+.mike-rage-sprite{animation:mikeRage .12s ease-in-out infinite;}
 @keyframes mikeAnnoy{0%,100%{transform:rotate(0) translateX(0)}50%{transform:rotate(-2.5deg) translateX(-2px)}}
 @keyframes mikeAngry{0%,100%{transform:rotate(0)}25%{transform:rotate(-3.5deg) translateX(-3px)}75%{transform:rotate(3.5deg) translateX(3px)}}
 @keyframes mikeRage{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.06) rotate(-3deg)}}
@@ -267,35 +265,13 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 <body>
 <a href="../index.html" id="home-link">← HOME</a>
 <div id="flash"></div>
+<audio id="bgm" src="../public/music/Citrus-crunch/CitrusCrunch.mp3" loop></audio>
 
 <!-- ██ TITLE ██ -->
 <div id="title-screen" class="screen active">
   <div class="t-logo">⚙ CITRUS CRUNCH ⚙</div>
   <div class="t-sub">// ROBOT BUILD CHALLENGE //</div>
-  <svg viewBox="0 0 100 155" width="100" height="155" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:16px;filter:drop-shadow(0 0 10px #c8e60033)">
-    <ellipse cx="50" cy="150" rx="24" ry="4" fill="#0004"/>
-    <rect x="28" y="122" width="18" height="24" rx="4" fill="#333"/><rect x="54" y="122" width="18" height="24" rx="4" fill="#333"/>
-    <ellipse cx="37" cy="147" rx="12" ry="4" fill="#1a1a1a"/><ellipse cx="63" cy="147" rx="12" ry="4" fill="#1a1a1a"/>
-    <rect x="22" y="82" width="56" height="46" rx="6" fill="#c8e600"/>
-    <text x="50" y="96" text-anchor="middle" font-size="7" fill="#005500" font-family="Arial" font-weight="bold">1678</text>
-    <text x="50" y="107" text-anchor="middle" font-size="5" fill="#005500" font-family="Arial">CITRUS</text>
-    <path d="M22 90 Q14 92 10 98 Q14 104 22 102Z" fill="#c8e600"/><path d="M78 90 Q86 92 90 98 Q86 104 78 102Z" fill="#c8e600"/>
-    <circle cx="11" cy="99" r="6" fill="#f0b888"/><circle cx="89" cy="99" r="6" fill="#f0b888"/>
-    <rect x="42" y="74" width="16" height="12" rx="3" fill="#f0b888"/>
-    <ellipse cx="50" cy="60" rx="24" ry="23" fill="#f0b888"/>
-    <path d="M28 65 Q31 77 50 79 Q69 77 72 65 Q65 73 50 74 Q35 73 28 65Z" fill="#9a7040" opacity=".92"/>
-    <path d="M40 63 Q50 67 60 63" stroke="#7a5025" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <rect x="33" y="52" width="14" height="10" rx="3" fill="none" stroke="#111" stroke-width="2.5"/>
-    <rect x="53" y="52" width="14" height="10" rx="3" fill="none" stroke="#111" stroke-width="2.5"/>
-    <line x1="47" y1="57" x2="53" y2="57" stroke="#111" stroke-width="2"/><line x1="33" y1="57" x2="27" y2="56" stroke="#111" stroke-width="2"/><line x1="67" y1="57" x2="73" y2="56" stroke="#111" stroke-width="2"/>
-    <circle cx="40" cy="57" r="3" fill="#2a1a0a"/><circle cx="60" cy="57" r="3" fill="#2a1a0a"/>
-    <line x1="33" y1="50" x2="47" y2="53" stroke="#5a3510" stroke-width="2.5" stroke-linecap="round"/>
-    <line x1="53" y1="53" x2="67" y2="50" stroke="#5a3510" stroke-width="2.5" stroke-linecap="round"/>
-    <ellipse cx="50" cy="38" rx="24" ry="7" fill="#444"/>
-    <rect x="27" y="29" width="46" height="17" rx="8" fill="#555"/>
-    <rect x="56" y="25" width="24" height="6" rx="3" fill="#444"/>
-    <text x="44" y="40" font-size="7" fill="#c8e600" font-family="Arial" font-weight="bold">1678</text>
-  </svg>
+  <canvas id="title-sprite" width="330" height="330" style="margin-top:-70px;margin-bottom:-45px;image-rendering:pixelated;filter:drop-shadow(0 0 10px #c8e60033);position:relative;z-index:0;width:min(330px,80vw);height:auto;"></canvas>
   <div style="font-family:'Rajdhani',sans-serif;font-size:16px;color:#777;max-width:380px;text-align:center;line-height:1.55;margin-bottom:10px;">Mike's watching. Mike's <span style="color:var(--orange);font-style:italic">always</span> watching. Keep the pit under control. Don't disappoint him.</div>
   <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#444;max-width:380px;text-align:center;margin-bottom:24px;">11 MINIGAMES • ENDLESS CHECKPOINTS • NO MERCY</div>
   <button class="btn" onclick="startGame()">START BUILD SEASON</button>
@@ -307,35 +283,7 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
     <!-- MIKE -->
     <div id="mike-zone">
       <div id="mike-svg-wrap">
-        <svg id="mike-game-svg" viewBox="0 0 100 155" xmlns="http://www.w3.org/2000/svg">
-          <g id="mike-body" class="mike-idle">
-            <ellipse cx="50" cy="150" rx="22" ry="3.5" fill="#0005"/>
-            <rect x="28" y="122" width="17" height="24" rx="4" fill="#2a2a2a"/><rect x="55" y="122" width="17" height="24" rx="4" fill="#2a2a2a"/>
-            <ellipse cx="36.5" cy="147" rx="11" ry="3.5" fill="#111"/><ellipse cx="63.5" cy="147" rx="11" ry="3.5" fill="#111"/>
-            <rect x="22" y="82" width="56" height="45" rx="6" fill="#c8e600"/>
-            <text x="50" y="96" text-anchor="middle" font-size="7" fill="#005500" font-family="Arial" font-weight="bold">1678</text>
-            <text x="50" y="107" text-anchor="middle" font-size="5" fill="#005500" font-family="Arial">CITRUS</text>
-            <g id="m-larm"><rect x="3" y="85" width="21" height="9" rx="4.5" fill="#c8e600"/><circle cx="9" cy="90" r="6" fill="#f0b888"/></g>
-            <g id="m-rarm"><rect x="76" y="85" width="21" height="9" rx="4.5" fill="#c8e600"/><circle cx="91" cy="90" r="6" fill="#f0b888"/></g>
-            <rect x="42" y="74" width="16" height="12" rx="3" fill="#f0b888"/>
-            <ellipse cx="50" cy="59" rx="23" ry="22" fill="#f0b888"/>
-            <path d="M29 65 Q32 76 50 78 Q68 76 71 65 Q64 72 50 73 Q36 72 29 65Z" fill="#9a7040" opacity=".92"/>
-            <path d="M40 63 Q50 67 60 63" stroke="#7a5025" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-            <rect x="33" y="52" width="13" height="9" rx="2.5" fill="none" stroke="#111" stroke-width="2.5"/>
-            <rect x="54" y="52" width="13" height="9" rx="2.5" fill="none" stroke="#111" stroke-width="2.5"/>
-            <line x1="46" y1="56.5" x2="54" y2="56.5" stroke="#111" stroke-width="2"/>
-            <line x1="33" y1="56.5" x2="27" y2="55.5" stroke="#111" stroke-width="2"/>
-            <line x1="67" y1="56.5" x2="73" y2="55.5" stroke="#111" stroke-width="2"/>
-            <circle cx="39.5" cy="56.5" r="2.5" fill="#2a1a0a"/><circle cx="60.5" cy="56.5" r="2.5" fill="#2a1a0a"/>
-            <line id="ml-brow" x1="33" y1="49" x2="46" y2="52" stroke="#5a3510" stroke-width="2.5" stroke-linecap="round"/>
-            <line id="mr-brow" x1="54" y1="52" x2="67" y2="49" stroke="#5a3510" stroke-width="2.5" stroke-linecap="round"/>
-            <path id="m-mouth" d="M42 66 Q50 70 58 66" stroke="#5a3510" stroke-width="2" fill="none" stroke-linecap="round"/>
-            <ellipse cx="50" cy="37" rx="23" ry="7" fill="#444"/>
-            <rect x="28" y="28" width="44" height="16" rx="8" fill="#555"/>
-            <rect x="55" y="24" width="23" height="6" rx="3" fill="#444"/>
-            <text x="43" y="39" font-size="6.5" fill="#c8e600" font-family="Arial" font-weight="bold">1678</text>
-          </g>
-        </svg>
+        <canvas id="game-sprite" width="165" height="165" style="image-rendering:pixelated;filter:drop-shadow(0 0 8px #c8e60033);display:block;margin-top:-27px;margin-bottom:-27px;"></canvas>
       </div>
       <div id="mike-bubble" class="calm">...</div>
     </div>
@@ -551,14 +499,23 @@ function addTouchDrag(el, onPickup, onDrop) {
 // ════════════════════════════════
 function showTitle(){
   stopAll();
+  const bgm=document.getElementById('bgm'); bgm.pause(); bgm.currentTime=0;
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('title-screen').classList.add('active');
   document.getElementById('levelup-modal').classList.remove('open');
   document.getElementById('gameover-modal').classList.remove('open');
+  const btn=document.getElementById('home-link');
+  btn.textContent='← HOME';
+  btn.href='../index.html';
+  btn.onclick=null;
 }
 function showGameScreen(){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('game-screen').classList.add('active');
+  const btn=document.getElementById('home-link');
+  btn.textContent='← BACK';
+  btn.href='#';
+  btn.onclick=(e)=>{e.preventDefault();showTitle();};
 }
 
 // ════════════════════════════════
@@ -566,9 +523,10 @@ function showGameScreen(){
 // ════════════════════════════════
 function startGame(){
   stopAll();
-  G={score:0,wave:1,task:0,lives:3,combo:0,bestCombo:0,patience:100,timerMax:20,timerVal:20,angerLevel:0,mgDone:false,running:true,timerIv:null,mikeIv:null,speechTO:null,balIv:null,wackIv:null,currentMG:null,lastMG:null};
+  G={score:0,wave:1,task:0,lives:3,combo:0,bestCombo:0,patience:100,timerMax:20,timerVal:20,angerLevel:0,mgDone:false,running:true,timerIv:null,mikeIv:null,speechTO:null,balIv:null,wackIv:null,currentMG:null,lastMG:null,mgWeights:{}};
   document.getElementById('levelup-modal').classList.remove('open');
   document.getElementById('gameover-modal').classList.remove('open');
+  const bgm=document.getElementById('bgm'); bgm.currentTime=0; bgm.play().catch(()=>{});
   showGameScreen(); updateHUD(); startTask(); scheduleMike();
 }
 function stopAll(){
@@ -629,12 +587,8 @@ function updateMikeAnger(){
   if(G.angerLevel!==old)applyMikeFace();
 }
 function applyMikeFace(){
-  const body=document.getElementById('mike-body'), mouth=document.getElementById('m-mouth'), lb=document.getElementById('ml-brow'), rb=document.getElementById('mr-brow');
-  body.className=['mike-idle','mike-annoy','mike-angry','mike-rage'][G.angerLevel];
-  const brows=[['33 49','46 52','54 52','67 49'],['33 51','46 49','54 49','67 51'],['33 53','46 47','54 47','67 53'],['33 55','46 45','54 45','67 55']][G.angerLevel];
-  lb.setAttribute('x1',brows[0].split(' ')[0]);lb.setAttribute('y1',brows[0].split(' ')[1]);lb.setAttribute('x2',brows[1].split(' ')[0]);lb.setAttribute('y2',brows[1].split(' ')[1]);
-  rb.setAttribute('x1',brows[2].split(' ')[0]);rb.setAttribute('y1',brows[2].split(' ')[1]);rb.setAttribute('x2',brows[3].split(' ')[0]);rb.setAttribute('y2',brows[3].split(' ')[1]);
-  mouth.setAttribute('d',['M42 66 Q50 70 58 66','M42 67 Q50 64 58 67','M42 68 Q50 63 58 68','M42 69 Q50 62 58 69'][G.angerLevel]);
+  const canvas=document.getElementById('game-sprite');
+  canvas.className=['','mike-annoy-sprite','mike-angry-sprite','mike-rage-sprite'][G.angerLevel];
 }
 function scheduleMike(){
   clearInterval(G.mikeIv);
@@ -663,6 +617,22 @@ function getPool(){
 const MG_ICONS={bolt:'🔩',wire:'🔌',seq:'🤖',gear:'⚙️',combo:'🔧',balance:'⚡',wack:'🔨',maze:'🧩',sweep:'📡',decrypt:'💻',uncoil:'🧵'};
 const MG_LABELS={bolt:'Tighten all bolts on the drivetrain!',wire:'Route power wires to the RoboRIO — avoid the live zaps!',seq:'Assemble parts in the correct order!',gear:'Sort components into the right bins!',combo:'Execute the quick-assembly sequence!',balance:'Calibrate the power distribution board!',wack:'Whack every loose screw before it disappears!',maze:'Drag a cable path through the maze from START to EXIT!',sweep:'Clear interference from the sensor array!',decrypt:'Crack the RoboRIO access code!',uncoil:'Drag along the cable coil to unspool it cleanly!'};
 
+function pickNextMG(){
+  const pool=[...new Set(getPool())]; // deduplicate — old pool used repeats for weighting, now handled by weights
+  // seed any new game entering the pool with a staleness equal to pool size
+  pool.forEach(mg=>{ if(!(mg in G.mgWeights)) G.mgWeights[mg]=pool.length; });
+  // last-played resets to 0 (blocked); everything else gains +1 staleness
+  pool.forEach(mg=>{ G.mgWeights[mg] = mg===G.lastMG ? 0 : G.mgWeights[mg]+1; });
+  const eligible=pool.filter(mg=>G.mgWeights[mg]>0);
+  // if somehow everything is blocked (single-game pool), open them all
+  if(!eligible.length){ pool.forEach(mg=>G.mgWeights[mg]=1); return pool[0]; }
+  // weight = staleness² for dramatic diversity spread
+  const weights=eligible.map(mg=>G.mgWeights[mg]**2);
+  const total=weights.reduce((a,b)=>a+b,0);
+  let r=Math.random()*total;
+  for(let i=0;i<eligible.length;i++){ r-=weights[i]; if(r<=0) return eligible[i]; }
+  return eligible[eligible.length-1];
+}
 function startTask(){
   if(!G.running)return;
   clearInterval(G.timerIv);
@@ -670,8 +640,7 @@ function startTask(){
   if(sweepSt.iv){clearInterval(sweepSt.iv);sweepSt.iv=null;}
   G.mgDone=false;
   document.querySelectorAll('.minigame').forEach(m=>m.classList.remove('active'));
-  const pool=getPool().filter(m=>m!==G.lastMG);
-  const mg=rnd(pool.length?pool:getPool()); G.lastMG=mg; G.currentMG=mg;
+  const mg=pickNextMG(); G.lastMG=mg; G.currentMG=mg;
   document.getElementById('mission-icon').textContent=MG_ICONS[mg];
   document.getElementById('mission-text').textContent=MG_LABELS[mg];
   updateHUD();
@@ -738,6 +707,32 @@ function gameOver(win){
   else{t.textContent='MIKE IS DONE WITH YOU';t.style.color='var(--red)';q.textContent=rnd(GO_LINES);}
   document.getElementById('gameover-modal').classList.add('open');
 }
+
+// ════════════════════════════════
+//  SPRITES
+// ════════════════════════════════
+(function setupSprites(){
+  const FRAME_SIZE=256, COLS=5, TOTAL=25, FPS=8;
+  function animSprite(canvasId, src){
+    const canvas=document.getElementById(canvasId);
+    if(!canvas)return;
+    const ctx=canvas.getContext('2d');
+    const img=new Image();
+    let frame=0;
+    img.onload=()=>{
+      setInterval(()=>{
+        const col=frame%COLS, row=Math.floor(frame/COLS);
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(img,col*FRAME_SIZE,row*FRAME_SIZE,FRAME_SIZE,FRAME_SIZE,0,0,canvas.width,canvas.height);
+        frame=(frame+1)%TOTAL;
+      },1000/FPS);
+    };
+    img.onerror=()=>console.error('Sprite failed to load:',src);
+    img.src=src;
+  }
+  animSprite('title-sprite','../public/sprites/citrus-crunch/Mike-iso_idle_down.png');
+  animSprite('game-sprite','../public/sprites/citrus-crunch/Mike-idle.png');
+})();
 
 // ════════════════════════════════
 //  FX
