@@ -218,11 +218,12 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 
 /* MOBILE */
 @media(max-width:600px){
-  #mike-zone{min-width:0;padding:6px 8px 6px 6px;}
-  #mike-svg-wrap svg{width:52px;height:72px;}
-  #mike-bubble{font-size:12px;padding:6px 10px;min-width:100px;max-width:160px;}
-  #timer-num{font-size:clamp(36px,9vw,56px);}
-  #top-bar{min-height:90px;}
+  #mike-zone{min-width:0;padding:4px 6px 4px 6px;max-width:42vw;}
+  #mike-svg-wrap{flex-shrink:0;}
+  #game-sprite{width:62px!important;height:62px!important;margin-top:-8px!important;margin-bottom:-8px!important;}
+  #mike-bubble{font-size:11px;padding:5px 8px;min-width:0;max-width:calc(42vw - 74px);word-break:break-word;}
+  #timer-num{font-size:clamp(32px,8vw,52px);}
+  #top-bar{min-height:80px;}
   #score-zone{min-width:100px;padding:6px 10px;}
   .sz-val{font-size:15px;}
   #build-area{padding:8px;}
