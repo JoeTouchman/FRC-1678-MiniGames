@@ -154,7 +154,62 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 .tc-ok{color:#4ade80}
 .tc-err{color:#ff4444;text-decoration:underline wavy #ff4040}
 .tc-left{color:#2a2a58}
+
+/* NAME ENTRY (post-game) */
+#name-entry{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:360px}
+.ne-label{font-size:9px;letter-spacing:3px;color:#383870;text-transform:uppercase}
+#callsign-input{background:#06060e;border:1px solid #2a2a55;color:#f5a623;font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:10px;text-align:center;padding:10px 16px;width:220px;text-transform:uppercase;outline:none;transition:border-color .2s,box-shadow .2s}
+#callsign-input:focus{border-color:#f5a623;box-shadow:0 0 14px rgba(245,166,35,.18)}
+#callsign-input::placeholder{color:#1a1a48;letter-spacing:4px}
+#submit-status{font-size:9px;color:#383870;min-height:14px;letter-spacing:1px;text-align:center}
+
+/* LEADERBOARD TABLE (shared style) */
+.lb-game-title{font-size:9px;letter-spacing:3px;color:#303065;text-transform:uppercase;text-align:center}
+.lb-tbl{width:100%;border-collapse:collapse}
+.lb-tbl th{font-size:7px;letter-spacing:2px;color:#242455;text-transform:uppercase;padding:5px 10px;border-bottom:1px solid #12122a;text-align:left;font-weight:normal}
+.lb-tbl td{padding:6px 10px;border-bottom:1px solid #0c0c1a;vertical-align:middle;font-size:10px;color:#404070}
+.lb-r{width:20px;color:#1e1e40!important;font-size:8px!important;padding-left:6px!important}
+.lb-n{color:#8080b0!important;letter-spacing:2px;font-family:'Bebas Neue',sans-serif;font-size:15px!important}
+.lb-s{color:#f5a623!important;font-family:'Bebas Neue',sans-serif;font-size:15px!important;text-align:right!important}
+.lb-w{color:#484878!important;font-size:9px!important;text-align:right!important;letter-spacing:1px}
+.lb-me .lb-n{color:#f5a623!important;text-shadow:0 0 8px rgba(245,166,35,.35)}
+.lb-me .lb-r{color:#f5a623!important}
+.lb-tbl tr:first-child .lb-r{color:#b0b030!important}
+.lb-empty{font-size:9px;color:#303060;text-align:center!important;letter-spacing:2px;padding:16px!important;border:none!important}
+
+/* RECORD WIDGETS */
+#boot-record{font-size:9px;color:#2a2a58;letter-spacing:2px;text-align:center;min-height:14px}
+#boot-record b{color:#7070a8;font-weight:normal}
+#boot-record .br-score{color:#f5a623;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;vertical-align:middle}
+#end-record{font-size:9px;letter-spacing:1px;text-align:center;min-height:18px;color:#303060;padding:2px 0}
+#end-record .br-new{display:block;color:#f5a623;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:6px;text-shadow:0 0 16px rgba(245,166,35,.55)}
+
+/* LEADERBOARD PANEL (inside end screen) */
+#lb-panel{display:none;flex-direction:column;gap:10px;width:100%;max-width:480px}
+
+/* LEADERBOARD OVERLAY (title screen) */
+#lb-overlay{position:fixed;inset:0;background:rgba(6,6,14,.97);z-index:250;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;overflow-y:auto}
+#lb-overlay .lb-ov-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,68px);letter-spacing:6px;color:#f5a623;text-shadow:0 0 24px rgba(245,166,35,.3);text-align:center}
+#lb-overlay-inner{width:100%;max-width:480px;display:flex;flex-direction:column;gap:10px}
 </style>
+<script>
+window.SUPABASE_URL='https://wzlmvozcvwvxnrlsafwz.supabase.co';
+window.SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6bG12b3pjdnd2eG5ybHNhZnd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAzMDQwMzUsImV4cCI6MjA2NTg4MDAzNX0.3tm8n4RlsNi3PdrFxw_rWpiOd6-P7grWb_dxppancg8';
+const LeaderboardAPI=(()=>{
+  function _h(){return{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':'Bearer '+window.SUPABASE_ANON_KEY};}
+  async function submitScore(gameId,playerName,score,metadata){
+    const r=await fetch(window.SUPABASE_URL+'/rest/v1/leaderboard_scores',{method:'POST',headers:Object.assign(_h(),{'Prefer':'return=minimal'}),body:JSON.stringify({game_id:gameId,player_name:(playerName||'AAA').trim().toUpperCase().slice(0,10),score:Math.floor(score),metadata:metadata||{}})});
+    if(!r.ok){const t=await r.text().catch(()=>'');throw new Error('HTTP '+r.status+': '+t);}
+  }
+  async function fetchTop(gameId,limit){
+    const url=window.SUPABASE_URL+'/rest/v1/leaderboard_scores?game_id=eq.'+encodeURIComponent(gameId)+'&order=score.desc&limit='+(limit||10)+'&select=player_name,score,metadata,created_at';
+    const r=await fetch(url,{headers:_h()});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return r.json();
+  }
+  return{submitScore,fetchTop};
+})();
+</script>
 </head>
 <body>
 <canvas id="gc"></canvas>
@@ -171,6 +226,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     Find AI terminals, complete their challenges, collect the docs.<br>Bring docs to the <b>COMPUTER</b> each round to compile the paper.<br><br>
     How many rounds can you survive? <b>High score wins.</b>
   </div>
+  <div id="boot-record"></div>
   <div class="bctrl">
     <div><span>WASD / ARROWS</span> — Move</div>
     <div><span>E</span> — Interact</div>
@@ -186,6 +242,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   <div class="brow-top">
     <a href="../index.html" class="smbtn" style="text-decoration:none">← HOME</a>
     <button class="bigbtn" id="startbtn">Avoid Responsibility</button>
+    <button class="smbtn" id="lbbtn">Scores</button>
     <button class="mutebtn-title" id="tmutebtn" onclick="toggleMute()">🔊 Music</button>
     <button class="mutebtn-title" id="fsbtn" onclick="toggleFullscreen()">⛶ Full</button>
   </div>
@@ -286,10 +343,42 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   <div class="et" id="etit">CAUGHT</div>
   <div class="es" id="esub"></div>
   <div class="estat" id="estat"></div>
-  <div class="brow">
+  <div id="end-record"></div>
+  <!-- Name entry -->
+  <div id="name-entry">
+    <div class="ne-label">Enter Your Name</div>
+    <input id="callsign-input" maxlength="10" placeholder="AAA" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="characters">
+    <div style="display:flex;gap:8px">
+      <button class="bigbtn" id="submitbtn">Submit Score</button>
+      <button class="smbtn" id="skipbtn">Skip</button>
+    </div>
+    <div id="submit-status"></div>
+  </div>
+  <!-- Leaderboard (shown after submit/skip) -->
+  <div id="lb-panel">
+    <div class="lb-game-title">— Whitepaper Dodge — Top Scores —</div>
+    <table class="lb-tbl">
+      <thead><tr><th class="lb-r">#</th><th>Name</th><th style="text-align:right">Score</th><th style="text-align:right">Round</th></tr></thead>
+      <tbody id="lb-body-end"></tbody>
+    </table>
+  </div>
+  <div class="brow" id="end-btns" style="display:none">
     <button class="bigbtn" id="restbtn">Try Again</button>
     <button class="smbtn" id="menubtn">Main Menu</button>
   </div>
+</div>
+
+<!-- Leaderboard Overlay (title screen) -->
+<div id="lb-overlay">
+  <div class="lb-ov-title">LEADERBOARD</div>
+  <div id="lb-overlay-inner">
+    <div class="lb-game-title">— Whitepaper Dodge —</div>
+    <table class="lb-tbl">
+      <thead><tr><th class="lb-r">#</th><th>Name</th><th style="text-align:right">Score</th><th style="text-align:right">Round</th></tr></thead>
+      <tbody id="lb-body-overlay"></tbody>
+    </table>
+  </div>
+  <button class="smbtn" id="lb-close-btn" style="margin-top:6px">Close</button>
 </div>
 
 <div id="dbglog" style="display:none;position:fixed;bottom:0;left:0;right:0;max-height:220px;overflow-y:auto;background:rgba(0,0,0,0.92);color:#0f0;font:11px monospace;padding:4px 8px 28px;z-index:9999;white-space:pre-wrap;"></div>
@@ -333,6 +422,7 @@ function rrect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);
 // ═══════════════════════════════════
 const keys={};
 window.addEventListener('keydown',e=>{
+  if(document.activeElement===document.getElementById('callsign-input'))return;
   if(minigameActive){
     if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
     // Only block Space for simon/non-typing challenges; typing needs the space character
@@ -827,6 +917,7 @@ function update(dt){
   }
 
   if(Math.random()<.0012*dt&&pickups.filter(p=>!p.dead&&p.type==='excuse').length<4)spawnP('excuse');
+  if(Math.random()<.0003*dt&&pickups.filter(p=>!p.dead&&p.type==='coffee').length<1)spawnP('coffee');
 
   updateHUD();
 }
@@ -1392,6 +1483,15 @@ function endGame(){
   document.getElementById('esub').innerHTML=msgs[Math.floor(Math.random()*msgs.length)]+`<br><br>Made it to <b>Round ${round}</b>. Better luck next time.`;
   document.getElementById('estat').innerHTML=`<div><span>${Math.floor(score).toLocaleString()}</span>Final Score</div><div><span>Round ${round}</span>Survived To</div><div><span>${Math.floor(surviveTime)}s</span>Time Alive</div><div><span>${docsSubmitted}</span>Docs Submitted</div><div><span>${excuses}</span>Excuses Left</div><div><span>${enemies.filter(e=>e.phase==='unaware').length}</span>Unaware Enemies</div>`;
   es.style.display='flex';
+  // Load record comparison and reset leaderboard UI
+  loadEndRecord(score);
+  document.getElementById('name-entry').style.display='flex';
+  document.getElementById('lb-panel').style.display='none';
+  document.getElementById('end-btns').style.display='none';
+  document.getElementById('callsign-input').value='';
+  document.getElementById('submit-status').textContent='';
+  const sb=document.getElementById('submitbtn');sb.disabled=false;sb.textContent='Submit Score';
+  setTimeout(()=>document.getElementById('callsign-input').focus(),150);
 }
 
 // ═══════════════════════════════════
@@ -1706,6 +1806,114 @@ document.getElementById('menubtn').addEventListener('click',()=>{
   startTitleAnim();
 });
 
+// ═══════════════════════════════════
+// LEADERBOARD
+// ═══════════════════════════════════
+const GAME_ID='whitepaper-dodge';
+
+function lbRenderRows(rows,tbodyId,highlightName){
+  const tb=document.getElementById(tbodyId);
+  if(!rows||!rows.length){
+    tb.innerHTML='<tr><td colspan="4" class="lb-empty">No scores yet — be the first!</td></tr>';
+    return;
+  }
+  tb.innerHTML=rows.map((r,i)=>{
+    const nm=(r.player_name||'???').toUpperCase();
+    const wv=(r.metadata&&r.metadata.round)?'R'+r.metadata.round:'—';
+    const isMe=highlightName&&nm===highlightName.trim().toUpperCase();
+    return`<tr class="${isMe?'lb-me':''}"><td class="lb-r">${i+1}</td><td class="lb-n">${nm}</td><td class="lb-s">${Number(r.score).toLocaleString()}</td><td class="lb-w">${wv}</td></tr>`;
+  }).join('');
+}
+
+async function lbLoad(tbodyId,highlightName){
+  const tb=document.getElementById(tbodyId);
+  tb.innerHTML='<tr><td colspan="4" class="lb-empty">Loading...</td></tr>';
+  try{
+    const rows=await LeaderboardAPI.fetchTop(GAME_ID,10);
+    lbRenderRows(rows,tbodyId,highlightName);
+  }catch(e){
+    tb.innerHTML='<tr><td colspan="4" class="lb-empty">Could not load scores.</td></tr>';
+  }
+}
+
+// Submit score and reveal leaderboard
+document.getElementById('submitbtn').addEventListener('click',async function(){
+  const inp=document.getElementById('callsign-input');
+  const name=inp.value.trim();
+  if(!name){
+    inp.focus();
+    document.getElementById('submit-status').textContent='Enter a callsign first.';
+    return;
+  }
+  this.disabled=true;this.textContent='Submitting...';
+  document.getElementById('submit-status').textContent='';
+  try{
+    await LeaderboardAPI.submitScore(GAME_ID,name,score,{round,time_alive:Math.floor(surviveTime),docs_submitted:docsSubmitted});
+    this.textContent='Submitted!';
+    document.getElementById('name-entry').style.display='none';
+    document.getElementById('lb-panel').style.display='flex';
+    document.getElementById('end-btns').style.display='flex';
+    lbLoad('lb-body-end',name);
+  }catch(e){
+    console.error('Leaderboard submit error:',e);
+    this.disabled=false;this.textContent='Submit Score';
+    document.getElementById('submit-status').textContent='Error: '+e.message;
+  }
+});
+
+// Skip name entry and just show leaderboard
+document.getElementById('skipbtn').addEventListener('click',function(){
+  document.getElementById('name-entry').style.display='none';
+  document.getElementById('lb-panel').style.display='flex';
+  document.getElementById('end-btns').style.display='flex';
+  lbLoad('lb-body-end',null);
+});
+
+// Enter key submits
+document.getElementById('callsign-input').addEventListener('keydown',function(e){
+  if(e.key==='Enter')document.getElementById('submitbtn').click();
+});
+
+// Title screen leaderboard overlay
+document.getElementById('lbbtn').addEventListener('click',function(){
+  document.getElementById('lb-overlay').style.display='flex';
+  lbLoad('lb-body-overlay',null);
+});
+document.getElementById('lb-close-btn').addEventListener('click',function(){
+  document.getElementById('lb-overlay').style.display='none';
+});
+
+// Load record into boot screen
+async function loadBootRecord(){
+  const el=document.getElementById('boot-record');
+  try{
+    const rows=await LeaderboardAPI.fetchTop(GAME_ID,1);
+    if(rows&&rows.length){
+      const r=rows[0];
+      const rnd=(r.metadata&&r.metadata.round)?'Round '+r.metadata.round:'';
+      el.innerHTML=`RECORD &nbsp;<b>${r.player_name.toUpperCase()}</b>&nbsp; <span class="br-score">${Number(r.score).toLocaleString()}</span>${rnd?' &nbsp;·&nbsp; '+rnd:''}`;
+    }
+  }catch(e){}
+}
+
+// Show record comparison on end screen
+async function loadEndRecord(myScore){
+  const el=document.getElementById('end-record');
+  el.textContent='';
+  try{
+    const rows=await LeaderboardAPI.fetchTop(GAME_ID,1);
+    if(!rows||!rows.length)return;
+    const top=rows[0];
+    if(myScore>top.score){
+      el.innerHTML='<span class="br-new">NEW RECORD</span>';
+    }else{
+      const diff=(top.score-myScore).toLocaleString();
+      el.textContent=`Record: ${top.player_name.toUpperCase()} — ${Number(top.score).toLocaleString()} pts  (${diff} ahead)`;
+    }
+  }catch(e){}
+}
+
+loadBootRecord();
 startTitleAnim();
 playTitleMusic();
 </script>
