@@ -755,7 +755,7 @@ function updateNotes() {
   }
 }
 
-// ── STAGE ────────────────────────────────────────────────────────────────────
+// ── STAGE ─────────────────────────────────────────────────────��──────────────
 function updateStage() {
   // Don't tick down the active timer if someone is actually on the stage
   const anyoneOnStage = (stageState === 'active') &&
@@ -1211,5 +1211,12 @@ if (new URLSearchParams(window.location.search).has('online')) {
 
 resetGame(); draw();
 </script>
+<script>
+  // Vercel Web Analytics - Initialization
+  window.va = window.va || function () {
+    (window.vaq = window.vaq || []).push(arguments);
+  };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
