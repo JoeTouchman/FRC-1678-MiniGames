@@ -389,10 +389,10 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 
     <!-- 10. CABLE UNCOILING -->
     <div class="minigame" id="mg-uncoil">
-      <div class="mg-title">🧵 CABLE UNCOIL</div>
-      <div class="mg-hint">Trace along the cable from the loose end to the plug.</div>
+      <div class="mg-title">🔗 CABLE CONNECT</div>
+      <div class="mg-hint">Drag each cable on the left to its matching port on the right!</div>
       <canvas id="uncoil-canvas" width="380" height="260"></canvas>
-      <div id="uncoil-status">Keep tracing to unspool...</div>
+      <div id="uncoil-status">Connect matching cable colors!</div>
     </div>
 
     <!-- 11. CODE DECRYPT -->
@@ -554,10 +554,11 @@ function updateHUD(){
 //  TIMER
 // ════════════════════════════════
 function getTime(){
-  if(G.currentMG==='wire') return Math.max(6,15-(G.wave-1)*1.1);
-  if(G.currentMG==='wack') return Math.max(8,16-(G.wave-1)*1.0);
-  if(G.currentMG==='maze') return Math.max(12,28-(G.wave-1)*1.8);
-  return Math.max(10,22-(G.wave-1)*1.4);
+  if(G.currentMG==='wire')   return Math.max(5,12-(G.wave-1)*0.9);
+  if(G.currentMG==='wack')   return Math.max(6,13-(G.wave-1)*0.8);
+  if(G.currentMG==='maze')   return Math.max(10,22-(G.wave-1)*1.5);
+  if(G.currentMG==='uncoil') return Math.max(8,12+Math.floor((G.wave-1)*0.55)*2-(G.wave-1)*0.5);
+  return Math.max(8,16-(G.wave-1)*1.2);
 }
 function startTimer(){
   clearInterval(G.timerIv);
@@ -615,8 +616,8 @@ function getPool(){
   const base=['bolt','bolt','seq','seq','combo','wire','gear','maze','balance','decrypt','uncoil'];
   return G.wave>=4?[...base,'wack','sweep']:base;
 }
-const MG_ICONS={bolt:'🔩',wire:'🔌',seq:'🤖',gear:'⚙️',combo:'🔧',balance:'⚡',wack:'🔨',maze:'🧩',sweep:'📡',decrypt:'💻',uncoil:'🧵'};
-const MG_LABELS={bolt:'Tighten all bolts on the drivetrain!',wire:'Route power wires to the RoboRIO — avoid the live zaps!',seq:'Assemble parts in the correct order!',gear:'Sort components into the right bins!',combo:'Execute the quick-assembly sequence!',balance:'Calibrate the power distribution board!',wack:'Whack every loose screw before it disappears!',maze:'Drag a cable path through the maze from START to EXIT!',sweep:'Clear interference from the sensor array!',decrypt:'Crack the RoboRIO access code!',uncoil:'Drag along the cable coil to unspool it cleanly!'};
+const MG_ICONS={bolt:'🔩',wire:'🔌',seq:'🤖',gear:'⚙️',combo:'🔧',balance:'⚡',wack:'🔨',maze:'🧩',sweep:'📡',decrypt:'💻',uncoil:'🔗'};
+const MG_LABELS={bolt:'Tighten all bolts on the drivetrain!',wire:'Route power wires to the RoboRIO — avoid the live zaps!',seq:'Assemble parts in the correct order!',gear:'Sort components into the right bins!',combo:'Execute the quick-assembly sequence!',balance:'Calibrate the power distribution board!',wack:'Whack every loose screw before it disappears!',maze:'Drag a cable path through the maze from START to EXIT!',sweep:'Clear interference from the sensor array!',decrypt:'Crack the RoboRIO access code!',uncoil:'Connect each cable on the left to its matching port on the right!'};
 
 function pickNextMG(){
   const pool=[...new Set(getPool())]; // deduplicate — old pool used repeats for weighting, now handled by weights
@@ -866,7 +867,7 @@ function launchSeq(){
       document.querySelectorAll('.seq-btn').forEach(b=>b.disabled=false);
       seqSt.phase='input';
     }
-  },Math.max(380,700-G.wave*50));
+  },Math.max(220,480-G.wave*40));
 }
 function seqRevealTemp(){
   seqSt.hideIndices.forEach(idx=>{
@@ -1165,44 +1166,138 @@ function sweepTap(i,el){
 // ════════════════════════════════
 //  10. CABLE UNCOIL
 // ════════════════════════════════
-let uncoilSt={};
+//  11. CABLE CONNECT
+// ════════════════════════════════
+const WM_COLORS=['#ff4444','#4499ff','#44ee77','#ffcc00','#ff6600','#cc44ff','#00ccdd','#ff44aa'];
+let wmSt={};
+
+function wmEvtPos(e,cv){
+  const r=cv.getBoundingClientRect(),sx=cv.width/r.width,sy=cv.height/r.height;
+  const s=(e.touches&&e.touches[0])||(e.changedTouches&&e.changedTouches[0])||e;
+  return{x:(s.clientX-r.left)*sx,y:(s.clientY-r.top)*sy};
+}
+function wmNodePos(side,idx,n,W,H){
+  const margin=36,spacing=n>1?(H-margin*2)/(n-1):0;
+  return{x:side==='left'?62:W-62,y:n>1?margin+idx*spacing:H/2};
+}
+function wmHit(x,y,side,n,W,H){
+  for(let i=0;i<n;i++){const p=wmNodePos(side,i,n,W,H);if(Math.hypot(x-p.x,y-p.y)<=22)return i;}
+  return -1;
+}
+function wmDraw(cv){
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  const{n,leftColors,rightColors,conns,drawing,fromLeft,fromIdx,curX,curY}=wmSt;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0f0f18';ctx.fillRect(0,0,W,H);
+
+  // Completed connections
+  ctx.lineCap='round';ctx.lineWidth=5;
+  Object.entries(conns).forEach(([li,ri])=>{
+    const lp=wmNodePos('left',+li,n,W,H),rp=wmNodePos('right',ri,n,W,H);
+    const mx=(lp.x+rp.x)/2;
+    ctx.strokeStyle=leftColors[+li];ctx.globalAlpha=0.85;
+    ctx.beginPath();ctx.moveTo(lp.x,lp.y);
+    ctx.bezierCurveTo(mx,lp.y,mx,rp.y,rp.x,rp.y);
+    ctx.stroke();
+  });
+  ctx.globalAlpha=1;
+
+  // In-progress wire
+  if(drawing&&fromIdx>=0){
+    const sp=wmNodePos(fromLeft?'left':'right',fromIdx,n,W,H);
+    const col=fromLeft?leftColors[fromIdx]:rightColors[fromIdx];
+    const mx=(sp.x+curX)/2;
+    ctx.strokeStyle=col;ctx.lineWidth=4;ctx.globalAlpha=0.7;ctx.setLineDash([8,5]);
+    ctx.beginPath();ctx.moveTo(sp.x,sp.y);
+    ctx.bezierCurveTo(mx,sp.y,mx,curY,curX,curY);
+    ctx.stroke();
+    ctx.setLineDash([]);ctx.globalAlpha=1;
+  }
+
+  // Left nodes (cables — filled circles)
+  for(let i=0;i<n;i++){
+    const p=wmNodePos('left',i,n,W,H),col=leftColors[i],connected=i in conns;
+    ctx.beginPath();ctx.arc(p.x,p.y,20,0,Math.PI*2);
+    ctx.fillStyle=connected?col:'#1a1a2e';ctx.fill();
+    ctx.strokeStyle=col;ctx.lineWidth=3;ctx.stroke();
+    // Port indicator (small ► pointing right)
+    ctx.fillStyle=connected?'#000':col;ctx.font='bold 14px sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('▶',p.x,p.y);
+    // "CABLE" label on left edge
+    ctx.fillStyle='#555570';ctx.font='8px Share Tech Mono';
+    ctx.textAlign='right';ctx.fillText('CABLE',p.x-26,p.y);
+  }
+
+  // Right nodes (ports — ring style)
+  for(let i=0;i<n;i++){
+    const p=wmNodePos('right',i,n,W,H),col=rightColors[i];
+    const connected=Object.values(conns).includes(i);
+    ctx.beginPath();ctx.arc(p.x,p.y,20,0,Math.PI*2);
+    ctx.fillStyle=connected?col:'#1a1a2e';ctx.fill();
+    ctx.strokeStyle=col;ctx.lineWidth=3;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=connected?'#000':col;ctx.font='bold 14px sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('◀',p.x,p.y);
+    ctx.fillStyle='#555570';ctx.font='8px Share Tech Mono';
+    ctx.textAlign='left';ctx.fillText('PORT',p.x+26,p.y);
+  }
+}
+
 function launchUncoil(){
   const cv=document.getElementById('uncoil-canvas');
-  const maxW=Math.min(420,window.innerWidth-36);
-  cv.width=maxW; cv.height=Math.round(maxW*0.68);
-  const W=cv.width,H=cv.height;
-  const turns=3.2+G.wave*0.18, pts=[];
-  const cx=W*0.48, cy=H*0.5;
-  const maxR=Math.min(W,H)*0.43;
-  const samples=Math.floor(220+G.wave*22);
-  for(let i=0;i<=samples;i++){
-    const t=i/samples;
-    const ang=t*Math.PI*2*turns;
-    const r=maxR*(1-t*0.88);
-    pts.push({x:cx+Math.cos(ang)*r,y:cy+Math.sin(ang)*r});
-  }
-  uncoilSt={pts,progress:0,drawing:false,done:false,tol:Math.max(12,20-G.wave*0.6)};
-  drawUncoil();
-  cv.onmousedown=cv.ontouchstart=e=>uncoilStart(e,cv);
-  cv.onmousemove=cv.ontouchmove=e=>uncoilMove(e,cv);
-  cv.onmouseup=cv.ontouchend=()=>uncoilSt.drawing=false;
-  document.getElementById('uncoil-status').textContent='Trace the whole cable to the plug.';
+  cv.width=380;cv.height=260;
+  const n=Math.min(WM_COLORS.length,3+Math.floor((G.wave-1)*0.55));
+  const cols=shuffle([...WM_COLORS]).slice(0,n);
+  const rightPerm=shuffle([...Array(n).keys()]);
+  wmSt={n,leftColors:cols,rightColors:rightPerm.map(i=>cols[i]),conns:{},drawing:false,fromLeft:true,fromIdx:-1,curX:0,curY:0,done:false};
+  cv.onmousedown =e=>{e.preventDefault();wmDown(e,cv);};
+  cv.onmousemove =e=>wmMove(e,cv);
+  cv.onmouseup   =e=>wmUp(e,cv);
+  cv.ontouchstart=e=>{e.preventDefault();wmDown(e,cv);};
+  cv.ontouchmove =e=>{e.preventDefault();wmMove(e,cv);};
+  cv.ontouchend  =e=>{e.preventDefault();wmUp(e,cv);};
+  wmDraw(cv);
+  document.getElementById('uncoil-status').textContent='Connect matching cable colors!';
 }
-function uncoilPos(e,cv){const r=cv.getBoundingClientRect(),s=e.touches?e.touches[0]:e;return{x:s.clientX-r.left,y:s.clientY-r.top};}
-function uncoilStart(e,cv){ if(G.mgDone||uncoilSt.done)return; const p=uncoilPos(e,cv),a=uncoilSt.pts[Math.max(0,uncoilSt.progress-2)]; if(Math.hypot(p.x-a.x,p.y-a.y)<=uncoilSt.tol+6)uncoilSt.drawing=true; e.preventDefault();}
-function uncoilMove(e,cv){ if(!uncoilSt.drawing||G.mgDone||uncoilSt.done)return; const p=uncoilPos(e,cv); const start=Math.max(0,uncoilSt.progress-5), end=Math.min(uncoilSt.pts.length-1,uncoilSt.progress+14); let best=-1,dist=1e9; for(let i=start;i<=end;i++){const q=uncoilSt.pts[i];const d=Math.hypot(p.x-q.x,p.y-q.y); if(d<dist){dist=d;best=i;}} if(dist>uncoilSt.tol){uncoilSt.drawing=false;penaltyTime(1.5);flashScreen('r');document.getElementById('uncoil-status').textContent='Cable slipped! Re-grab and keep tracing.';e.preventDefault();return;} if(best>uncoilSt.progress)uncoilSt.progress=best; drawUncoil(); if(uncoilSt.progress>=uncoilSt.pts.length-1){uncoilSt.done=true;taskDone();} e.preventDefault();}
-function drawUncoil(){
-  const cv=document.getElementById('uncoil-canvas'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
-  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0f0f18';ctx.fillRect(0,0,W,H);
-  ctx.strokeStyle='#2a3244';ctx.lineWidth=6;ctx.lineCap='round';ctx.lineJoin='round';
-  ctx.beginPath();ctx.moveTo(uncoilSt.pts[0].x,uncoilSt.pts[0].y);uncoilSt.pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.stroke();
-  ctx.strokeStyle='#c8e600';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(uncoilSt.pts[0].x,uncoilSt.pts[0].y);for(let i=1;i<=uncoilSt.progress;i++)ctx.lineTo(uncoilSt.pts[i].x,uncoilSt.pts[i].y);ctx.stroke();
-  const head=uncoilSt.pts[Math.max(0,uncoilSt.progress-1)],tail=uncoilSt.pts[uncoilSt.pts.length-1];
-  ctx.fillStyle='#00ff66';ctx.beginPath();ctx.arc(head.x,head.y,7,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#ff7700';ctx.beginPath();ctx.arc(tail.x,tail.y,8,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#ff7700';ctx.font='bold 10px Share Tech Mono';ctx.fillText('PLUG',tail.x+10,tail.y+4);
-  const pct=Math.round(uncoilSt.progress/(uncoilSt.pts.length-1)*100);
-  document.getElementById('uncoil-status').textContent=`Uncoiled ${pct}%`;
+function wmDown(e,cv){
+  if(wmSt.done||G.mgDone)return;
+  const{x,y}=wmEvtPos(e,cv),{n}=wmSt,W=cv.width,H=cv.height;
+  let hit=wmHit(x,y,'left',n,W,H);
+  if(hit>=0){if(hit in wmSt.conns)delete wmSt.conns[hit];wmSt.drawing=true;wmSt.fromLeft=true;wmSt.fromIdx=hit;wmSt.curX=x;wmSt.curY=y;wmDraw(cv);return;}
+  hit=wmHit(x,y,'right',n,W,H);
+  if(hit>=0){for(const li in wmSt.conns)if(wmSt.conns[li]===hit)delete wmSt.conns[li];wmSt.drawing=true;wmSt.fromLeft=false;wmSt.fromIdx=hit;wmSt.curX=x;wmSt.curY=y;wmDraw(cv);}
+}
+function wmMove(e,cv){
+  if(!wmSt.drawing)return;
+  const{x,y}=wmEvtPos(e,cv);wmSt.curX=x;wmSt.curY=y;wmDraw(cv);
+}
+function wmUp(e,cv){
+  if(!wmSt.drawing)return;
+  wmSt.drawing=false;
+  const{x,y}=wmEvtPos(e,cv),{n,leftColors,rightColors,fromLeft,fromIdx}=wmSt,W=cv.width,H=cv.height;
+  if(fromLeft){
+    const ri=wmHit(x,y,'right',n,W,H);
+    if(ri>=0){
+      if(leftColors[fromIdx]===rightColors[ri]){
+        for(const li in wmSt.conns)if(wmSt.conns[li]===ri)delete wmSt.conns[li];
+        wmSt.conns[fromIdx]=ri;
+      } else {penaltyTime(2);flashScreen('r');}
+    }
+  } else {
+    const li=wmHit(x,y,'left',n,W,H);
+    if(li>=0){
+      if(rightColors[fromIdx]===leftColors[li]){
+        for(const lix in wmSt.conns)if(wmSt.conns[lix]===fromIdx)delete wmSt.conns[lix];
+        wmSt.conns[li]=fromIdx;
+      } else {penaltyTime(2);flashScreen('r');}
+    }
+  }
+  wmDraw(cv);
+  const done=Object.keys(wmSt.conns).length===wmSt.n;
+  const total=wmSt.n;
+  document.getElementById('uncoil-status').textContent=done?'All connected!':`${Object.keys(wmSt.conns).length}/${total} connected`;
+  if(done){wmSt.done=true;taskDone();}
 }
 
 // ════════════════════════════════
