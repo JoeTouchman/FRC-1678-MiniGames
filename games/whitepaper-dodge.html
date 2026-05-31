@@ -119,12 +119,14 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 .mgbtn.pri:hover{background:#f5a623;color:#080810}
 
 /* END SCREEN */
-#ends{position:fixed;inset:0;background:rgba(8,8,16,.95);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:100;gap:12px;padding:20px}
-.et{font-family:'Bebas Neue',sans-serif;font-size:clamp(44px,8vw,88px);letter-spacing:5px}
-.es{font-size:11px;color:#6060a0;text-align:center;max-width:480px;line-height:1.85}
+#ends{position:fixed;inset:0;background:rgba(8,8,16,.95);display:none;flex-direction:column;align-items:center;justify-content:flex-start;z-index:100;gap:10px;padding:20px;overflow-y:auto}
+#ends>*{flex-shrink:0}
+@media(min-height:600px){#ends{justify-content:center}}
+.et{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,7vw,88px);letter-spacing:5px}
+.es{font-size:10px;color:#6060a0;text-align:center;max-width:480px;line-height:1.7}
 .es b{color:#f5a623}
-.estat{display:grid;grid-template-columns:repeat(3,1fr);gap:7px 20px;font-size:9px;color:#383870;text-align:center;border:1px solid #12122a;padding:12px 20px;background:#06060e}
-.estat span{color:#c0c0e0;font-size:13px;display:block}
+.estat{display:grid;grid-template-columns:repeat(3,1fr);gap:5px 12px;font-size:8px;color:#383870;text-align:center;border:1px solid #12122a;padding:10px 14px;background:#06060e;width:100%;max-width:480px}
+.estat span{color:#c0c0e0;font-size:12px;display:block}
 .brow{display:flex;gap:10px;margin-top:6px}
 
 /* ROTATE OVERLAY */
@@ -156,12 +158,12 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 .tc-left{color:#2a2a58}
 
 /* NAME ENTRY (post-game) */
-#name-entry{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:360px}
+#name-entry{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;max-width:360px}
 .ne-label{font-size:9px;letter-spacing:3px;color:#383870;text-transform:uppercase}
-#callsign-input{background:#06060e;border:1px solid #2a2a55;color:#f5a623;font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:10px;text-align:center;padding:10px 16px;width:220px;text-transform:uppercase;outline:none;transition:border-color .2s,box-shadow .2s}
+#callsign-input{background:#06060e;border:1px solid #2a2a55;color:#f5a623;font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:8px;text-align:center;padding:8px 14px;width:200px;text-transform:uppercase;outline:none;transition:border-color .2s,box-shadow .2s}
 #callsign-input:focus{border-color:#f5a623;box-shadow:0 0 14px rgba(245,166,35,.18)}
 #callsign-input::placeholder{color:#1a1a48;letter-spacing:4px}
-#submit-status{font-size:9px;color:#383870;min-height:14px;letter-spacing:1px;text-align:center}
+#submit-status{font-size:9px;color:#383870;min-height:12px;letter-spacing:1px;text-align:center}
 
 /* LEADERBOARD TABLE (shared style) */
 .lb-game-title{font-size:9px;letter-spacing:3px;color:#303065;text-transform:uppercase;text-align:center}
