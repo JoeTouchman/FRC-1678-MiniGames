@@ -153,11 +153,6 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 .bal-tap-btn:hover{background:var(--blue);color:var(--dark);box-shadow:0 0 20px var(--blue);}
 .bal-tap-btn:active{transform:scale(.9)!important;}
 
-/* SENSOR SWEEP WARN/CRIT */
-@keyframes sweepWarn{0%,100%{box-shadow:0 0 18px #ffcc00bb;border-color:#ffcc00;color:#ffcc00;}50%{box-shadow:0 0 5px #ffcc0033;border-color:#886600;color:#886600;}}
-@keyframes sweepCrit{0%,100%{box-shadow:0 0 22px #ff4444dd;border-color:#ff4444;color:#ff4444;background:#1a0000;}50%{box-shadow:0 0 5px #ff444422;border-color:#660000;color:#990000;background:#0d0000;}}
-.sweep-node.sweep-warn{animation:sweepWarn .32s ease-in-out infinite!important;}
-.sweep-node.sweep-crit{animation:sweepCrit .13s ease-in-out infinite!important;}
 
 /* ═══ WHACK-A-SCREW ═══ */
 #wack-grid{display:grid;grid-template-columns:repeat(4,80px);gap:12px;}
@@ -1571,21 +1566,12 @@ function launchSweep(){
   tickSweep();
   clearInterval(sweepSt.iv); clearInterval(sweepSt.warnIv);
   sweepSt.iv=setInterval(tickSweep,tickMs);
-  // Warning sub-ticker: update flash classes based on time-in-tick
-  sweepSt.warnIv=setInterval(()=>{
-    if(G.mgDone||sweepSt.done)return;
-    const ratio=(Date.now()-sweepSt.lastTick)/sweepSt.tickMs;
-    document.querySelectorAll('.sweep-node.active').forEach(n=>{
-      n.classList.toggle('sweep-warn',ratio>0.52&&ratio<=0.78);
-      n.classList.toggle('sweep-crit',ratio>0.78);
-    });
-  },40);
 }
 function tickSweep(){
   if(G.mgDone||sweepSt.done)return;
   sweepSt.lastTick=Date.now();
   const nodes=[...document.querySelectorAll('.sweep-node')];
-  nodes.forEach((n,i)=>{if(!n.classList.contains('done')){n.classList.remove('active','sweep-warn','sweep-crit');sweepSt.active.delete(i);}});
+  nodes.forEach((n,i)=>{if(!n.classList.contains('done')){n.classList.remove('active');sweepSt.active.delete(i);}});
   const picks=2+Math.floor(Math.random()*3);
   const pool=nodes.map((n,i)=>n.classList.contains('done')?null:i).filter(v=>v!==null);
   shuffle(pool).slice(0,Math.min(picks,pool.length)).forEach(i=>{nodes[i].classList.add('active');sweepSt.active.add(i);});
