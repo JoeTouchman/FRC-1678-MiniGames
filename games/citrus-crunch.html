@@ -160,7 +160,7 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 /* SENSOR SWEEP */
 #sweep-grid{display:grid;grid-template-columns:repeat(4,72px);gap:10px;}
 .sweep-node{width:72px;height:72px;border-radius:10px;border:2px solid #3a3a52;background:var(--panel2);color:var(--dim);font-size:24px;cursor:pointer;transition:all .12s;}
-.sweep-node:hover{border-color:var(--blue);color:var(--blue);}
+.sweep-node:hover{border-color:#888;color:#aaa;}
 .sweep-node.active{background:#00202a;border-color:var(--blue);color:var(--blue);box-shadow:0 0 14px #00d4ff66;}
 .sweep-node.done{background:#001a08;border-color:var(--green);color:var(--green);cursor:default;}
 #sweep-status{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--dim);}
@@ -1120,7 +1120,7 @@ function drawMaze(){
 // ════════════════════════════════
 let sweepSt={};
 function launchSweep(){
-  const total=16, goal=Math.min(18,8+G.wave*2);
+  const total=16, goal=Math.min(14,6+G.wave);
   sweepSt={goal,hit:0,active:new Set(),done:false};
   const grid=document.getElementById('sweep-grid');
   grid.innerHTML='';
@@ -1134,7 +1134,7 @@ function launchSweep(){
   document.getElementById('sweep-status').textContent=`Cleared 0 / ${goal} interference nodes`;
   tickSweep();
   clearInterval(sweepSt.iv);
-  sweepSt.iv=setInterval(tickSweep,780);
+  sweepSt.iv=setInterval(tickSweep,Math.max(950,1400-G.wave*60));
 }
 function tickSweep(){
   if(G.mgDone||sweepSt.done)return;
