@@ -565,7 +565,8 @@ function hiDPI(cv, cssW, cssH){
 }
 function cvPos(e,cv){
   const r=cv.getBoundingClientRect();
-  const s=e.touches?e.touches[0]:(e.changedTouches?e.changedTouches[0]:e);
+  // e.touches is an empty TouchList (truthy) on touchend, so use && chaining not ternary
+  const s=(e.touches&&e.touches[0])||(e.changedTouches&&e.changedTouches[0])||e;
   const cw=parseFloat(cv.style.width)||cv.width, ch=parseFloat(cv.style.height)||cv.height;
   return{x:(s.clientX-r.left)*cw/r.width, y:(s.clientY-r.top)*ch/r.height};
 }
