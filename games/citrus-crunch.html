@@ -214,13 +214,32 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 #combo-banner.vis{opacity:1;animation:comboPop .4s ease-out;}
 @keyframes comboPop{0%{transform:scale(1.5);}100%{transform:scale(1);}}
 
-/* BUILD AREA — subtle circuit grid */
+/* BUILD AREA — circuit board texture */
 #build-area{
-  background:
-    linear-gradient(rgba(200,230,0,.025) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(200,230,0,.025) 1px,transparent 1px),
-    var(--dark);
-  background-size:44px 44px,44px 44px,auto;
+  background:url('../public/images/citrus-crunch/circuit-bg.jpeg') center/512px 512px, var(--dark);
+}
+
+/* MISSION BAR ICON — sprite sheet */
+#mission-icon{
+  width:32px;height:32px;flex-shrink:0;
+  background-image:url('../public/images/citrus-crunch/icon-sheet.png');
+  background-repeat:no-repeat;
+  background-size:352px 192px;
+  background-position:0 -81px;
+  border-radius:4px;
+  overflow:hidden;
+}
+
+/* MINIGAME TITLE ICON — smaller sprite badge */
+.mg-icon-badge{
+  display:inline-block;width:20px;height:20px;
+  background-image:url('../public/images/citrus-crunch/icon-sheet.png');
+  background-repeat:no-repeat;
+  background-size:220px 120px;
+  border-radius:3px;
+  vertical-align:middle;
+  margin-right:5px;
+  flex-shrink:0;
 }
 
 /* INTERACTIVE ELEMENT POLISH */
@@ -740,6 +759,8 @@ function getPool(){
   return G.wave>=4?[...base,'wack','sweep']:base;
 }
 const MG_ICONS={bolt:'🔩',wire:'🔌',seq:'🤖',gear:'⚙️',combo:'🔧',balance:'⚡',wack:'🔨',maze:'🧩',sweep:'📡',decrypt:'💻',uncoil:'🔗'};
+// Sprite sheet icon indices (0-10, 128px each, icons at y=324 in 1408×768 sheet)
+const MG_ICON_IDX={bolt:0,uncoil:1,seq:2,gear:3,combo:4,balance:5,wack:6,maze:7,sweep:8,decrypt:9,wire:10};
 const MG_LABELS={bolt:'Tighten all bolts on the drivetrain!',wire:'Route power wires to the RoboRIO — avoid the live zaps!',seq:'Assemble parts in the correct order!',gear:'Sort components into the right bins!',combo:'Execute the quick-assembly sequence!',balance:'Calibrate the power distribution board!',wack:'Whack every loose screw before it disappears!',maze:'Drag a cable path through the maze from START to EXIT!',sweep:'Clear interference from the sensor array!',decrypt:'Crack the RoboRIO access code!',uncoil:'Connect each cable on the left to its matching port on the right!'};
 
 function pickNextMG(){
@@ -766,8 +787,20 @@ function startTask(){
   G.mgDone=false;
   document.querySelectorAll('.minigame').forEach(m=>m.classList.remove('active'));
   const mg=pickNextMG(); G.lastMG=mg; G.currentMG=mg;
-  document.getElementById('mission-icon').textContent=MG_ICONS[mg];
+  // Mission bar sprite icon
+  const _mIcon=document.getElementById('mission-icon');
+  _mIcon.textContent=''; _mIcon.style.backgroundPosition=`-${(MG_ICON_IDX[mg]??0)*32}px -81px`;
   document.getElementById('mission-text').textContent=MG_LABELS[mg];
+  // Inject sprite badge into minigame title (once per mg element)
+  const _titleEl=document.querySelector('#mg-'+mg+' .mg-title');
+  if(_titleEl&&!_titleEl.querySelector('.mg-icon-badge')){
+    const _txt=_titleEl.textContent.replace(/^\S+\s*/,'');
+    const _badge=document.createElement('span');
+    _badge.className='mg-icon-badge';
+    _badge.style.backgroundPosition=`-${(MG_ICON_IDX[mg]??0)*20}px -51px`;
+    _titleEl.textContent=''; _titleEl.appendChild(_badge);
+    _titleEl.appendChild(document.createTextNode(_txt));
+  }
   updateHUD();
   ({bolt:launchBolt,wire:launchWire,seq:launchSeq,gear:launchGear,combo:launchCombo,balance:launchBalance,wack:launchWack,maze:launchMaze,sweep:launchSweep,decrypt:launchDecrypt,uncoil:launchUncoil})[mg]();
   document.getElementById('mg-'+mg).classList.add('active');
