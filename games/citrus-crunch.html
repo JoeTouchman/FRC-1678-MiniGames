@@ -219,28 +219,49 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
   background:url('../public/images/citrus-crunch/circuit-bg.jpeg') center/512px 512px, var(--dark);
 }
 
-/* MISSION BAR ICON — sprite sheet */
+/* MISSION BAR ICON — text badge */
 #mission-icon{
-  width:32px;height:32px;flex-shrink:0;
-  background-image:url('../public/images/citrus-crunch/icon-sheet.png');
-  background-repeat:no-repeat;
-  background-size:352px 192px;
-  background-position:0 -81px;
+  width:36px;height:24px;flex-shrink:0;
+  background:rgba(200,230,0,0.12);
+  border:1px solid var(--citrus-d);
   border-radius:4px;
-  overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Share Tech Mono',monospace;font-size:8px;font-weight:700;
+  color:var(--citrus);letter-spacing:0.5px;
 }
 
-/* MINIGAME TITLE ICON — smaller sprite badge */
-.mg-icon-badge{
-  display:inline-block;width:20px;height:20px;
-  background-image:url('../public/images/citrus-crunch/icon-sheet.png');
-  background-repeat:no-repeat;
-  background-size:220px 120px;
-  border-radius:3px;
-  vertical-align:middle;
-  margin-right:5px;
-  flex-shrink:0;
-}
+/* BOLT SVG VISUALS */
+.bolt-svg{display:block;transition:filter .15s;}
+@keyframes boltSpin{0%{transform:rotate(0deg)}100%{transform:rotate(720deg)}}
+.bolt-cell.spinning .bolt-svg{animation:boltSpin .32s ease-out;}
+.bolt-cell.tgt .bolt-hex{fill:var(--citrus);stroke:var(--citrus-d);}
+.bolt-cell.tgt .bolt-hub{fill:#6a7a00;stroke:var(--citrus-d);}
+.bolt-cell.tgt .bolt-slot{stroke:var(--citrus-d);}
+.bolt-cell.done .bolt-hex{fill:#00aa44;stroke:#006622;}
+.bolt-cell.done .bolt-hub{fill:#002810;stroke:#006622;}
+.bolt-cell.done .bolt-slot{stroke:#00aa44;}
+
+/* SCREW / BOMB SVG */
+.screw-svg,.bomb-svg{display:block;}
+.wack-hole.up .screw-hex{fill:#b0b0c8;stroke:#777;}
+.wack-hole.up .screw-hub{fill:#888;stroke:#555;}
+.wack-hole.up .screw-slot{stroke:#444;}
+.wack-hole.hit .screw-hex{fill:var(--green)!important;stroke:#006622!important;}
+
+/* LIVES */
+.life-full{color:var(--red);font-size:17px;line-height:1;}
+.life-empty{color:#2a2a3a;font-size:17px;line-height:1;}
+
+/* SEQUENCE items — text chips */
+.sp{font-size:10px;font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:1px;min-width:52px;padding:8px 10px;}
+.seq-btn{font-size:10px;font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:1px;padding:10px 12px;min-width:52px;}
+
+/* GEAR SORT items — text chips */
+.g-item{font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0.5px;text-align:center;line-height:1.2;}
+
+/* SWEEP NODES */
+.sweep-node{display:flex;align-items:center;justify-content:center;}
+.sweep-node svg{pointer-events:none;}
 
 /* INTERACTIVE ELEMENT POLISH */
 .bolt-cell:hover{transform:scale(1.07);box-shadow:0 0 14px rgba(200,230,0,.25);}
@@ -337,7 +358,7 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 
 <!-- ██ TITLE ██ -->
 <div id="title-screen" class="screen active">
-  <div class="t-logo">⚙ CITRUS CRUNCH ⚙</div>
+  <div class="t-logo">CITRUS CRUNCH</div>
   <div class="t-sub">// ROBOT BUILD CHALLENGE //</div>
   <canvas id="title-sprite" width="330" height="330" style="margin-top:-70px;margin-bottom:-45px;image-rendering:pixelated;filter:drop-shadow(0 0 10px #c8e60033);position:relative;z-index:0;width:min(330px,80vw);height:auto;"></canvas>
   <div style="font-family:'Rajdhani',sans-serif;font-size:16px;color:#777;max-width:380px;text-align:center;line-height:1.55;margin-bottom:10px;">Mike's watching. Mike's <span style="color:var(--orange);font-style:italic">always</span> watching. Keep the pit under control. Don't disappoint him.</div>
@@ -371,11 +392,11 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 
   <!-- MISSION BAR -->
   <div id="mission-bar">
-    <div id="mission-icon">⚙️</div>
+    <div id="mission-icon">SYS</div>
     <div id="mission-text">Prepare for build season...</div>
     <div id="wave-prog-wrap"><div id="wave-prog-fill" style="width:0%"></div></div>
     <div id="task-progress">0/5</div>
-    <div class="lives-display" id="lives-disp">❤️❤️❤️</div>
+    <div class="lives-display" id="lives-disp"><span class="life-full">&#9829;</span><span class="life-full">&#9829;</span><span class="life-full">&#9829;</span></div>
   </div>
 
   <!-- BUILD AREA -->
@@ -383,21 +404,21 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 
     <!-- 1. BOLT TIGHTENING -->
     <div class="minigame" id="mg-bolt">
-      <div class="mg-title">🔩 BOLT TIGHTENING</div>
+      <div class="mg-title">BOLT TIGHTENING</div>
       <div id="bolt-grid"></div>
       <div id="bolt-status">Find bolt 1!</div>
     </div>
 
     <!-- 2. WIRE TRACE -->
     <div class="minigame" id="mg-wire">
-      <div class="mg-title">🔌 WIRE ROUTING</div>
+      <div class="mg-title">WIRE ROUTING</div>
       <div class="mg-hint">Draw from PWR → RIO without hitting live wires!</div>
       <canvas id="wire-canvas" width="380" height="200"></canvas>
     </div>
 
     <!-- 3. ASSEMBLY SEQUENCE -->
     <div class="minigame" id="mg-seq">
-      <div class="mg-title">🤖 ASSEMBLY SEQUENCE</div>
+      <div class="mg-title">ASSEMBLY SEQUENCE</div>
       <div id="seq-show"></div>
       <div id="seq-legend"><span class="seq-legend-r">■ HIDES</span><span class="seq-legend-g">■ STAYS</span></div>
       <div id="seq-status" class="mg-hint">Watch the order...</div>
@@ -406,7 +427,7 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 
     <!-- 4. PARTS SORTING (color coded) -->
     <div class="minigame" id="mg-gear">
-      <div class="mg-title">⚙️ PARTS SORTING</div>
+      <div class="mg-title">PARTS SORTING</div>
       <div class="mg-hint">Drag each colored part to its matching bin!</div>
       <div id="gear-source"></div>
       <div id="gear-bins"></div>
@@ -414,7 +435,7 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 
     <!-- 5. QUICK ASSEMBLY -->
     <div class="minigame" id="mg-combo">
-      <div class="mg-title">🔧 QUICK ASSEMBLY</div>
+      <div class="mg-title">QUICK ASSEMBLY</div>
       <div class="mg-hint">Hit the sequence — keyboard works too!</div>
       <div id="combo-seq"></div>
       <div id="combo-keys"></div>
@@ -422,25 +443,25 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 
     <!-- 6. POWER CALIBRATION -->
     <div class="minigame" id="mg-balance">
-      <div class="mg-title">⚡ POWER CALIBRATION</div>
+      <div class="mg-title">POWER CALIBRATION</div>
       <div class="mg-hint">Tap to keep the needle in the green zone!</div>
       <div id="bal-track"><div id="bal-zone"></div><div id="bal-needle" style="left:47%"></div></div>
       <div id="bal-hold-bar-wrap"><div id="bal-hold-bar"></div></div>
       <div id="bal-label">Calibrating...</div>
-      <button class="bal-tap-btn" onclick="balTap()">TAP ⚡</button>
+      <button class="bal-tap-btn" onclick="balTap()">TAP</button>
     </div>
 
     <!-- 7. WHACK-A-SCREW -->
     <div class="minigame" id="mg-wack">
-      <div class="mg-title">🔨 WHACK-A-SCREW</div>
-      <div class="mg-hint">Hit the screws before they disappear — don't whack the 💣!</div>
+      <div class="mg-title">WHACK-A-SCREW</div>
+      <div class="mg-hint">Hit the screws before they disappear — avoid the BOMB!</div>
       <div id="wack-grid"></div>
       <div id="wack-score">Hit 0 / 0</div>
     </div>
 
     <!-- 8. MAZE NAVIGATION -->
     <div class="minigame" id="mg-maze">
-      <div class="mg-title">🧩 CABLE MAZE</div>
+      <div class="mg-title">CABLE MAZE</div>
       <div class="mg-hint" id="maze-hint">Draw a route from START to EXIT. Walls block you, no rewinding.</div>
       <canvas id="maze-canvas" width="380" height="260" style="border:2px solid var(--border);border-radius:8px;background:var(--panel2);cursor:crosshair;touch-action:none;display:block;max-width:100%;"></canvas>
       <div id="maze-status" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim);">Drag to trace the cable path</div>
@@ -448,7 +469,7 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 
     <!-- 9. SENSOR SWEEP -->
     <div class="minigame" id="mg-sweep">
-      <div class="mg-title">📡 SENSOR SWEEP</div>
+      <div class="mg-title">SENSOR SWEEP</div>
       <div class="mg-hint">Tap highlighted sensors to clear interference before it spreads.</div>
       <div id="sweep-grid"></div>
       <div id="sweep-status">Cleared 0 / 10 interference nodes</div>
@@ -456,7 +477,7 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 
     <!-- 10. CABLE UNCOILING -->
     <div class="minigame" id="mg-uncoil">
-      <div class="mg-title">🔗 CABLE CONNECT</div>
+      <div class="mg-title">CABLE CONNECT</div>
       <div class="mg-hint">Drag each cable on the left to its matching port on the right!</div>
       <canvas id="uncoil-canvas" width="380" height="260"></canvas>
       <div id="uncoil-status">Connect matching cable colors!</div>
@@ -464,7 +485,7 @@ body{background:var(--dark);color:var(--text);font-family:'Rajdhani',sans-serif;
 
     <!-- 11. CODE DECRYPT -->
     <div class="minigame" id="mg-decrypt">
-      <div class="mg-title">💻 CODE DECRYPT</div>
+      <div class="mg-title">CODE DECRYPT</div>
       <div class="mg-hint">The RoboRIO passcode is scrambled. Enter the correct digits!</div>
       <div id="decrypt-area">
         <div id="decrypt-display">????</div>
@@ -680,7 +701,7 @@ function updateHUD(){
   document.getElementById('wave-val').textContent=`${G.wave}/${waveGoal}`;
   document.getElementById('task-progress').textContent=`${G.task}/${taskGoal}`;
   document.getElementById('wave-prog-fill').style.width=(G.task/taskGoal*100)+'%';
-  document.getElementById('lives-disp').textContent=['❤️','❤️','❤️'].map((v,i)=>i<G.lives?v:'🖤').join('');
+  document.getElementById('lives-disp').innerHTML=Array(3).fill(0).map((_,i)=>`<span class="${i<G.lives?'life-full':'life-empty'}">&#9829;</span>`).join('');
   document.getElementById('patience-fill').style.width=G.patience+'%';
 }
 
@@ -758,9 +779,7 @@ function getPool(){
   const base=['bolt','bolt','seq','seq','combo','wire','gear','maze','balance','decrypt','uncoil'];
   return G.wave>=4?[...base,'wack','sweep']:base;
 }
-const MG_ICONS={bolt:'🔩',wire:'🔌',seq:'🤖',gear:'⚙️',combo:'🔧',balance:'⚡',wack:'🔨',maze:'🧩',sweep:'📡',decrypt:'💻',uncoil:'🔗'};
-// Sprite sheet icon indices (0-10, 128px each, icons at y=324 in 1408×768 sheet)
-const MG_ICON_IDX={bolt:0,uncoil:1,seq:2,gear:3,combo:4,balance:5,wack:6,maze:7,sweep:8,decrypt:9,wire:10};
+const MG_SHORT={bolt:'BLT',wire:'WIR',seq:'SEQ',gear:'GER',combo:'CMB',balance:'PWR',wack:'WHK',maze:'MZE',sweep:'SWP',decrypt:'DEC',uncoil:'CBL'};
 const MG_LABELS={bolt:'Tighten all bolts on the drivetrain!',wire:'Route power wires to the RoboRIO — avoid the live zaps!',seq:'Assemble parts in the correct order!',gear:'Sort components into the right bins!',combo:'Execute the quick-assembly sequence!',balance:'Calibrate the power distribution board!',wack:'Whack every loose screw before it disappears!',maze:'Drag a cable path through the maze from START to EXIT!',sweep:'Clear interference from the sensor array!',decrypt:'Crack the RoboRIO access code!',uncoil:'Connect each cable on the left to its matching port on the right!'};
 
 function pickNextMG(){
@@ -787,20 +806,8 @@ function startTask(){
   G.mgDone=false;
   document.querySelectorAll('.minigame').forEach(m=>m.classList.remove('active'));
   const mg=pickNextMG(); G.lastMG=mg; G.currentMG=mg;
-  // Mission bar sprite icon
-  const _mIcon=document.getElementById('mission-icon');
-  _mIcon.textContent=''; _mIcon.style.backgroundPosition=`-${(MG_ICON_IDX[mg]??0)*32}px -81px`;
+  document.getElementById('mission-icon').textContent=MG_SHORT[mg]||'SYS';
   document.getElementById('mission-text').textContent=MG_LABELS[mg];
-  // Inject sprite badge into minigame title (once per mg element)
-  const _titleEl=document.querySelector('#mg-'+mg+' .mg-title');
-  if(_titleEl&&!_titleEl.querySelector('.mg-icon-badge')){
-    const _txt=_titleEl.textContent.replace(/^\S+\s*/,'');
-    const _badge=document.createElement('span');
-    _badge.className='mg-icon-badge';
-    _badge.style.backgroundPosition=`-${(MG_ICON_IDX[mg]??0)*20}px -51px`;
-    _titleEl.textContent=''; _titleEl.appendChild(_badge);
-    _titleEl.appendChild(document.createTextNode(_txt));
-  }
   updateHUD();
   ({bolt:launchBolt,wire:launchWire,seq:launchSeq,gear:launchGear,combo:launchCombo,balance:launchBalance,wack:launchWack,maze:launchMaze,sweep:launchSweep,decrypt:launchDecrypt,uncoil:launchUncoil})[mg]();
   document.getElementById('mg-'+mg).classList.add('active');
@@ -905,6 +912,15 @@ function showComboBanner(m){ const b=document.getElementById('combo-banner');doc
 //  1. BOLT TIGHTENING
 // ════════════════════════════════
 let boltSt={};
+function makeBoltSVG(size){
+  const s=size*0.78;
+  return `<svg viewBox="0 0 40 40" width="${s}" height="${s}" class="bolt-svg">
+    <polygon class="bolt-hex" points="20,3 34,11.5 34,28.5 20,37 6,28.5 6,11.5" fill="#686880" stroke="#444" stroke-width="2"/>
+    <circle class="bolt-hub" cx="20" cy="20" r="9" fill="#333" stroke="#555" stroke-width="2"/>
+    <line class="bolt-slot" x1="20" y1="13" x2="20" y2="27" stroke="#555" stroke-width="3.5" stroke-linecap="round"/>
+    <line class="bolt-slot" x1="13" y1="20" x2="27" y2="20" stroke="#555" stroke-width="3.5" stroke-linecap="round"/>
+  </svg>`;
+}
 function launchBolt(){
   const total=6+Math.floor(G.wave*1.3), cols=Math.min(6,Math.ceil(Math.sqrt(total+2)));
   boltSt={total,next:1,done:false};
@@ -915,8 +931,7 @@ function launchBolt(){
   shuffle(Array.from({length:total},(_,i)=>i+1)).forEach(num=>{
     const c=document.createElement('div'); c.className='bolt-cell'; c.dataset.num=num;
     c.style.width=cellSize+'px'; c.style.height=cellSize+'px';
-    c.style.fontSize=Math.round(cellSize*0.38)+'px';
-    c.innerHTML=`🔩<div class="bolt-badge">${num}</div>`;
+    c.innerHTML=makeBoltSVG(cellSize)+`<div class="bolt-badge">${num}</div>`;
     if(num===1)c.classList.add('tgt');
     c.addEventListener('click',()=>boltClick(c));
     grid.appendChild(c);
@@ -924,11 +939,18 @@ function launchBolt(){
   document.getElementById('bolt-status').textContent=`Tighten bolt 1 of ${total}!`;
 }
 function boltClick(cell){
-  if(G.mgDone||boltSt.done||cell.classList.contains('done'))return;
+  if(G.mgDone||boltSt.done||cell.classList.contains('done')||cell.classList.contains('spinning'))return;
   const num=parseInt(cell.dataset.num);
   if(num===boltSt.next){
-    cell.classList.remove('tgt'); cell.classList.add('done'); sfx('tap'); boltSt.next++;
-    if(boltSt.next>boltSt.total){boltSt.done=true;taskDone();return;}
+    cell.classList.remove('tgt');
+    cell.classList.add('spinning');
+    sfx('tap');
+    setTimeout(()=>{
+      cell.classList.remove('spinning');
+      cell.classList.add('done');
+    },300);
+    boltSt.next++;
+    if(boltSt.next>boltSt.total){boltSt.done=true;setTimeout(taskDone,320);return;}
     document.querySelectorAll('.bolt-cell').forEach(c=>{ if(parseInt(c.dataset.num)===boltSt.next)c.classList.add('tgt'); });
     document.getElementById('bolt-status').textContent=`Tighten bolt ${boltSt.next} of ${boltSt.total}!`;
   } else {
@@ -969,7 +991,7 @@ function drawWire(win){
   ctx.clearRect(0,0,W,H);ctx.strokeStyle='#1a1a2e';ctx.lineWidth=1;
   for(let x=0;x<W;x+=20){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
   for(let y=0;y<H;y+=20){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-  wireSt.obs.forEach(o=>{ctx.fillStyle='#ff224428';ctx.fillRect(o.x,o.y,o.w,o.h);ctx.strokeStyle='#ff2244';ctx.lineWidth=2;ctx.strokeRect(o.x,o.y,o.w,o.h);ctx.fillStyle='#ff2244';ctx.font='9px Share Tech Mono';ctx.fillText('⚡',o.x+4,o.y+13);});
+  wireSt.obs.forEach(o=>{ctx.fillStyle='#ff224428';ctx.fillRect(o.x,o.y,o.w,o.h);ctx.strokeStyle='#ff2244';ctx.lineWidth=2;ctx.strokeRect(o.x,o.y,o.w,o.h);ctx.fillStyle='#ff2244';ctx.font='bold 8px Share Tech Mono';ctx.fillText('ZAP',o.x+3,o.y+12);});
   const dn=(x,y,c,l)=>{ctx.beginPath();ctx.arc(x,y,14,0,Math.PI*2);ctx.fillStyle=c+'22';ctx.fill();ctx.strokeStyle=c;ctx.lineWidth=2;ctx.stroke();ctx.fillStyle=c;ctx.font='bold 9px Share Tech Mono';ctx.textAlign='center';ctx.fillText(l,x,y+3);ctx.textAlign='left';};
   dn(wireSt.sx,wireSt.sy,'#00ff66','PWR'); dn(wireSt.ex,wireSt.ey,win?'#00ff66':'#c8e600','RIO');
   if(wireSt.path.length>1){ctx.beginPath();ctx.moveTo(wireSt.path[0].x,wireSt.path[0].y);wireSt.path.forEach(p=>ctx.lineTo(p.x,p.y));ctx.strokeStyle=win?'#00ff66':'#c8e600';ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();}
@@ -979,7 +1001,7 @@ function drawWire(win){
 //  3. ASSEMBLY SEQUENCE
 // ════════════════════════════════
 let seqSt={};
-const SEQ_ITEMS=['🔩','⚙️','🔧','🔌','📡','🦾','🔋','💡','🎛️','🖥️'];
+const SEQ_ITEMS=['BOLT','GEAR','TOOL','WIRE','SENS','ARM','BATT','LED','CTRL','CPU'];
 function launchSeq(){
   const len=3+Math.floor(G.wave*.7);
   const pool=SEQ_ITEMS.slice(0,4+Math.floor(G.wave/2));
@@ -1062,10 +1084,10 @@ function seqPress(item,btn){
 // Each category has a distinct color. Items get a colored background,
 // bins have the same color border+bg. No confusion about what goes where.
 const GCATS=[
-  {label:'DRIVE',   color:'#1a5cff', bg:'#0a1a44', items:['⚙️','🔩','🦿','⛓️'], textColor:'#6699ff'},
-  {label:'CONTROLS',color:'#ff7700', bg:'#3a1a00', items:['🎛️','🖥️','🔌','🕹️'], textColor:'#ffaa44'},
-  {label:'STRUCT',  color:'#00cc55', bg:'#003318', items:['🔧','🏗️','📐','🪛'],  textColor:'#44ff88'},
-  {label:'SENSORS', color:'#cc00ff', bg:'#220033', items:['📡','👁️','💡','📷'],  textColor:'#dd66ff'},
+  {label:'DRIVE',   color:'#1a5cff', bg:'#0a1a44', items:['AXLE','BOLT','CHAIN','HUB'],  textColor:'#6699ff'},
+  {label:'CONTROLS',color:'#ff7700', bg:'#3a1a00', items:['RIO','PWM','CAN','HID'],      textColor:'#ffaa44'},
+  {label:'STRUCT',  color:'#00cc55', bg:'#003318', items:['RAIL','TUBE','GUSS','BRAC'],  textColor:'#44ff88'},
+  {label:'SENSORS', color:'#cc00ff', bg:'#220033', items:['LIDAR','CAM','IMU','ENC'],    textColor:'#dd66ff'},
 ];
 let gearSt={};
 function launchGear(){
@@ -1154,7 +1176,7 @@ function launchBalance(){
     document.getElementById('bal-needle').classList.toggle('in',inZ);
     document.getElementById('bal-label').classList.toggle('in',inZ);
     if(inZ){G.balHold+=0.05;document.getElementById('bal-label').textContent=`${G.balHold.toFixed(1)} / ${G.balReq.toFixed(1)}s`;document.getElementById('bal-hold-bar').style.width=(G.balHold/G.balReq*100)+'%';if(G.balHold>=G.balReq){clearInterval(G.balIv);G.balIv=null;taskDone();}}
-    else{G.balHold=Math.max(0,G.balHold-.02);document.getElementById('bal-hold-bar').style.width=(G.balHold/G.balReq*100)+'%';document.getElementById('bal-label').textContent=G.balPos<43?'⬅ Too low':'Too high ➡';}
+    else{G.balHold=Math.max(0,G.balHold-.02);document.getElementById('bal-hold-bar').style.width=(G.balHold/G.balReq*100)+'%';document.getElementById('bal-label').textContent=G.balPos<43?'<< Too low':'Too high >>';}
   },50);
 }
 function balTap(){ if(G.mgDone)return;const push=G.balPos<50?3+Math.random()*2:-(3+Math.random()*2);G.balVel+=push*.8; }
@@ -1162,9 +1184,8 @@ function balTap(){ if(G.mgDone)return;const push=G.balPos<50?3+Math.random()*2:-
 // ════════════════════════════════
 //  7. WHACK-A-SCREW
 // ════════════���═══════════════════
-// Grid of 4x4 holes. Screws pop up randomly; player must click them.
-// Bombs also pop up — click them = penalty.
-// Need to hit a target count to win.
+const SCREW_SVG=`<svg viewBox="0 0 44 44" width="36" height="36" class="screw-svg"><circle class="screw-hex" cx="22" cy="22" r="18" fill="#b0b0c8" stroke="#777" stroke-width="2.5"/><circle class="screw-hub" cx="22" cy="22" r="12" fill="#888" stroke="#555" stroke-width="2"/><line class="screw-slot" x1="22" y1="12" x2="22" y2="32" stroke="#333" stroke-width="4" stroke-linecap="round"/><line class="screw-slot" x1="12" y1="22" x2="32" y2="22" stroke="#333" stroke-width="4" stroke-linecap="round"/><line class="screw-slot" x1="14.5" y1="14.5" x2="29.5" y2="29.5" stroke="#333" stroke-width="2.5" stroke-linecap="round"/><line class="screw-slot" x1="29.5" y1="14.5" x2="14.5" y2="29.5" stroke="#333" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+const BOMB_SVG=`<svg viewBox="0 0 44 44" width="36" height="36" class="bomb-svg"><line x1="30" y1="10" x2="36" y2="5" stroke="#ff8800" stroke-width="2.5" stroke-linecap="round"/><circle cx="29" cy="11" r="5" fill="#555" stroke="#ff8800" stroke-width="2"/><circle cx="21" cy="25" r="15" fill="#1a1a1a" stroke="#666" stroke-width="2"/><circle cx="16" cy="19" r="4" fill="#333" opacity="0.7"/><text x="22" y="30" text-anchor="middle" font-family="Share Tech Mono" font-size="9" font-weight="700" fill="#ff4444">BOMB</text></svg>`;
 let wackSt={};
 function launchWack(){
   const target=3+Math.floor(G.wave/2);
@@ -1190,7 +1211,7 @@ function launchWack(){
     // Clear old
     occupied.forEach(idx=>{
       const c=wackSt.cells[idx];
-      if(c&&!c.classList.contains('hit'))c.classList.remove('up');
+      if(c&&!c.classList.contains('hit')){c.classList.remove('up');c.innerHTML='';}
     });
     occupied.clear();
     // Show new ones
@@ -1203,7 +1224,7 @@ function launchWack(){
       c.classList.remove('hit');
       const isBomb=Math.random()<(0.1+G.wave*0.04);
       c.dataset.type=isBomb?'bomb':'screw';
-      c.textContent=isBomb?'💣':'🔩';
+      c.innerHTML=isBomb?BOMB_SVG:SCREW_SVG;
       c.classList.add('up');
       occupied.add(idx);
     }
@@ -1285,7 +1306,7 @@ function launchSweep(){
   for(let i=0;i<total;i++){
     const b=document.createElement('button');
     b.className='sweep-node';
-    b.textContent='◉';
+    b.innerHTML=`<svg viewBox="0 0 36 36" width="30" height="30" style="pointer-events:none"><circle cx="18" cy="18" r="10" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="18" r="4" fill="currentColor"/><line x1="18" y1="2" x2="18" y2="8" stroke="currentColor" stroke-width="1.5"/><line x1="18" y1="28" x2="18" y2="34" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="18" x2="8" y2="18" stroke="currentColor" stroke-width="1.5"/><line x1="28" y1="18" x2="34" y2="18" stroke="currentColor" stroke-width="1.5"/></svg>`;
     b.onclick=()=>sweepTap(i,b);
     grid.appendChild(b);
   }
