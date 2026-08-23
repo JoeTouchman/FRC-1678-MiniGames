@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Scout Room Sim — Team 1678</title>
+<title>Scout Battle Royale — Team 1678</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
@@ -26,12 +26,13 @@ body {
   background: var(--bg);
   color: #fff;
   font-family: 'Rajdhani', sans-serif;
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
-/* ── TOP BAR ── */
 #topbar {
   display: flex;
   align-items: center;
@@ -41,7 +42,6 @@ body {
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-
 #back-btn {
   font-family: 'Share Tech Mono', monospace;
   font-size: 11px;
@@ -55,7 +55,6 @@ body {
   white-space: nowrap;
 }
 #back-btn:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
-
 .topbar-title {
   font-family: 'Orbitron', sans-serif;
   font-size: clamp(11px, 2.5vw, 16px);
@@ -66,7 +65,6 @@ body {
   -webkit-text-fill-color: transparent;
   flex: 1;
 }
-
 .topbar-sub {
   font-family: 'Share Tech Mono', monospace;
   font-size: 10px;
@@ -75,15 +73,13 @@ body {
   white-space: nowrap;
 }
 
-/* ── MAIN LAYOUT ── */
 #app {
   display: flex;
   flex: 1;
   overflow: hidden;
-  gap: 0;
+  min-height: 0;
 }
 
-/* ── LEFT SIDEBAR ── */
 #sidebar {
   width: 200px;
   flex-shrink: 0;
@@ -91,16 +87,13 @@ body {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 0;
   overflow-y: auto;
   overflow-x: hidden;
 }
-
 .panel-section {
   padding: 10px 12px;
   border-bottom: 1px solid var(--border);
 }
-
 .panel-label {
   font-family: 'Share Tech Mono', monospace;
   font-size: 9px;
@@ -110,17 +103,8 @@ body {
   margin-bottom: 8px;
 }
 
-/* ── SIM CONTROLS ── */
-#sim-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.ctrl-row {
-  display: flex;
-  gap: 5px;
-}
+#sim-controls { display: flex; flex-direction: column; gap: 6px; }
+.ctrl-row { display: flex; gap: 5px; }
 
 .btn {
   font-family: 'Orbitron', sans-serif;
@@ -139,10 +123,10 @@ body {
   text-align: center;
   -webkit-user-select: none;
   user-select: none;
+  touch-action: manipulation;
 }
 .btn:hover { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.25); }
 .btn:active { transform: scale(0.96); }
-
 .btn-play {
   background: linear-gradient(135deg, var(--volt-dark), var(--volt));
   color: #000;
@@ -150,26 +134,11 @@ body {
   font-size: 10px;
 }
 .btn-play:hover { box-shadow: 0 0 14px rgba(0,255,204,0.4); color: #000; }
-
-.btn-reset {
-  border-color: rgba(255,107,0,0.4);
-  color: var(--citrus-light);
-}
+.btn-reset { border-color: rgba(255,107,0,0.4); color: var(--citrus-light); }
 .btn-reset:hover { border-color: var(--citrus); background: rgba(255,107,0,0.1); color: var(--citrus-light); }
+.btn-speed.active { background: rgba(0,102,255,0.2); border-color: var(--blue-light); color: var(--blue-light); }
 
-.btn-speed.active {
-  background: rgba(0,102,255,0.2);
-  border-color: var(--blue-light);
-  color: var(--blue-light);
-}
-
-/* ── SPAWN PANEL ── */
-#spawn-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
+#spawn-list { display: flex; flex-direction: column; gap: 4px; }
 .spawn-btn {
   display: flex;
   align-items: center;
@@ -186,34 +155,16 @@ body {
   font-weight: 700;
   -webkit-user-select: none;
   user-select: none;
+  touch-action: manipulation;
 }
 .spawn-btn:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2); }
 .spawn-btn:active { transform: scale(0.97); }
 .spawn-btn.active { opacity: 0.45; cursor: default; pointer-events: none; }
-
-.spawn-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
+.spawn-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .spawn-name { flex: 1; }
-.spawn-role {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 8px;
-  color: var(--text-muted);
-  letter-spacing: 0.5px;
-}
+.spawn-role { font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--text-muted); letter-spacing: 0.5px; }
 
-/* ── CHARACTER STATUS ── */
-#char-status-list {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-height: 0;
-}
-
+#char-status-list { display: flex; flex-direction: column; gap: 5px; min-height: 0; }
 .char-status-item {
   display: flex;
   align-items: flex-start;
@@ -225,15 +176,8 @@ body {
 }
 .char-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; }
 .char-status-name { font-size: 11px; font-weight: 700; }
-.char-status-action {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 8px;
-  color: var(--text-muted);
-  letter-spacing: 0.3px;
-  line-height: 1.4;
-}
+.char-status-action { font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--text-muted); letter-spacing: 0.3px; line-height: 1.4; }
 
-/* ── CANVAS AREA ── */
 #canvas-wrap {
   flex: 1;
   display: flex;
@@ -242,16 +186,18 @@ body {
   background: #050a05;
   overflow: hidden;
   position: relative;
+  min-width: 0;
 }
-
 #sim-canvas {
   display: block;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
   width: 100%;
   height: 100%;
   object-fit: contain;
+  touch-action: none;
+  cursor: default;
 }
+#sim-canvas.can-drag  { cursor: grab; }
+#sim-canvas.dragging  { cursor: grabbing; }
 
 #overlay-msg {
   position: absolute;
@@ -261,69 +207,25 @@ body {
   text-align: center;
   pointer-events: none;
 }
-#overlay-msg .big { font-family: 'Orbitron', sans-serif; font-size: 22px; font-weight: 700; color: var(--volt); letter-spacing: 2px; }
-#overlay-msg .small { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--text-muted); margin-top: 6px; letter-spacing: 1px; }
+#overlay-msg .big  { font-family: 'Orbitron', sans-serif; font-size: clamp(14px,3vw,22px); font-weight: 700; color: var(--volt); letter-spacing: 2px; }
+#overlay-msg .small { font-family: 'Share Tech Mono', monospace; font-size: clamp(9px,1.5vw,11px); color: var(--text-muted); margin-top: 6px; letter-spacing: 1px; }
 
-/* ── EVENT LOG ── */
-#log-panel {
-  width: 210px;
-  flex-shrink: 0;
-  background: rgba(0,0,0,0.35);
-  border-left: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-#log-header {
-  padding: 10px 12px 6px;
-  border-bottom: 1px solid var(--border);
+#drag-hint {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
   font-family: 'Share Tech Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 2px;
-  color: var(--text-muted);
-  flex-shrink: 0;
+  font-size: clamp(8px,1.2vw,10px);
+  letter-spacing: 1px;
+  color: rgba(0,255,204,0.7);
+  pointer-events: none;
+  display: none;
+  white-space: nowrap;
+  animation: pulseHint 2s ease-in-out infinite;
 }
+@keyframes pulseHint { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
 
-#event-log {
-  flex: 1;
-  overflow-y: auto;
-  padding: 6px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-#event-log::-webkit-scrollbar { width: 3px; }
-#event-log::-webkit-scrollbar-track { background: transparent; }
-#event-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-
-.log-entry {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  padding: 5px 6px;
-  border-radius: 4px;
-  background: rgba(255,255,255,0.03);
-  border-left: 2px solid rgba(0,255,204,0.3);
-  animation: fadeIn 0.3s ease;
-}
-@keyframes fadeIn { from { opacity: 0; transform: translateX(6px); } to { opacity: 1; transform: none; } }
-
-.log-time {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 8px;
-  color: var(--text-muted);
-  letter-spacing: 0.5px;
-}
-.log-msg {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.8);
-  line-height: 1.35;
-}
-
-/* ── STATS BAR ── */
 #stats-bar {
   position: absolute;
   top: 8px;
@@ -332,6 +234,7 @@ body {
   display: flex;
   gap: 10px;
   pointer-events: none;
+  z-index: 2;
 }
 .stat-chip {
   font-family: 'Share Tech Mono', monospace;
@@ -345,10 +248,59 @@ body {
 }
 .stat-chip span { color: #fff; font-weight: 700; }
 
-/* ── MOBILE LAYOUT ── */
+#log-panel {
+  width: 210px;
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.35);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+#log-header {
+  padding: 10px 12px 6px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+#event-log {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+#event-log::-webkit-scrollbar { width: 3px; }
+#event-log::-webkit-scrollbar-track { background: transparent; }
+#event-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+.log-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 5px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.03);
+  border-left: 2px solid rgba(0,255,204,0.3);
+  flex-shrink: 0;
+  animation: fadeIn 0.25s ease;
+}
+.log-entry.combat { border-left-color: rgba(255,80,80,0.55); }
+.log-entry.elim   { border-left-color: rgba(255,200,0,0.7); background: rgba(255,200,0,0.04); }
+.log-entry.buff   { border-left-color: rgba(0,200,255,0.5); }
+@keyframes fadeIn { from { opacity:0; transform:translateX(5px); } to { opacity:1; transform:none; } }
+.log-time { font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--text-muted); letter-spacing: 0.5px; }
+.log-msg  { font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.82); line-height: 1.35; }
+
 @media (max-width: 700px) {
-  body { overflow-y: auto; }
-  #app { flex-direction: column; overflow: visible; }
+  body { height: 100vh; overflow: hidden; }
+  #app { flex-direction: column; overflow: hidden; }
   #sidebar {
     width: 100%;
     flex-direction: row;
@@ -357,35 +309,21 @@ body {
     overflow-y: hidden;
     border-right: none;
     border-bottom: 1px solid var(--border);
-    max-height: none;
-  }
-  .panel-section {
+    max-height: 115px;
     flex-shrink: 0;
-    border-bottom: none;
-    border-right: 1px solid var(--border);
   }
+  .panel-section { flex-shrink:0; border-bottom:none; border-right:1px solid var(--border); }
   #char-status-section { display: none; }
-  #canvas-wrap {
-    height: clamp(240px, 56vw, 420px);
-    flex-shrink: 0;
-  }
-  #log-panel {
-    width: 100%;
-    height: 200px;
-    border-left: none;
-    border-top: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  #stats-bar { top: 4px; gap: 6px; }
-  .stat-chip { font-size: 8px; padding: 2px 6px; }
-  .topbar-sub { display: none; }
+  #canvas-wrap { flex: 1; min-height: 0; }
+  #log-panel { width:100%; height:155px; max-height:155px; border-left:none; border-top:1px solid var(--border); flex-shrink:0; }
+  #stats-bar { top:4px; gap:6px; }
+  .stat-chip { font-size:8px; padding:2px 6px; }
+  .topbar-sub { display:none; }
 }
-
 @media (max-width: 480px) {
-  #sidebar { flex-direction: column; overflow-x: hidden; overflow-y: auto; max-height: 260px; }
-  .panel-section { border-right: none; border-bottom: 1px solid var(--border); }
-  .spawn-btn { font-size: 13px; padding: 9px 10px; }
-  .btn { font-size: 10px; padding: 9px 10px; }
+  #sidebar { max-height: 95px; }
+  .spawn-btn { font-size:12px; padding:6px 8px; }
+  .btn { font-size:9px; padding:7px 8px; }
 }
 </style>
 </head>
@@ -393,20 +331,17 @@ body {
 
 <div id="topbar">
   <a href="../index.html" id="back-btn">&#8592; BACK</a>
-  <div class="topbar-title">SCOUT ROOM SIM</div>
-  <div class="topbar-sub">SOFTWARE SCOUTING &#183; TEAM 1678</div>
+  <div class="topbar-title">SCOUT BATTLE ROYALE</div>
+  <div class="topbar-sub">LAST ONE STANDING &#183; TEAM 1678</div>
 </div>
 
 <div id="app">
-  <!-- LEFT SIDEBAR -->
   <div id="sidebar">
     <div class="panel-section">
       <div class="panel-label">Simulation</div>
       <div id="sim-controls">
         <button class="btn btn-play" id="btn-playpause">&#9654; PLAY</button>
-        <div class="ctrl-row">
-          <button class="btn btn-reset" id="btn-reset">RESET</button>
-        </div>
+        <div class="ctrl-row"><button class="btn btn-reset" id="btn-reset">RESET</button></div>
         <div class="ctrl-row" id="speed-btns">
           <button class="btn btn-speed active" data-speed="1">1x</button>
           <button class="btn btn-speed" data-speed="2">2x</button>
@@ -414,84 +349,37 @@ body {
         </div>
       </div>
     </div>
-
     <div class="panel-section">
-      <div class="panel-label">Spawn Character</div>
+      <div class="panel-label">Spawn Fighter</div>
       <div id="spawn-list">
-        <button class="spawn-btn" data-char="Joe">
-          <div class="spawn-dot" style="background:#FF6B00"></div>
-          <div>
-            <div class="spawn-name">Joe</div>
-            <div class="spawn-role">Hunter</div>
-          </div>
-        </button>
-        <button class="spawn-btn" data-char="Charlie">
-          <div class="spawn-dot" style="background:#FF3366"></div>
-          <div>
-            <div class="spawn-name">Charlie</div>
-            <div class="spawn-role">Glass Cannon</div>
-          </div>
-        </button>
-        <button class="spawn-btn" data-char="Kurt">
-          <div class="spawn-dot" style="background:#4488FF"></div>
-          <div>
-            <div class="spawn-name">Kurt</div>
-            <div class="spawn-role">Iron Wall</div>
-          </div>
-        </button>
-        <button class="spawn-btn" data-char="Altin">
-          <div class="spawn-dot" style="background:#00FFCC"></div>
-          <div>
-            <div class="spawn-name">Altin</div>
-            <div class="spawn-role">Ghost</div>
-          </div>
-        </button>
-        <button class="spawn-btn" data-char="Jai">
-          <div class="spawn-dot" style="background:#FFD700"></div>
-          <div>
-            <div class="spawn-name">Jai</div>
-            <div class="spawn-role">Skirmisher</div>
-          </div>
-        </button>
-        <button class="spawn-btn" data-char="Liam">
-          <div class="spawn-dot" style="background:#CC88FF"></div>
-          <div>
-            <div class="spawn-name">Liam</div>
-            <div class="spawn-role">Opportunist</div>
-          </div>
-        </button>
-        <button class="spawn-btn" data-char="Andy">
-          <div class="spawn-dot" style="background:#FF8C42"></div>
-          <div>
-            <div class="spawn-name">Andy</div>
-            <div class="spawn-role">Commander</div>
-          </div>
-        </button>
+        <button class="spawn-btn" data-char="Joe"><div class="spawn-dot" style="background:#FF6B00"></div><div><div class="spawn-name">Joe</div><div class="spawn-role">Brawler</div></div></button>
+        <button class="spawn-btn" data-char="Charlie"><div class="spawn-dot" style="background:#FF3366"></div><div><div class="spawn-name">Charlie</div><div class="spawn-role">Wild Card</div></div></button>
+        <button class="spawn-btn" data-char="Kurt"><div class="spawn-dot" style="background:#4488FF"></div><div><div class="spawn-name">Kurt</div><div class="spawn-role">Tactician</div></div></button>
+        <button class="spawn-btn" data-char="Altin"><div class="spawn-dot" style="background:#00FFCC"></div><div><div class="spawn-name">Altin</div><div class="spawn-role">Tank</div></div></button>
+        <button class="spawn-btn" data-char="Jai"><div class="spawn-dot" style="background:#FFD700"></div><div><div class="spawn-name">Jai</div><div class="spawn-role">Speedster</div></div></button>
+        <button class="spawn-btn" data-char="Liam"><div class="spawn-dot" style="background:#CC88FF"></div><div><div class="spawn-name">Liam</div><div class="spawn-role">Lead</div></div></button>
+        <button class="spawn-btn" data-char="Andy"><div class="spawn-dot" style="background:#FF8C42"></div><div><div class="spawn-name">Andy</div><div class="spawn-role">Commander</div></div></button>
       </div>
     </div>
-
     <div class="panel-section" id="char-status-section">
-      <div class="panel-label">Active Characters</div>
+      <div class="panel-label">Fighters</div>
       <div id="char-status-list"></div>
     </div>
   </div>
 
-  <!-- CANVAS -->
   <div id="canvas-wrap">
     <canvas id="sim-canvas"></canvas>
     <div id="overlay-msg">
       <div class="big">SCOUT BATTLE ROYALE</div>
-      <div class="small">Spawn contenders, then press PLAY</div>
+      <div class="small">Spawn fighters &#8226; drag to position &#8226; press PLAY</div>
     </div>
+    <div id="drag-hint">&#10010; DRAG FIGHTERS TO POSITION &#10010;</div>
     <div id="stats-bar">
       <div class="stat-chip">Alive: <span id="stat-active">0</span></div>
-      <div class="stat-chip">KOs: <span id="stat-ok">0</span></div>
-      <div class="stat-chip">Avg HP: <span id="stat-disrupted">–</span></div>
-      <div class="stat-chip">Items: <span id="stat-efficient">0</span></div>
+      <div class="stat-chip">Buffs Up: <span id="stat-buffs">0</span></div>
     </div>
   </div>
 
-  <!-- EVENT LOG -->
   <div id="log-panel">
     <div id="log-header">EVENT LOG</div>
     <div id="event-log"><div style="padding:8px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted)">Events will appear here...</div></div>
@@ -501,1423 +389,799 @@ body {
 <script>
 'use strict';
 
-// ─────────────────────────────────────────────
-// CONSTANTS & CONFIG
-// ─────────────────────────────────────────────
-const RW = 800, RH = 540; // internal room resolution
+const RW = 800, RH = 540;
 
-// Character color map
 const CHAR_COLORS = {
-  Joe:    '#FF6B00',
-  Charlie:'#FF3366',
-  Kurt:   '#4488FF',
-  Altin:  '#00FFCC',
-  Jai:    '#FFD700',
-  Liam:   '#CC88FF',
-  Andy:   '#FF8C42',
+  Joe:'#FF6B00', Charlie:'#FF3366', Kurt:'#4488FF',
+  Altin:'#00FFCC', Jai:'#FFD700', Liam:'#CC88FF', Andy:'#FF8C42',
 };
-
-// Character image file map
 const CHAR_IMAGE_FILES = {
-  Joe:    'Joe.png',
-  Charlie:'Charlie.png',
-  Kurt:   'Kurt.png',
-  Altin:  'Altin.png', // file is Altin.png
-  Jai:    'Jai.png',   // file is Jai.png
-  Liam:   'Liam.png',
-  Andy:   'Andy.png',
+  Joe:'Joe.png', Charlie:'Charlie.png', Kurt:'Kurt.png',
+  Altin:'Altin.png', Jai:'Jai.png', Liam:'Liam.png', Andy:'Andy.png',
 };
 
-// ─────────────────────────────────────────────
-// UTILITY
-// ─────────────────────────────────────────────
-function dist(a, b) {
-  // Handles both Character {x,y} and RoomObject {cx,cy}
-  const ax = a.cx !== undefined ? a.cx : a.x;
-  const ay = a.cy !== undefined ? a.cy : a.y;
-  const bx = b.cx !== undefined ? b.cx : b.x;
-  const by = b.cy !== undefined ? b.cy : b.y;
-  return Math.hypot(ax - bx, ay - by);
-}
-function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
-function rand(lo, hi) { return lo + Math.random() * (hi - lo); }
-function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-function nearestObj(char, list) {
-  return list.reduce((best, o) => {
-    const d = dist(char, o);
-    return d < best.d ? { obj: o, d } : best;
-  }, { obj: null, d: Infinity }).obj;
-}
+const BUFF = { HEAL:'heal', DAMAGE:'damage', SPEED:'speed', ARMOR:'armor', POWER:'power' };
+const BUFF_COLORS = { heal:'#ff4466', damage:'#ff8800', speed:'#ffdd00', armor:'#4499ff', power:'#00ffcc' };
+const BUFF_ICONS  = { heal:'❤️', damage:'⚔️', speed:'⚡', armor:'🛡️', power:'💎' };
+const BUFF_CD     = { heal:14, damage:18, speed:14, armor:18, power:28 };
 
-// ─────────────────────────────────────────────
-// CHROMA KEY REMOVAL
-// Removes the green outline from character sprites
-// ─────────────────────────────────────────────
-function removeGreenChroma(img) {
-  const oc = document.createElement('canvas');
-  oc.width  = img.naturalWidth  || img.width;
-  oc.height = img.naturalHeight || img.height;
-  const ctx = oc.getContext('2d');
-  ctx.drawImage(img, 0, 0);
-  const id = ctx.getImageData(0, 0, oc.width, oc.height);
-  const d  = id.data;
-  for (let i = 0; i < d.length; i += 4) {
-    const r = d[i], g = d[i + 1], b = d[i + 2];
-    const gDom = g - Math.max(r, b); // how much green dominates
-    if (gDom > 12 && g > 55) {
-      // Feather: reduce alpha based on greenness strength
-      const strength = Math.min(1, gDom / 70);
-      d[i + 3] = Math.floor(d[i + 3] * (1 - strength));
-    }
+function dist(a,b){
+  const ax=a.cx!==undefined?a.cx:a.x, ay=a.cy!==undefined?a.cy:a.y;
+  const bx=b.cx!==undefined?b.cx:b.x, by=b.cy!==undefined?b.cy:b.y;
+  return Math.hypot(ax-bx,ay-by);
+}
+function clamp(v,lo,hi){return v<lo?lo:v>hi?hi:v;}
+function rand(lo,hi){return lo+Math.random()*(hi-lo);}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+
+// ── Chroma key ──────────────────────────────
+function removeGreenChroma(img){
+  const oc=document.createElement('canvas');
+  oc.width=img.naturalWidth||img.width; oc.height=img.naturalHeight||img.height;
+  const ctx=oc.getContext('2d'); ctx.drawImage(img,0,0);
+  const id=ctx.getImageData(0,0,oc.width,oc.height), d=id.data;
+  for(let i=0;i<d.length;i+=4){
+    const r=d[i],g=d[i+1],b=d[i+2], gDom=g-Math.max(r,b);
+    if(gDom>12&&g>55){ const s=Math.min(1,gDom/70); d[i+3]=Math.floor(d[i+3]*(1-s)); }
   }
-  ctx.putImageData(id, 0, 0);
-  return oc;
+  ctx.putImageData(id,0,0); return oc;
 }
-
-// Loads all character images and returns a name→image map
-function loadCharImages() {
-  const map = {};
-  const promises = Object.entries(CHAR_IMAGE_FILES).map(([name, file]) =>
-    new Promise(resolve => {
-      const img = new Image();
-      img.onload = () => {
-        try {
-          map[name] = removeGreenChroma(img);
-        } catch {
-          // If pixel access is blocked on this device/browser, still use the raw image.
-          map[name] = img;
-        }
-        resolve();
-      };
-      img.onerror = () => {
-        // Keep sim usable even when an asset is unavailable on a device/network.
-        map[name] = null;
-        resolve();
-      };
-      img.src = new URL(`../public/sprites/scouting-sim/${file}`, window.location.href).href;
+function loadCharImages(){
+  const map={};
+  const promises=Object.entries(CHAR_IMAGE_FILES).map(([name,file])=>
+    new Promise(resolve=>{
+      const img=new Image();
+      img.onload=()=>{ try{map[name]=removeGreenChroma(img);}catch{map[name]=img;} resolve(); };
+      img.onerror=()=>{ map[name]=null; resolve(); };
+      img.src=new URL(`../public/sprites/scouting-sim/${file}`,window.location.href).href;
     })
   );
-  return Promise.all(promises).then(() => map);
+  return Promise.all(promises).then(()=>map);
 }
-
-function createFallbackSprite(name, color) {
-  const size = 64;
-  const c = document.createElement('canvas');
-  c.width = size;
-  c.height = size;
-  const cctx = c.getContext('2d');
-
-  // Halo
-  const grad = cctx.createRadialGradient(size / 2, size / 2, 8, size / 2, size / 2, size / 2);
-  grad.addColorStop(0, 'rgba(255,255,255,0.26)');
-  grad.addColorStop(1, 'rgba(255,255,255,0)');
-  cctx.fillStyle = grad;
-  cctx.fillRect(0, 0, size, size);
-
-  // Body
-  cctx.fillStyle = color;
-  cctx.beginPath();
-  cctx.arc(size / 2, size / 2, 20, 0, Math.PI * 2);
-  cctx.fill();
-
-  // Initial
-  cctx.fillStyle = '#111';
-  cctx.font = 'bold 24px Rajdhani, sans-serif';
-  cctx.textAlign = 'center';
-  cctx.textBaseline = 'middle';
-  cctx.fillText(name.charAt(0).toUpperCase(), size / 2, size / 2 + 1);
-
+function createFallbackSprite(name,color){
+  const size=64, c=document.createElement('canvas');
+  c.width=size; c.height=size;
+  const cctx=c.getContext('2d');
+  const grad=cctx.createRadialGradient(size/2,size/2,8,size/2,size/2,size/2);
+  grad.addColorStop(0,'rgba(255,255,255,0.26)'); grad.addColorStop(1,'rgba(255,255,255,0)');
+  cctx.fillStyle=grad; cctx.fillRect(0,0,size,size);
+  cctx.fillStyle=color; cctx.beginPath(); cctx.arc(size/2,size/2,20,0,Math.PI*2); cctx.fill();
+  cctx.fillStyle='#111'; cctx.font='bold 24px Rajdhani,sans-serif';
+  cctx.textAlign='center'; cctx.textBaseline='middle';
+  cctx.fillText(name.charAt(0).toUpperCase(),size/2,size/2+1);
   return c;
 }
 
-// ─────────────────────────────────────────────
-// ROOM OBJECT
-// Represents an interactive item in the room
-// ─────────────────────────────────────────────
-const STATE = { NORMAL: 'normal', DISRUPTED: 'disrupted', EFFICIENT: 'efficient' };
-
+// ── Room Object (buff station or table) ────
 class RoomObject {
-  constructor({ id, x, y, w, h, type, label, interactive = true }) {
-    this.id = id; this.x = x; this.y = y; this.w = w; this.h = h;
-    this.type = type; this.label = label; this.interactive = interactive;
-    this.state = STATE.NORMAL;
-    this.animT = 0; // drives blink / glow animations
+  constructor({id,x,y,w,h,type,label,buffType=null,interactive=true}){
+    this.id=id; this.x=x; this.y=y; this.w=w; this.h=h;
+    this.type=type; this.label=label;
+    this.buffType=buffType;
+    this.interactive=interactive&&!!buffType;
+    this.cooldown=0; this.animT=0;
   }
-  get cx() { return this.x + this.w / 2; }
-  get cy() { return this.y + this.h / 2; }
+  get cx(){return this.x+this.w/2;}
+  get cy(){return this.y+this.h/2;}
+  get available(){return this.interactive&&this.cooldown<=0;}
+  update(dt){ this.animT+=dt; if(this.cooldown>0) this.cooldown=Math.max(0,this.cooldown-dt); }
+  use(){ this.cooldown=BUFF_CD[this.buffType]||15; }
+  reset(){ this.cooldown=0; this.animT=0; }
 
-  update(dt) { this.animT += dt; }
-  disrupt()      { this.state = STATE.DISRUPTED; }
-  repair()       { this.state = STATE.NORMAL; }
-  makeEfficient(){ this.state = STATE.EFFICIENT; }
-  reset()        { this.state = STATE.NORMAL; this.animT = 0; }
-
-  draw(ctx) {
-    const { x, y, w, h, type, state, animT } = this;
-    const pulse = 0.5 + 0.5 * Math.sin(animT * 3); // 0‥1 pulsing value
-
-    // Base colour per type
-    const baseFill = {
-      table:   '#1a1f1a',
-      laptop:  '#1c2b3a',
-      tablet:  '#1a2a1a',
-      phone:   '#2a1a2a',
-      charger: '#1a2a2a',
-      server:  '#0d1a2a',
-      station: '#0a1a1a',
-    }[type] || '#1a1a1a';
-
-    // State overlay
-    const stateColor = state === STATE.DISRUPTED  ? `rgba(255,60,60,${0.25 + pulse * 0.2})`
-                     : state === STATE.EFFICIENT  ? `rgba(0,255,200,${0.18 + pulse * 0.15})`
-                     : 'transparent';
-
-    // Shadow
+  draw(ctx){
+    const {x,y,w,h,type,buffType,available,animT}=this;
+    const pulse=0.5+0.5*Math.sin(animT*2.8);
+    if(type==='table'){
+      ctx.save(); ctx.shadowColor='rgba(0,0,0,0.6)'; ctx.shadowBlur=6;
+      ctx.fillStyle='#1a1f1a'; this._rr(ctx,x,y,w,h,4); ctx.fill(); ctx.restore();
+      ctx.strokeStyle='rgba(255,255,255,0.09)'; ctx.lineWidth=1;
+      this._rr(ctx,x,y,w,h,4); ctx.stroke();
+      ctx.save(); ctx.font='9px Rajdhani,sans-serif'; ctx.textAlign='center';
+      ctx.textBaseline='middle'; ctx.fillStyle='rgba(255,255,255,0.11)';
+      ctx.fillText(this.label,x+w/2,y+h/2); ctx.restore();
+      return;
+    }
+    if(!buffType) return;
+    const bc=BUFF_COLORS[buffType], dim=available?1:0.32;
     ctx.save();
-    ctx.shadowColor = state === STATE.DISRUPTED  ? '#ff3c3c'
-                    : state === STATE.EFFICIENT  ? '#00ffc8'
-                    : 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = state === STATE.NORMAL ? 4 : 14;
-
-    // Body
-    ctx.fillStyle = baseFill;
-    this._roundRect(ctx, x, y, w, h, 4);
-    ctx.fill();
-
-    // State overlay glow
-    if (stateColor !== 'transparent') {
-      ctx.fillStyle = stateColor;
-      this._roundRect(ctx, x, y, w, h, 4);
-      ctx.fill();
-    }
+    if(available){ ctx.shadowColor=bc; ctx.shadowBlur=10+pulse*10; }
+    ctx.globalAlpha=dim; ctx.fillStyle='#0e1a1e';
+    this._rr(ctx,x,y,w,h,6); ctx.fill();
+    if(available){ ctx.fillStyle=bc+'18'; this._rr(ctx,x,y,w,h,6); ctx.fill(); }
     ctx.restore();
-
-    // Border
-    ctx.strokeStyle = state === STATE.DISRUPTED ? `rgba(255,80,80,${0.6 + pulse * 0.4})`
-                    : state === STATE.EFFICIENT ? `rgba(0,255,200,${0.5 + pulse * 0.4})`
-                    : 'rgba(255,255,255,0.1)';
-    ctx.lineWidth = state === STATE.NORMAL ? 1 : 1.5;
-    this._roundRect(ctx, x, y, w, h, 4);
-    ctx.stroke();
-
-    // Icon / detail per type
-    this._drawDetail(ctx, pulse);
+    ctx.save(); ctx.globalAlpha=dim;
+    ctx.strokeStyle=available?bc:'rgba(255,255,255,0.1)';
+    ctx.lineWidth=available?1.5:1; this._rr(ctx,x,y,w,h,6); ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.globalAlpha=available?(0.75+pulse*0.2):0.25;
+    ctx.font=`${Math.min(w,h)*0.48}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(BUFF_ICONS[buffType]||'?',x+w/2,y+h/2-5); ctx.restore();
+    ctx.save(); ctx.globalAlpha=available?0.75:0.2;
+    ctx.font='7px Share Tech Mono,monospace'; ctx.textAlign='center';
+    ctx.textBaseline='bottom'; ctx.fillStyle=available?bc:'#888';
+    ctx.fillText(this.label,x+w/2,y+h-3); ctx.restore();
+    if(!available&&this.cooldown>0){
+      const prog=1-(this.cooldown/(BUFF_CD[buffType]||15));
+      ctx.save(); ctx.globalAlpha=0.55;
+      ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(x+3,y+h-5,w-6,3);
+      ctx.fillStyle=bc; ctx.fillRect(x+3,y+h-5,(w-6)*prog,3);
+      ctx.restore();
+    }
   }
-
-  _drawDetail(ctx, pulse) {
-    const { x, y, w, h, type, state } = this;
-    ctx.save();
-    ctx.font = `${Math.min(w, h) * 0.45}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    const icons = { laptop:'💻', tablet:'📱', phone:'📲', charger:'⚡', server:'🖥️', station:'📡', table:'▬' };
-    const icon = icons[type] || '▪';
-    if (type !== 'table') {
-      ctx.globalAlpha = state === STATE.DISRUPTED ? 0.6 + pulse * 0.4 : 0.7;
-      ctx.fillText(icon, x + w / 2, y + h / 2);
-    }
-
-    // Disrupted warning flicker
-    if (state === STATE.DISRUPTED) {
-      ctx.font = 'bold 9px Share Tech Mono, monospace';
-      ctx.fillStyle = `rgba(255,80,80,${0.7 + pulse * 0.3})`;
-      ctx.fillText('!ERR', x + w / 2, y + h - 7);
-    }
-    // Efficient boost indicator
-    if (state === STATE.EFFICIENT) {
-      ctx.font = 'bold 8px Share Tech Mono, monospace';
-      ctx.fillStyle = `rgba(0,255,200,${0.7 + pulse * 0.3})`;
-      ctx.fillText('+EFF', x + w / 2, y + h - 7);
-    }
-
-    // Table label
-    if (type === 'table') {
-      ctx.font = '8px Rajdhani, sans-serif';
-      ctx.fillStyle = 'rgba(255,255,255,0.15)';
-      ctx.fillText(this.label, x + w / 2, y + h / 2);
-    }
-    ctx.restore();
-  }
-
-  _roundRect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
+  _rr(ctx,x,y,w,h,r){
+    ctx.beginPath(); ctx.moveTo(x+r,y);
+    ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
     ctx.closePath();
   }
 }
 
-// ─────────────────────────────────────────────
-// CHARACTER
-// ─────────────────────────────────────────────
-const CS = { IDLE: 'idle', WANDER: 'wander', MOVING: 'moving', WORKING: 'working' };
+// ── Playstyles ─────────────────────────────
+const PLAYSTYLES = {
+  Joe:    { label:'Brawler',   baseSpeed:90,  naturalArmor:0,    healThreshold:32, fleeThreshold:0,  targetMode:'nearest',  buffPriority:['damage','power'],         buffChance:0.20 },
+  Charlie:{ label:'Wild Card', baseSpeed:85,  naturalArmor:0,    healThreshold:22, fleeThreshold:15, targetMode:'random',   buffPriority:['speed','power','damage'],  buffChance:0.45 },
+  Kurt:   { label:'Tactician', baseSpeed:95,  naturalArmor:0.05, healThreshold:45, fleeThreshold:20, targetMode:'weakest',  buffPriority:['damage','armor'],          buffChance:0.50 },
+  Altin:  { label:'Tank',      baseSpeed:55,  naturalArmor:0.18, healThreshold:48, fleeThreshold:0,  targetMode:'nearest',  buffPriority:['heal','armor','power'],    buffChance:0.55 },
+  Jai:    { label:'Speedster', baseSpeed:120, naturalArmor:0,    healThreshold:38, fleeThreshold:28, targetMode:'nearest',  buffPriority:['speed','power'],           buffChance:0.25 },
+  Liam:   { label:'Lead',      baseSpeed:88,  naturalArmor:0.05, healThreshold:42, fleeThreshold:18, targetMode:'weakest',  buffPriority:['damage','armor','power'],  buffChance:0.40 },
+  Andy:   { label:'Commander', baseSpeed:85,  naturalArmor:0.04, healThreshold:40, fleeThreshold:0,  targetMode:'strongest',buffPriority:['power','damage'],          buffChance:0.35 },
+};
 
+const CS = { IDLE:'idle', MOVING:'moving', USING:'using' };
+
+// ── Character ──────────────────────────────
 class Character {
-  constructor({ name, color, speed, role, behaviors }) {
-    this.name  = name;
-    this.color = color;
-    this.speed = speed;
-    this.role  = role;
-    this.behaviors = behaviors;
-
-    // Runtime state
-    this.x = 400; this.y = 270;
-    this.vx = 0; this.vy = 0;
-    this.state = CS.IDLE;
-    this.target = null;          // {x, y, obj: RoomObject|null}
-    this.actionTimer  = 0;       // countdown while working
-    this.workDuration = 1;       // set from behaviors when work starts
-    this.workProgress = 0;
-    this.idleTimer = 0;
-    this.statusText = 'Ready';
-    this.active = false;
-    this.image  = null;          // set after images load
-
-    // Buff flags (set by other characters' passive effects)
-    this.andyBoost  = 0; // seconds remaining of Andy speed bonus
-    this.altinCalm  = 0; // set by Altin each frame (reduces idle jitter)
-
-    // Per-character timers for passive events
-    this._passiveTimer = rand(5, 15);
-
-    // Fight state
-    this.health = 100;
-    this.fightCooldown = rand(0.6, 1.8);
-    this.hitFlash = 0;
-    this.eliminated = false;
-    this.eliminations = 0;
-
-    // Combat buffs from item use
-    this.powerBuff    = 0;
-    this.speedBuff    = 0;
-    this.armorBuff    = 0;
-    this.critBuff     = 0;
-    this.healCooldown = 0;
-    this.itemsUsed    = 0;
+  constructor({name,color,playstyle}){
+    this.name=name; this.color=color; this.playstyle=playstyle;
+    this.speed=playstyle.baseSpeed; this.role=playstyle.label;
+    this.x=400; this.y=270; this.vx=0; this.vy=0;
+    this.state=CS.IDLE; this.target=null; this.targetChar=null;
+    this.actionTimer=0; this.useDuration=0.55;
+    this.workProgress=0; this.idleTimer=0;
+    this.statusText='Ready'; this.active=false; this.image=null;
+    this._lastX=400; this._lastY=270; this._stuckAccum=0; this._moveTimer=0;
+    this.health=100; this.fightCooldown=rand(0.5,1.5);
+    this.hitFlash=0; this.eliminated=false; this.eliminations=0;
+    this.damageBuff=0; this.damageMult=1;
+    this.speedBuff=0;  this.speedMult=1;
+    this.armorBuff=0;  this.armorVal=0;
   }
 
-  // ── Update ──────────────────────────────────
-  update(dt, sim) {
-    if (!this.active) return;
+  get effectiveSpeed() { return this.speed*(this.speedBuff>0?this.speedMult:1); }
+  get effectiveArmor() { return this.playstyle.naturalArmor+(this.armorBuff>0?this.armorVal:0); }
+  get effectiveDmgMult(){ return this.damageBuff>0?this.damageMult:1; }
 
-    // Apply passive effect (if defined)
-    if (this.behaviors.onPassive) this.behaviors.onPassive(this, sim, dt);
+  update(dt,sim){
+    if(!this.active) return;
+    if(this.damageBuff>0){this.damageBuff-=dt; if(this.damageBuff<=0) this.damageMult=1;}
+    if(this.speedBuff >0){this.speedBuff -=dt; if(this.speedBuff <=0) this.speedMult =1;}
+    if(this.armorBuff >0){this.armorBuff -=dt; if(this.armorBuff <=0) this.armorVal  =0;}
+    if(this.fightCooldown>0) this.fightCooldown-=dt;
+    if(this.hitFlash>0)      this.hitFlash-=dt;
 
-    // Work rate modified by Andy's leadership boost
-    const workRate = 1.0;
-    if (this.andyBoost    > 0) this.andyBoost    -= dt;
-    if (this.altinCalm    > 0) this.altinCalm    -= dt;
-    if (this.powerBuff    > 0) this.powerBuff    -= dt;
-    if (this.speedBuff    > 0) this.speedBuff    -= dt;
-    if (this.armorBuff    > 0) this.armorBuff    -= dt;
-    if (this.critBuff     > 0) this.critBuff     -= dt;
-    if (this.healCooldown > 0) this.healCooldown -= dt;
-    if (this.fightCooldown > 0) this.fightCooldown -= dt;
-    if (this.hitFlash > 0) this.hitFlash -= dt;
+    // Drop stale target
+    if(this.targetChar&&(!this.targetChar.active||this.targetChar.health<=0)){
+      this.targetChar=null; this._goIdle(rand(0.05,0.2));
+    }
+    // Track moving enemy
+    if(this.targetChar&&this.state===CS.MOVING&&this.target){
+      this.target.x=this.targetChar.x; this.target.y=this.targetChar.y;
+    }
 
-    switch (this.state) {
+    switch(this.state){
       case CS.IDLE:
-        this.vx = 0; this.vy = 0;
-        this.idleTimer -= dt;
-        if (this.idleTimer <= 0) this._pickGoal(sim);
+        this.vx=0; this.vy=0;
+        this.idleTimer-=dt;
+        if(this.idleTimer<=0) this._pickGoal(sim);
         break;
-
-      case CS.WANDER:
       case CS.MOVING:
-        this._steer(dt, sim);
+        this._steer(dt,sim);
+        this._trackStuck(dt);
         break;
-
-      case CS.WORKING:
-        this.vx = 0; this.vy = 0;
-        this.actionTimer -= dt * workRate;
-        this.workProgress = 1 - clamp(this.actionTimer / this.workDuration, 0, 1);
-        if (this.actionTimer <= 0) this._finishWork(sim);
+      case CS.USING:
+        this.vx=0; this.vy=0;
+        this.actionTimer-=dt;
+        this.workProgress=1-clamp(this.actionTimer/this.useDuration,0,1);
+        if(this.actionTimer<=0) this._finishUse(sim);
         break;
     }
 
-    // Separation from other characters
     this._separate(sim.characters);
-
-    // Soft obstacle push from table rects
     this._pushFromTables(sim.tables);
+    this._battleNearby(sim,dt);
 
-    // Close-quarters scout room brawls
-    this._battleNearby(sim, dt);
-
-    // Integrate
-    this.x += this.vx * dt;
-    this.y += this.vy * dt;
-    this.x = clamp(this.x, 22, RW - 22);
-    this.y = clamp(this.y, 22, RH - 22);
+    this.x+=this.vx*dt; this.y+=this.vy*dt;
+    this.x=clamp(this.x,22,RW-22); this.y=clamp(this.y,22,RH-22);
   }
 
-  _pickGoal(sim) {
-    const result = this.behaviors.selectTarget
-      ? this.behaviors.selectTarget(this, sim)
-      : null;
+  _pickGoal(sim){
+    const ps=this.playstyle;
+    const enemies=sim.characters.filter(c=>c.active&&c!==this&&c.health>0);
 
-    if (result) {
-      this.target = result;
-      this.state  = result.obj ? CS.MOVING : CS.WANDER;
-      if (result.statusText) this.statusText = result.statusText;
-    } else {
-      this._wander();
+    // 1. Flee when critically low
+    if(ps.fleeThreshold>0&&this.health<ps.fleeThreshold&&enemies.length>0){
+      const s=this._nearestBuff(sim,['heal','power']);
+      if(s){this._moveToBuff(s,'Retreating!'); return;}
     }
+    // 2. Heal when low
+    if(this.health<ps.healThreshold){
+      const s=this._nearestBuff(sim,['heal','power']);
+      if(s){this._moveToBuff(s,'Need healing!'); return;}
+    }
+    // 3. Grab a nearby preferred buff opportunistically
+    if(enemies.length>0&&Math.random()<ps.buffChance){
+      const preferred=sim.interactive
+        .filter(o=>o.available&&ps.buffPriority.includes(o.buffType))
+        .sort((a,b)=>dist(this,a)-dist(this,b));
+      if(preferred.length>0&&dist(this,preferred[0])<240){
+        this._moveToBuff(preferred[0],'Grabbing power-up!'); return;
+      }
+    }
+    // 4. Hunt
+    if(enemies.length>0){
+      let foe;
+      switch(ps.targetMode){
+        case 'weakest':   foe=enemies.reduce((b,e)=>e.health<b.health?e:b); break;
+        case 'strongest': foe=enemies.reduce((b,e)=>e.eliminations>b.eliminations?e:b);
+                          if(foe.eliminations===0) foe=enemies.reduce((b,e)=>dist(this,e)<dist(this,b)?e:b);
+                          break;
+        case 'random':    foe=Math.random()<0.45?pick(enemies):enemies.reduce((b,e)=>dist(this,e)<dist(this,b)?e:b); break;
+        default:          foe=enemies.reduce((b,e)=>dist(this,e)<dist(this,b)?e:b);
+      }
+      this.targetChar=foe;
+      this.target={x:foe.x,y:foe.y,obj:null};
+      this.state=CS.MOVING;
+      this.statusText=pick([`After ${foe.name}!`,`Hunting ${foe.name}`,`Get ${foe.name}!`,`${foe.name} is mine!`]);
+      this._resetStuck(); return;
+    }
+    // 5. Patrol
+    this._wander();
   }
 
-  _wander() {
-    this.target = { x: rand(50, RW - 50), y: rand(50, RH - 50), obj: null };
-    this.state  = CS.WANDER;
-    this.statusText = 'Wandering...';
+  _nearestBuff(sim,types){
+    return sim.interactive.filter(o=>o.available&&types.includes(o.buffType))
+      .sort((a,b)=>dist(this,a)-dist(this,b))[0]||null;
+  }
+  _moveToBuff(obj,status){
+    this.targetChar=null;
+    this.target={x:obj.cx,y:obj.cy,obj};
+    this.state=CS.MOVING; this.statusText=status; this._resetStuck();
+  }
+  _wander(){
+    this.targetChar=null;
+    this.target={x:rand(60,RW-60),y:rand(60,RH-60),obj:null};
+    this.state=CS.MOVING;
+    this.statusText=pick(['Patrolling...','Scouting...','Looking for trouble...','On the prowl...']);
+    this._resetStuck();
   }
 
-  _steer(dt, sim) {
-    if (!this.target) { this._goIdle(rand(0.4, 1.2)); return; }
-    const dx = this.target.x - this.x;
-    const dy = this.target.y - this.y;
-    const d  = Math.hypot(dx, dy);
-    const arriveR = this.target.obj ? 28 : 12;
-
-    if (d < arriveR) {
-      this.vx = 0; this.vy = 0;
-      if (this.target.obj) {
-        // Begin working at this object
-        this.workDuration = this.behaviors.workDuration || 3;
-        this.actionTimer  = this.workDuration;
-        this.workProgress = 0;
-        this.state = CS.WORKING;
-        if (this.behaviors.onArrive) this.behaviors.onArrive(this, sim);
+  _steer(dt,sim){
+    if(!this.target){this._goIdle(rand(0.2,0.6)); return;}
+    const dx=this.target.x-this.x, dy=this.target.y-this.y;
+    const d=Math.hypot(dx,dy);
+    const arriveR=this.target.obj?26:14;
+    if(d<arriveR){
+      this.vx=0; this.vy=0;
+      if(this.target.obj){
+        if(this.target.obj.available){
+          this.useDuration=0.55; this.actionTimer=this.useDuration;
+          this.workProgress=0; this.state=CS.USING; this.statusText='Using buff...';
+        } else {
+          this.targetChar=null; this._goIdle(0.05);
+        }
       } else {
-        this._goIdle(rand(0.08, 0.28));
+        this._goIdle(rand(0.08,0.3));
       }
     } else {
-      const spd = this.speed * (this.speedBuff > 0 ? 1.35 : 1.0);
-      this.vx = (dx / d) * spd;
-      this.vy = (dy / d) * spd;
+      const spd=this.effectiveSpeed;
+      this.vx=(dx/d)*spd; this.vy=(dy/d)*spd;
     }
   }
 
-  _finishWork(sim) {
-    if (this.behaviors.onComplete) this.behaviors.onComplete(this, sim);
-    this.workProgress = 0;
-    this._goIdle(rand(0.3, 1.2));
+  _finishUse(sim){
+    const obj=this.target?.obj;
+    if(obj&&obj.buffType&&obj.available){ this._applyBuff(obj,sim); obj.use(); }
+    this.workProgress=0; this.targetChar=null; this._goIdle(rand(0.1,0.3));
   }
 
-  _goIdle(dur) {
-    this.state = CS.IDLE;
-    this.idleTimer = dur;
-    this.vx = 0; this.vy = 0;
-    this.target = null;
-  }
-
-  _separate(characters) {
-    for (const o of characters) {
-      if (o === this || !o.active) continue;
-      const dx = this.x - o.x, dy = this.y - o.y;
-      const d  = Math.hypot(dx, dy);
-      const minD = 42;
-      if (d < minD && d > 0) {
-        const f = (minD - d) / minD * 55;
-        this.vx += (dx / d) * f;
-        this.vy += (dy / d) * f;
+  _applyBuff(obj,sim){
+    const bt=obj.buffType;
+    if(bt===BUFF.HEAL){
+      const gain=Math.round(Math.min(35+rand(0,15),100-this.health));
+      this.health=Math.min(100,this.health+gain);
+      sim.addEvent(`${this.name} grabbed the Medkit (+${gain} HP)`,'buff');
+      this.statusText=`+${gain} HP!`;
+    } else if(bt===BUFF.DAMAGE){
+      this.damageMult=1.45+rand(0,0.1); this.damageBuff=10;
+      sim.addEvent(`${this.name} grabbed the Arsenal — power surge!`,'buff');
+      this.statusText='Damage boost!';
+    } else if(bt===BUFF.SPEED){
+      this.speedMult=1.5+rand(0,0.15); this.speedBuff=10;
+      sim.addEvent(`${this.name} hit the Booster — moving fast!`,'buff');
+      this.statusText='Speed boost!';
+    } else if(bt===BUFF.ARMOR){
+      this.armorVal=0.35+rand(0,0.05); this.armorBuff=12;
+      sim.addEvent(`${this.name} activated the Shield!`,'buff');
+      this.statusText='Shielded!';
+    } else if(bt===BUFF.POWER){
+      const r=Math.random();
+      if(r<0.38){
+        const gain=Math.round(Math.min(55,100-this.health));
+        this.health=Math.min(100,this.health+gain);
+        sim.addEvent(`${this.name} hit the Power Core — massive heal (+${gain} HP)!`,'buff');
+        this.statusText='MEGA HEALED!';
+      } else if(r<0.70){
+        this.damageMult=1.6; this.damageBuff=12;
+        this.speedMult=1.2;  this.speedBuff=12;
+        sim.addEvent(`${this.name} activated the Power Core — full combat buff!`,'buff');
+        this.statusText='POWERED UP!';
+      } else {
+        this.damageMult=1.35; this.damageBuff=14;
+        this.armorVal=0.28;   this.armorBuff=14;
+        sim.addEvent(`${this.name} is supercharged from the Power Core!`,'buff');
+        this.statusText='SUPERCHARGED!';
       }
     }
   }
 
-  _battleNearby(sim, dt) {
-    if (this.fightCooldown > 0 || this.health <= 0) return;
-    const foes = sim.characters.filter(c => c.active && c !== this && c.health > 0 && dist(this, c) < 52);
-    if (foes.length === 0) return;
+  _goIdle(dur){
+    this.state=CS.IDLE; this.idleTimer=dur;
+    this.vx=0; this.vy=0; this.target=null; this._resetStuck();
+  }
+  _resetStuck(){ this._stuckAccum=0; this._moveTimer=0; this._lastX=this.x; this._lastY=this.y; }
+  _trackStuck(dt){
+    const moved=Math.hypot(this.x-this._lastX,this.y-this._lastY);
+    this._lastX=this.x; this._lastY=this.y; this._moveTimer+=dt;
+    if(moved<12*dt) this._stuckAccum+=dt;
+    else this._stuckAccum=Math.max(0,this._stuckAccum-dt*1.5);
+    if(this._stuckAccum>2.2||this._moveTimer>7.5){
+      this._resetStuck(); this.targetChar=null; this._goIdle(rand(0.05,0.2));
+    }
+  }
 
-    const foe = pick(foes);
-    const attackerCtx = this._combatContext(sim);
-    const defenderCtx = foe._combatContext(sim);
-    const chaos = clamp(0.12 + attackerCtx.chaos + defenderCtx.chaos, 0.1, 0.55);
-    const baseDamage = rand(5.5, 11.5);
-    const variableDamage = rand(baseDamage * (1 - chaos), baseDamage * (1 + chaos));
-    const critChance = clamp(0.08 + attackerCtx.crit, 0.05, 0.45);
-    const dodgeChance = clamp(defenderCtx.dodge, 0, 0.35);
-    const dodged = Math.random() < dodgeChance;
-    const isCrit = !dodged && Math.random() < critChance;
-    const damage = dodged
-      ? 0
-      : Math.max(1, variableDamage * attackerCtx.power * (isCrit ? 1.7 : 1) * (1 - defenderCtx.armor));
+  _separate(characters){
+    for(const o of characters){
+      if(o===this||!o.active) continue;
+      const dx=this.x-o.x, dy=this.y-o.y, d=Math.hypot(dx,dy), minD=38;
+      if(d<minD&&d>0){ const f=(minD-d)/minD*52; this.vx+=(dx/d)*f; this.vy+=(dy/d)*f; }
+    }
+  }
+  _pushFromTables(tables){
+    for(const t of tables){
+      const cx=clamp(this.x,t.x,t.x+t.w), cy=clamp(this.y,t.y,t.y+t.h);
+      const dx=this.x-cx, dy=this.y-cy, d=Math.hypot(dx,dy), r=18;
+      if(d<r){
+        const f=(r-d)/r*90;
+        if(d>0){this.vx+=(dx/d)*f; this.vy+=(dy/d)*f;}
+        else{this.vx+=(Math.random()-0.5)*80; this.vy+=(Math.random()-0.5)*80;}
+      }
+    }
+  }
 
-    foe.health = clamp(foe.health - damage, 0, 100);
-    foe.hitFlash = 0.35;
-    foe.statusText = dodged
-      ? pick(['Dodged it!', 'Slipped away!', 'Too quick!'])
-      : pick(['Taking hits!', 'Defending!', 'Countering!']);
-    this.statusText = isCrit
-      ? pick(['Critical strike!', 'Massive hit!', 'Big damage!'])
-      : pick(['Throwing hands!', 'Scout showdown!', 'Battle mode!']);
+  _battleNearby(sim,dt){
+    if(this.fightCooldown>0||this.health<=0) return;
+    const foes=sim.characters.filter(c=>c.active&&c!==this&&c.health>0&&dist(this,c)<52);
+    if(foes.length===0) return;
+    const foe=pick(foes);
+    const baseDmg=rand(6,12);
+    const dmgMult=this.effectiveDmgMult;
+    const armor=clamp(foe.effectiveArmor,0,0.6);
+    const critChance=0.10+(this.damageBuff>0?0.08:0);
+    const dodgeChance=clamp(0.05+(foe.speedBuff>0?0.09:0),0,0.35);
+    const dodged=Math.random()<dodgeChance;
+    const isCrit=!dodged&&Math.random()<critChance;
+    const damage=dodged?0:Math.max(1,baseDmg*dmgMult*(isCrit?1.75:1)*(1-armor));
 
-    // Knockback
-    const dx = foe.x - this.x;
-    const dy = foe.y - this.y;
-    const d  = Math.max(1, Math.hypot(dx, dy));
-    foe.vx += (dx / d) * 95;
-    foe.vy += (dy / d) * 95;
+    foe.health=clamp(foe.health-damage,0,100);
+    foe.hitFlash=0.35;
+    foe.statusText=dodged
+      ?pick(['Dodged!','Too quick!','Slipped away!'])
+      :pick(['Taking hits!','Ouch!','Fighting back!']);
+    this.statusText=isCrit
+      ?pick(['CRITICAL HIT!','MASSIVE BLOW!','CRUSHING STRIKE!'])
+      :pick(['Throwing hands!','Attack!','Come on!','Fight!']);
 
-    this.fightCooldown = rand(0.55, 1.45) * (1 / attackerCtx.speed);
+    const ddx=foe.x-this.x, ddy=foe.y-this.y, dd=Math.max(1,Math.hypot(ddx,ddy));
+    foe.vx+=(ddx/dd)*88; foe.vy+=(ddy/dd)*88;
 
-    if (Math.random() < 0.38) {
-      if (dodged) sim.addEvent(`${foe.name} dodged ${this.name}'s strike`);
-      else sim.addEvent(`${this.name} hit ${foe.name}${isCrit ? ' with a CRIT' : ''} (-${Math.round(damage)} HP)`);
+    this.fightCooldown=rand(0.48,1.15)/(this.effectiveSpeed/85);
+
+    if(Math.random()<0.32){
+      if(dodged) sim.addEvent(`${foe.name} dodged ${this.name}'s attack`,'combat');
+      else sim.addEvent(`${this.name} hit ${foe.name}${isCrit?' — CRIT!':''} (${Math.round(damage)} dmg)`,'combat');
     }
 
-    if (foe.health <= 0) {
-      foe.health = 0;
-      foe.active = false;
-      foe.eliminated = true;
-      foe.state = CS.IDLE;
-      foe.idleTimer = 0;
-      foe.vx = 0; foe.vy = 0;
-      foe.statusText = 'Eliminated';
-      this.eliminations += 1;
-      sim.addEvent(`${foe.name} was eliminated by ${this.name}!`);
+    if(foe.health<=0){
+      foe.health=0; foe.active=false; foe.eliminated=true;
+      foe.state=CS.IDLE; foe.idleTimer=0; foe.vx=0; foe.vy=0;
+      foe.statusText='☠ Eliminated';
+      this.eliminations+=1;
+      sim.addEvent(`💀 ${foe.name} eliminated by ${this.name}!`,'elim');
       sim.checkForWinner();
     }
   }
 
-  _combatContext(sim) {
-    const style = this.behaviors.combatStyle || {};
-    const ctx = {
-      power: 1 + (style.power || 0),
-      armor: style.armor || 0,
-      crit:  style.crit  || 0,
-      dodge: style.dodge || 0,
-      speed: 1 + (style.speedMult || 0),
-      chaos: style.chaos || 0,
-    };
+  draw(ctx,preGame){
+    if(!this.active) return;
+    const {x,y,color,image,name,statusText,state,workProgress}=this;
+    const t=Date.now()/1000;
 
-    // Active item buffs
-    if (this.powerBuff > 0) { ctx.power += 0.22; ctx.crit += 0.05; }
-    if (this.speedBuff > 0) { ctx.speed += 0.20; ctx.dodge += 0.05; }
-    if (this.armorBuff > 0) { ctx.armor += 0.18; }
-    if (this.critBuff  > 0) { ctx.crit  += 0.15; }
-
-    // Environmental bonuses from nearby objects
-    const nearby = sim.objects.filter(o => dist(this, o) < 135);
-    for (const o of nearby) {
-      const mult = o.state === STATE.EFFICIENT ? 1.2 : o.state === STATE.DISRUPTED ? 0.85 : 1;
-      if (o.type === 'laptop')  { ctx.power += 0.05 * mult; ctx.crit += 0.01; }
-      if (o.type === 'tablet')  { ctx.crit  += 0.04 * mult; }
-      if (o.type === 'phone')   { ctx.dodge += 0.02 * mult; }
-      if (o.type === 'server')  { ctx.power += 0.08 * mult; ctx.armor += 0.04 * mult; }
-      if (o.type === 'station') { ctx.power += 0.06 * mult; ctx.speed += 0.04 * mult; }
-      if (o.type === 'charger') { ctx.armor += 0.03 * mult; }
-      if (o.state === STATE.DISRUPTED) { ctx.chaos += 0.06; ctx.armor -= 0.03; }
-    }
-
-    if (this.andyBoost > 0) { ctx.power += 0.07; ctx.speed += 0.07; }
-    if (this.altinCalm > 0) { ctx.chaos = Math.max(0, ctx.chaos - 0.05); ctx.dodge += 0.02; }
-
-    ctx.armor = clamp(ctx.armor, -0.15, 0.55);
-    return ctx;
-  }
-
-  _pushFromTables(tables) {
-    for (const t of tables) {
-      // Closest point on table rect
-      const cx = clamp(this.x, t.x, t.x + t.w);
-      const cy = clamp(this.y, t.y, t.y + t.h);
-      const dx = this.x - cx, dy = this.y - cy;
-      const d  = Math.hypot(dx, dy);
-      const r  = 18;
-      if (d < r) {
-        const f = (r - d) / r * 90;
-        if (d > 0) { this.vx += (dx / d) * f; this.vy += (dy / d) * f; }
-        else       { this.vx += (Math.random() - 0.5) * 80; this.vy += (Math.random() - 0.5) * 80; }
-      }
-    }
-  }
-
-  // ── Draw ────────────────────────────────────
-  draw(ctx) {
-    if (!this.active) return;
-    const { x, y, color, image, name, statusText, state, workProgress } = this;
-
-    // Shadow ellipse
-    ctx.save();
-    ctx.globalAlpha = 0.25;
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.ellipse(x, y + 22, 16, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    // Colour aura glow
-    ctx.save();
-    ctx.globalAlpha = 0.18;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(x, y, 26, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    // Always render character images (no colored circle fallback)
-    if (image) {
-      const s = 52;
-      ctx.drawImage(image, x - s / 2, y - s / 2, s, s);
-    }
-
-    // Work progress bar
-    if (state === CS.WORKING) {
-      const bw = 46, bh = 4;
-      const bx = x - bw / 2, by = y + 27;
-      ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      ctx.fillRect(bx, by, bw, bh);
-      ctx.fillStyle = color;
-      ctx.fillRect(bx, by, bw * workProgress, bh);
-    }
-
-    // Altin calm ring
-    if (this.name === 'Altin' && state === CS.IDLE) {
-      const t = Date.now() / 1000;
+    // Pre-game drag ring
+    if(preGame){
       ctx.save();
-      ctx.globalAlpha = 0.12 + 0.05 * Math.sin(t * 1.5);
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(x, y, 70 + 5 * Math.sin(t), 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
+      ctx.globalAlpha=0.35+0.2*Math.sin(t*2.5);
+      ctx.strokeStyle=color; ctx.lineWidth=1.5;
+      ctx.setLineDash([3,4]);
+      ctx.beginPath(); ctx.arc(x,y,36,0,Math.PI*2); ctx.stroke();
+      ctx.setLineDash([]); ctx.restore();
     }
-
-    // Andy aura ring
-    if (this.name === 'Andy') {
-      const t = Date.now() / 1000;
-      ctx.save();
-      ctx.globalAlpha = 0.1 + 0.04 * Math.sin(t * 0.8);
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([4, 6]);
-      ctx.beginPath();
-      ctx.arc(x, y, 100, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.restore();
+    // Buff rings
+    if(this.damageBuff>0){
+      ctx.save(); ctx.globalAlpha=0.22+0.1*Math.sin(t*5);
+      ctx.strokeStyle=BUFF_COLORS.damage; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(x,y,31,0,Math.PI*2); ctx.stroke(); ctx.restore();
     }
-
+    if(this.speedBuff>0){
+      ctx.save(); ctx.globalAlpha=0.20+0.1*Math.sin(t*6);
+      ctx.strokeStyle=BUFF_COLORS.speed; ctx.lineWidth=1.5;
+      ctx.setLineDash([2,3]);
+      ctx.beginPath(); ctx.arc(x,y,33,0,Math.PI*2); ctx.stroke();
+      ctx.setLineDash([]); ctx.restore();
+    }
+    if(this.armorBuff>0){
+      ctx.save(); ctx.globalAlpha=0.25+0.08*Math.sin(t*3);
+      ctx.strokeStyle=BUFF_COLORS.armor; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.arc(x,y,29,0,Math.PI*2); ctx.stroke(); ctx.restore();
+    }
+    // Shadow
+    ctx.save(); ctx.globalAlpha=0.25; ctx.fillStyle='#000';
+    ctx.beginPath(); ctx.ellipse(x,y+22,16,6,0,0,Math.PI*2); ctx.fill(); ctx.restore();
+    // Aura
+    ctx.save(); ctx.globalAlpha=0.18; ctx.fillStyle=color;
+    ctx.beginPath(); ctx.arc(x,y,26,0,Math.PI*2); ctx.fill(); ctx.restore();
+    // Sprite
+    if(image){ const s=52; ctx.drawImage(image,x-s/2,y-s/2,s,s); }
     // Hit flash
-    if (this.hitFlash > 0) {
-      ctx.save();
-      ctx.globalAlpha = Math.min(this.hitFlash * 2.2, 0.7);
-      ctx.strokeStyle = '#ff3c3c';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(x, y, 28, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
+    if(this.hitFlash>0){
+      ctx.save(); ctx.globalAlpha=Math.min(this.hitFlash*2.5,0.75);
+      ctx.strokeStyle='#ff3333'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.arc(x,y,28,0,Math.PI*2); ctx.stroke(); ctx.restore();
     }
-
-    // Health bar for battle mode
-    const hpW = 46;
-    const hpRatio = clamp(this.health / 100, 0, 1);
-    ctx.fillStyle = 'rgba(0,0,0,0.65)';
-    ctx.fillRect(x - hpW / 2, y + 32, hpW, 4);
-    ctx.fillStyle = hpRatio > 0.55 ? '#00ff99' : hpRatio > 0.25 ? '#ffd447' : '#ff5757';
-    ctx.fillRect(x - hpW / 2, y + 32, hpW * hpRatio, 4);
-
-    // Status text
-    ctx.save();
-    ctx.textAlign = 'center';
-    ctx.shadowColor = '#000';
-    ctx.shadowBlur = 5;
-    ctx.font = '8px Share Tech Mono, monospace';
-    ctx.fillStyle = 'rgba(255,255,255,0.65)';
-    ctx.fillText(statusText, x, y - 38);
-
-    // Name
-    ctx.font = 'bold 12px Rajdhani, sans-serif';
-    ctx.fillStyle = '#fff';
-    ctx.fillText(name, x, y - 27);
-    ctx.restore();
+    // Use bar
+    if(state===CS.USING){
+      const bw=46,bh=4;
+      ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(x-bw/2,y+27,bw,bh);
+      ctx.fillStyle=color; ctx.fillRect(x-bw/2,y+27,bw*workProgress,bh);
+    }
+    // HP bar
+    const hpW=46, hpR=clamp(this.health/100,0,1);
+    ctx.fillStyle='rgba(0,0,0,0.65)'; ctx.fillRect(x-hpW/2,y+32,hpW,4);
+    ctx.fillStyle=hpR>0.55?'#00ff99':hpR>0.25?'#ffd447':'#ff5757';
+    ctx.fillRect(x-hpW/2,y+32,hpW*hpR,4);
+    // Name + status
+    ctx.save(); ctx.textAlign='center'; ctx.shadowColor='#000'; ctx.shadowBlur=5;
+    ctx.font='8px Share Tech Mono,monospace'; ctx.fillStyle='rgba(255,255,255,0.65)';
+    ctx.fillText(statusText,x,y-38);
+    ctx.font='bold 12px Rajdhani,sans-serif'; ctx.fillStyle='#fff';
+    ctx.fillText(name,x,y-27); ctx.restore();
+    // DRAG label pre-game
+    if(preGame){
+      ctx.save(); ctx.globalAlpha=0.55+0.25*Math.sin(t*2.8);
+      ctx.font='7px Share Tech Mono,monospace'; ctx.textAlign='center';
+      ctx.fillStyle=color; ctx.fillText('DRAG',x,y+50); ctx.restore();
+    }
   }
 }
 
-// ─────────────────────────────────────────────
-// CHARACTER BEHAVIOR DEFINITIONS
-// Each entry defines: selectTarget, onArrive, onComplete, onPassive, workDuration
-// ─────────────────────────────────────────────
-
-const BEHAVIORS = {
-
-  // ── Joe: Relentless Hunter ──────────────────
-  // Chases the most wounded enemy. Uses laptops for damage spikes.
-  // Aggressive brawler — high power, fights straight up, doesn't back down.
-  Joe: {
-    workDuration: 3.0,
-    combatStyle: { power: 0.25, armor: 0.05, crit: 0.08, dodge: 0.0, speedMult: 0.1, chaos: 0.0 },
-    selectTarget(char, sim) {
-      const alive = sim.characters.filter(c => c.active && c !== char && c.health > 0);
-      if (char.health < 30 && char.healCooldown <= 0) {
-        const phones = sim.interactive.filter(o => o.type === 'phone');
-        if (phones.length > 0) {
-          const p = nearestObj(char, phones);
-          return { x: p.cx, y: p.cy, obj: p, statusText: 'Need a fix!' };
-        }
-      }
-      if (char.powerBuff <= 0 && alive.length > 0 && Math.random() < 0.12) {
-        const laptops = sim.interactive.filter(o => o.type === 'laptop');
-        if (laptops.length > 0) {
-          const l = nearestObj(char, laptops);
-          if (dist(char, l) < 220) return { x: l.cx, y: l.cy, obj: l, statusText: 'Powering up...' };
-        }
-      }
-      if (alive.length > 0) {
-        const target = alive.reduce((a, b) => a.health < b.health ? a : b);
-        return { x: target.x + rand(-10, 10), y: target.y + rand(-10, 10), obj: null, statusText: pick(['Hunting...', 'Coming for you.', 'No mercy!']) };
-      }
-      return null;
-    },
-    onArrive(char) { char.statusText = char.target?.obj ? 'Overclocking...' : 'Moving in!'; },
-    onComplete(char, sim) {
-      const obj = char.target?.obj;
-      if (!obj) return;
-      if (obj.type === 'phone') {
-        const heal = rand(22, 32);
-        char.health = Math.min(100, char.health + heal);
-        char.healCooldown = 25;
-        char.itemsUsed++;
-        sim.addEvent(pick([`Joe patched himself up (+${Math.round(heal)} HP)`, `Joe grabbed the phone — back in it`]));
-        char.statusText = 'Fixed!';
-      } else if (obj.type === 'laptop') {
-        char.powerBuff = 9;
-        char.itemsUsed++;
-        sim.addEvent(pick([`Joe overclocked — incoming pain`, `Joe's damage just spiked. Watch out.`]));
-        char.statusText = 'Powered up!';
-      }
-    },
-  },
-
-  // ── Charlie: Chaotic Glass Cannon ──────────
-  // Unpredictable targeting — picks enemies randomly. Uses tablets for crit bursts.
-  // High chaos and crit chance. Fragile but hits wildly hard.
-  Charlie: {
-    workDuration: 2.5,
-    combatStyle: { power: 0.0, armor: -0.05, crit: 0.18, dodge: 0.06, speedMult: 0.15, chaos: 0.18 },
-    selectTarget(char, sim) {
-      const alive = sim.characters.filter(c => c.active && c !== char && c.health > 0);
-      if (char.health < 42 && char.healCooldown <= 0) {
-        const phones = sim.interactive.filter(o => o.type === 'phone');
-        if (phones.length > 0) {
-          const p = nearestObj(char, phones);
-          return { x: p.cx, y: p.cy, obj: p, statusText: 'Retreating...' };
-        }
-      }
-      if (char.critBuff <= 0 && alive.length > 0 && Math.random() < 0.15) {
-        const tablets = sim.interactive.filter(o => o.type === 'tablet');
-        if (tablets.length > 0) {
-          const t = nearestObj(char, tablets);
-          if (dist(char, t) < 250) return { x: t.cx, y: t.cy, obj: t, statusText: 'Setting something up...' };
-        }
-      }
-      if (alive.length > 0) {
-        const target = pick(alive);
-        return { x: target.x + rand(-28, 28), y: target.y + rand(-28, 28), obj: null, statusText: pick(['Incoming!', 'Surprise!', 'Let\'s cause problems!']) };
-      }
-      return null;
-    },
-    onArrive(char) { char.statusText = char.target?.obj ? 'Tinkering...' : pick(['Got you!', 'Boo.', 'Hi.']); },
-    onComplete(char, sim) {
-      const obj = char.target?.obj;
-      if (!obj) return;
-      if (obj.type === 'phone') {
-        const heal = rand(18, 28);
-        char.health = Math.min(100, char.health + heal);
-        char.healCooldown = 22;
-        char.itemsUsed++;
-        sim.addEvent(pick([`Charlie snuck a heal (+${Math.round(heal)} HP)`, `Charlie is NOT eliminated today`]));
-        char.statusText = 'Back at it!';
-      } else if (obj.type === 'tablet') {
-        char.critBuff = 8;
-        char.itemsUsed++;
-        sim.addEvent(pick([`Charlie set something up. Looks unstable.`, `Charlie's crits just got a lot more chaotic`]));
-        char.statusText = 'Chaos mode!';
-      }
-    },
-  },
-
-  // ── Kurt: Iron Wall ────────────────────────
-  // Methodical tank. Targets whoever has the most eliminations — the biggest threat.
-  // Extremely high armor, slow, steady damage. Uses chargers to fortify.
-  Kurt: {
-    workDuration: 3.5,
-    combatStyle: { power: 0.1, armor: 0.22, crit: 0.02, dodge: -0.03, speedMult: -0.18, chaos: -0.05 },
-    selectTarget(char, sim) {
-      const alive = sim.characters.filter(c => c.active && c !== char && c.health > 0);
-      if (char.health < 25 && char.healCooldown <= 0) {
-        const phones = sim.interactive.filter(o => o.type === 'phone');
-        if (phones.length > 0) {
-          const p = nearestObj(char, phones);
-          return { x: p.cx, y: p.cy, obj: p, statusText: 'Sustaining...' };
-        }
-      }
-      if (char.armorBuff <= 0 && alive.length > 0 && Math.random() < 0.13) {
-        const chargers = sim.objects.filter(o => o.type === 'charger');
-        if (chargers.length > 0) {
-          const c = nearestObj(char, chargers);
-          if (dist(char, c) < 220) return { x: c.cx, y: c.cy, obj: c, statusText: 'Fortifying...' };
-        }
-      }
-      if (alive.length > 0) {
-        const target = alive.reduce((a, b) => b.eliminations > a.eliminations ? b : a);
-        return { x: target.x + rand(-8, 8), y: target.y + rand(-8, 8), obj: null, statusText: pick(['On your six.', 'Engaging.', 'You\'re the target.']) };
-      }
-      return null;
-    },
-    onArrive(char) { char.statusText = char.target?.obj ? 'Reinforcing...' : 'Engaging.'; },
-    onComplete(char, sim) {
-      const obj = char.target?.obj;
-      if (!obj) return;
-      if (obj.type === 'phone') {
-        const heal = rand(20, 30);
-        char.health = Math.min(100, char.health + heal);
-        char.healCooldown = 30;
-        char.itemsUsed++;
-        sim.addEvent(pick([`Kurt patched the damage (+${Math.round(heal)} HP)`, `Kurt took a moment. Just a moment.`]));
-        char.statusText = 'Back in position.';
-      } else if (obj.type === 'charger') {
-        char.armorBuff = 10;
-        char.itemsUsed++;
-        sim.addEvent(pick([`Kurt is basically a wall now`, `Kurt's armor is maxed. Good luck critting him.`]));
-        char.statusText = 'Fortified.';
-      }
-    },
-  },
-
-  // ── Altin: The Ghost ───────────────────────
-  // Evasive survivor. Avoids groups, circles isolated targets, heals proactively.
-  // High dodge and speed, low damage. Hard to kill, hard to catch.
-  Altin: {
-    workDuration: 2.2,
-    combatStyle: { power: -0.22, armor: -0.04, crit: 0.05, dodge: 0.18, speedMult: 0.25, chaos: 0.02 },
-    selectTarget(char, sim) {
-      const alive = sim.characters.filter(c => c.active && c !== char && c.health > 0);
-      if (char.health < 58 && char.healCooldown <= 0) {
-        const phones = sim.interactive.filter(o => o.type === 'phone');
-        if (phones.length > 0) {
-          const p = nearestObj(char, phones);
-          return { x: p.cx, y: p.cy, obj: p, statusText: 'Vibing... carefully.' };
-        }
-      }
-      if (alive.length > 0) {
-        const isolated = alive.filter(e => alive.filter(o => o !== e && dist(e, o) < 120).length === 0);
-        const target = isolated.length > 0 ? pick(isolated) : alive.reduce((a, b) => a.health < b.health ? a : b);
-        const dx = char.x - target.x, dy = char.y - target.y;
-        const d  = Math.hypot(dx, dy) || 1;
-        const ax = clamp(target.x + (dx / d) * 75 + rand(-30, 30), 40, RW - 40);
-        const ay = clamp(target.y + (dy / d) * 75 + rand(-30, 30), 40, RH - 40);
-        return { x: ax, y: ay, obj: null, statusText: pick(['Circling...', 'Wait for it...', 'Staying fluid']) };
-      }
-      return null;
-    },
-    onArrive(char) { char.statusText = char.target?.obj ? 'Healing up...' : 'Repositioning'; },
-    onComplete(char, sim) {
-      const obj = char.target?.obj;
-      if (!obj) return;
-      if (obj.type === 'phone') {
-        const heal = rand(28, 38);
-        char.health = Math.min(100, char.health + heal);
-        char.healCooldown = 18;
-        char.itemsUsed++;
-        sim.addEvent(pick([`Altin healed up (+${Math.round(heal)} HP) and vanished again`, `Altin took a chill moment to recover`]));
-        char.statusText = 'Refreshed.';
-      }
-    },
-    onPassive(char, sim, dt) {
-      for (const c of sim.characters) {
-        if (c === char || !c.active) continue;
-        if (dist(char, c) < 90) c.altinCalm = Math.min(c.altinCalm + dt * 0.5, 0.3);
-      }
-    },
-  },
-
-  // ── Jai: Hit-and-Run Skirmisher ─────────────
-  // Fastest fighter. Always targets the weakest enemy — finishes off the wounded.
-  // Uses stations for speed bursts. Quick cooldown, burst damage, always moving.
-  Jai: {
-    workDuration: 2.0,
-    combatStyle: { power: -0.08, armor: 0.0, crit: 0.10, dodge: 0.10, speedMult: 0.35, chaos: 0.04 },
-    selectTarget(char, sim) {
-      const alive = sim.characters.filter(c => c.active && c !== char && c.health > 0);
-      if (char.health < 38 && char.healCooldown <= 0) {
-        const phones = sim.interactive.filter(o => o.type === 'phone');
-        if (phones.length > 0) {
-          const p = nearestObj(char, phones);
-          return { x: p.cx, y: p.cy, obj: p, statusText: 'Quick pit stop' };
-        }
-      }
-      if (char.speedBuff <= 0 && alive.length > 0 && Math.random() < 0.18) {
-        const stations = sim.interactive.filter(o => o.type === 'station');
-        if (stations.length > 0) {
-          const s = nearestObj(char, stations);
-          if (dist(char, s) < 280) return { x: s.cx, y: s.cy, obj: s, statusText: 'Boosting!' };
-        }
-      }
-      if (alive.length > 0) {
-        const target = alive.reduce((a, b) => a.health < b.health ? a : b);
-        return { x: target.x + rand(-12, 12), y: target.y + rand(-12, 12), obj: null, statusText: pick(['Target acquired!', 'Quick strike!', 'On the move!']) };
-      }
-      return null;
-    },
-    onArrive(char) { char.statusText = char.target?.obj ? 'Boosting...' : 'Strike!'; },
-    onComplete(char, sim) {
-      const obj = char.target?.obj;
-      if (!obj) return;
-      if (obj.type === 'phone') {
-        const heal = rand(20, 30);
-        char.health = Math.min(100, char.health + heal);
-        char.healCooldown = 22;
-        char.itemsUsed++;
-        sim.addEvent(pick([`Jai grabbed a quick heal (+${Math.round(heal)} HP)`, `Jai's back in action`]));
-        char.statusText = 'Back in!';
-      } else if (obj.type === 'station') {
-        char.speedBuff = 8;
-        char.itemsUsed++;
-        sim.addEvent(pick([`Jai is now moving at terrifying speed`, `Jai hit the station — nobody's catching them`]));
-        char.statusText = 'Blazing!';
-      }
-    },
-  },
-
-  // ── Liam: Adaptive Opportunist ──────────────
-  // Balanced all-rounder. Targets enemies already fighting someone else.
-  // Heals conservatively, uses any nearby item for small edges.
-  Liam: {
-    workDuration: 3.0,
-    combatStyle: { power: 0.0, armor: 0.06, crit: 0.06, dodge: 0.06, speedMult: 0.0, chaos: 0.0 },
-    selectTarget(char, sim) {
-      const alive = sim.characters.filter(c => c.active && c !== char && c.health > 0);
-      if (char.health < 48 && char.healCooldown <= 0) {
-        const phones = sim.interactive.filter(o => o.type === 'phone');
-        if (phones.length > 0) {
-          const p = nearestObj(char, phones);
-          return { x: p.cx, y: p.cy, obj: p, statusText: 'Smart play — healing' };
-        }
-      }
-      if (char.health > 65 && Math.random() < 0.10) {
-        const items = sim.interactive.filter(o => ['laptop', 'tablet', 'station'].includes(o.type));
-        const nearby = items.filter(o => dist(char, o) < 180);
-        if (nearby.length > 0) {
-          const item = pick(nearby);
-          return { x: item.cx, y: item.cy, obj: item, statusText: 'Quick advantage...' };
-        }
-      }
-      if (alive.length > 0) {
-        const inFight = alive.filter(e => e.fightCooldown < 0.3);
-        const target  = inFight.length > 0 ? pick(inFight) : pick(alive);
-        return { x: target.x + rand(-15, 15), y: target.y + rand(-15, 15), obj: null, statusText: pick(['Picking my moment', 'Now!', 'Moving in']) };
-      }
-      return null;
-    },
-    onArrive(char) { char.statusText = char.target?.obj ? 'Working an angle...' : 'Let\'s go!'; },
-    onComplete(char, sim) {
-      const obj = char.target?.obj;
-      if (!obj) return;
-      if (obj.type === 'phone') {
-        const heal = rand(22, 32);
-        char.health = Math.min(100, char.health + heal);
-        char.healCooldown = 20;
-        char.itemsUsed++;
-        sim.addEvent(pick([`Liam healed up — smart call (+${Math.round(heal)} HP)`, `Liam takes a breather`]));
-        char.statusText = 'Good to go!';
-      } else if (obj.type === 'laptop') {
-        char.powerBuff = 7; char.itemsUsed++;
-        sim.addEvent(`Liam grabbed an edge — power boost active`);
-        char.statusText = 'Boosted!';
-      } else if (obj.type === 'tablet') {
-        char.critBuff = 7; char.itemsUsed++;
-        sim.addEvent(`Liam set up for crits`);
-        char.statusText = 'Ready!';
-      } else if (obj.type === 'station') {
-        char.speedBuff = 7; char.itemsUsed++;
-        sim.addEvent(`Liam's picking up speed`);
-        char.statusText = 'Moving!';
-      }
-    },
-  },
-
-  // ── Andy: The Commander ─────────────────────
-  // Dominant brawler. Targets the highest-HP enemy — goes for the strongest.
-  // Uses the server for a massive power+armor spike. High damage, high durability.
-  Andy: {
-    workDuration: 3.2,
-    combatStyle: { power: 0.20, armor: 0.12, crit: 0.05, dodge: 0.02, speedMult: -0.05, chaos: -0.03 },
-    selectTarget(char, sim) {
-      const alive = sim.characters.filter(c => c.active && c !== char && c.health > 0);
-      if (char.health < 28 && char.healCooldown <= 0) {
-        const phones = sim.interactive.filter(o => o.type === 'phone');
-        if (phones.length > 0) {
-          const p = nearestObj(char, phones);
-          return { x: p.cx, y: p.cy, obj: p, statusText: 'Brief retreat' };
-        }
-      }
-      if (char.powerBuff <= 0 && char.armorBuff <= 0 && alive.length > 0 && Math.random() < 0.14) {
-        const servers = sim.interactive.filter(o => o.type === 'server');
-        if (servers.length > 0 && dist(char, servers[0]) < 300) {
-          return { x: servers[0].cx, y: servers[0].cy, obj: servers[0], statusText: 'Pulling rank...' };
-        }
-      }
-      if (alive.length > 0) {
-        const target = alive.reduce((a, b) => b.health > a.health ? b : a);
-        return { x: target.x + rand(-10, 10), y: target.y + rand(-10, 10), obj: null, statusText: pick(['Taking charge.', 'Front and center.', 'I\'ve got this.']) };
-      }
-      return null;
-    },
-    onArrive(char) { char.statusText = char.target?.obj ? 'Accessing server...' : 'Engaging.'; },
-    onComplete(char, sim) {
-      const obj = char.target?.obj;
-      if (!obj) return;
-      if (obj.type === 'phone') {
-        const heal = rand(20, 30);
-        char.health = Math.min(100, char.health + heal);
-        char.healCooldown = 28;
-        char.itemsUsed++;
-        sim.addEvent(pick([`Andy stepped back to recover (+${Math.round(heal)} HP)`, `Andy's back at full strength`]));
-        char.statusText = 'Back in command.';
-      } else if (obj.type === 'server') {
-        char.powerBuff = 12; char.armorBuff = 12; char.itemsUsed++;
-        sim.addEvent(pick([`Andy pulled server access — massive power spike`, `Andy at full command capacity. This is bad for everyone else.`]));
-        char.statusText = 'Full power!';
-      }
-    },
-    onPassive(char, sim, dt) {
-      for (const c of sim.characters) {
-        if (c === char || !c.active) continue;
-        if (dist(char, c) < 100) c.andyBoost = Math.max(c.andyBoost, 1.0);
-      }
-    },
-  },
-};
-
-// ─────────────────────────────────────────────
-// ROOM LAYOUT
-// Define all objects in the room
-// ─────────────────────────────────────────────
-function buildRoom() {
-  const defs = [
-    // ── Tables (physical obstacles, not interactive) ──
-    { id:'tbl-tl',  x:55,  y:42,  w:210, h:68, type:'table',   label:'Table A', interactive:false },
-    { id:'tbl-tr',  x:520, y:42,  w:225, h:68, type:'table',   label:'Table B', interactive:false },
-    { id:'tbl-mid', x:255, y:205, w:290, h:65, type:'table',   label:'Table C', interactive:false },
-    { id:'tbl-bl',  x:55,  y:375, w:210, h:68, type:'table',   label:'Table D', interactive:false },
-    { id:'tbl-br',  x:520, y:375, w:225, h:68, type:'table',   label:'Table E', interactive:false },
-
-    // ── Laptops ──
-    { id:'lap1', x:68,  y:52,  w:52, h:38, type:'laptop',  label:'Laptop 1' },
-    { id:'lap2', x:140, y:52,  w:52, h:38, type:'laptop',  label:'Laptop 2' },
-    { id:'lap3', x:268, y:215, w:52, h:38, type:'laptop',  label:'Laptop 3' },
-    { id:'lap4', x:350, y:215, w:52, h:38, type:'laptop',  label:'Laptop 4' },
-    { id:'lap5', x:534, y:385, w:52, h:38, type:'laptop',  label:'Laptop 5' },
-
-    // ── Tablets ──
-    { id:'tab1', x:538, y:52,  w:38, h:54, type:'tablet',  label:'Tablet 1' },
-    { id:'tab2', x:598, y:52,  w:38, h:54, type:'tablet',  label:'Tablet 2' },
-    { id:'tab3', x:68,  y:383, w:38, h:54, type:'tablet',  label:'Tablet 3' },
-
-    // ── Phones ──
-    { id:'ph1',  x:140, y:387, w:28, h:46, type:'phone',   label:'Phone 1' },
-    { id:'ph2',  x:180, y:387, w:28, h:46, type:'phone',   label:'Phone 2' },
-    { id:'ph3',  x:620, y:387, w:28, h:46, type:'phone',   label:'Phone 3' },
-
-    // ── Charger strip (left wall) ──
-    { id:'chg1', x:16,  y:195, w:30, h:130, type:'charger', label:'Charger A', interactive:false },
-
-    // ── Data server (top-center) ──
-    { id:'srv1', x:354, y:38,  w:95, h:85, type:'server',  label:'Data Server' },
-
-    // ── Scouting stations (bottom) ──
-    { id:'stn1', x:340, y:368, w:110, h:82, type:'station', label:'Scout Station' },
-
-    // ── Second charger strip (right wall) ──
-    { id:'chg2', x:756, y:195, w:30, h:130, type:'charger', label:'Charger B', interactive:false },
-  ];
-  return defs.map(d => new RoomObject(d));
+// ── Room Layout ────────────────────────────
+function buildRoom(){
+  return [
+    {id:'tbl-tl', x:30,  y:25,  w:185,h:55, type:'table',   label:'TABLE A', interactive:false},
+    {id:'tbl-tr', x:585, y:25,  w:185,h:55, type:'table',   label:'TABLE B', interactive:false},
+    {id:'tbl-mid',x:260, y:210, w:280,h:52, type:'table',   label:'TABLE C', interactive:false},
+    {id:'tbl-bl', x:30,  y:460, w:185,h:55, type:'table',   label:'TABLE D', interactive:false},
+    {id:'tbl-br', x:585, y:460, w:185,h:55, type:'table',   label:'TABLE E', interactive:false},
+    {id:'med-a',  x:40,  y:120, w:55, h:48, type:'station', label:'MEDKIT',    buffType:BUFF.HEAL},
+    {id:'med-b',  x:705, y:362, w:55, h:48, type:'station', label:'MEDKIT',    buffType:BUFF.HEAL},
+    {id:'dmg-a',  x:705, y:120, w:55, h:48, type:'station', label:'ARSENAL',   buffType:BUFF.DAMAGE},
+    {id:'dmg-b',  x:40,  y:362, w:55, h:48, type:'station', label:'ARSENAL',   buffType:BUFF.DAMAGE},
+    {id:'spd-a',  x:370, y:30,  w:60, h:40, type:'station', label:'BOOSTER',   buffType:BUFF.SPEED},
+    {id:'spd-b',  x:370, y:470, w:60, h:40, type:'station', label:'BOOSTER',   buffType:BUFF.SPEED},
+    {id:'arm-a',  x:40,  y:244, w:55, h:48, type:'station', label:'SHIELD',    buffType:BUFF.ARMOR},
+    {id:'arm-b',  x:705, y:244, w:55, h:48, type:'station', label:'SHIELD',    buffType:BUFF.ARMOR},
+    {id:'pwr',    x:373, y:282, w:54, h:50, type:'station', label:'POWER CORE',buffType:BUFF.POWER},
+  ].map(d=>new RoomObject(d));
 }
 
-// ─────────────────────────────────────────────
-// SIMULATION
-// ─────────────────────────────────────────────
+// ── Simulation ─────────────────────────────
 class Simulation {
-  constructor() {
-    this.objects    = buildRoom();
-    this.characters = this._buildCharacters();
-    this.events     = [];
-    this.running    = false;
-    this.speed      = 1;
-    this.simTime    = 0; // seconds (scaled)
-    this.winner     = null;
-    this.matchOver  = false;
+  constructor(){
+    this.objects=buildRoom();
+    this.characters=this._buildChars();
+    this.events=[]; this.running=false;
+    this.speed=1; this.simTime=0;
+    this.winner=null; this.matchOver=false;
   }
+  get tables()      { return this.objects.filter(o=>o.type==='table'); }
+  get interactive() { return this.objects.filter(o=>o.interactive); }
+  get activeChars() { return this.characters.filter(c=>c.active); }
 
-  get tables()      { return this.objects.filter(o => o.type === 'table'); }
-  get interactive() { return this.objects.filter(o => o.interactive !== false); }
-  get activeChars() { return this.characters.filter(c => c.active); }
-
-  _buildCharacters() {
-    return Object.keys(BEHAVIORS).map(name =>
-      new Character({
-        name,
-        color: CHAR_COLORS[name],
-        speed: { Joe:95, Charlie:100, Kurt:72, Altin:110, Jai:125, Liam:90, Andy:85 }[name] || 90,
-        role:  { Joe:'Hunter', Charlie:'Glass Cannon', Kurt:'Iron Wall', Altin:'Ghost', Jai:'Skirmisher', Liam:'Opportunist', Andy:'Commander' }[name],
-        behaviors: BEHAVIORS[name],
-      })
+  _buildChars(){
+    return Object.keys(PLAYSTYLES).map(name=>
+      new Character({name,color:CHAR_COLORS[name],playstyle:PLAYSTYLES[name]})
     );
   }
 
-  spawn(name) {
-    const c = this.characters.find(ch => ch.name === name);
-    if (!c || c.active) return;
-    c.active = true;
-    c.x = rand(60, RW - 60); c.y = rand(60, RH - 60);
-    c.state = CS.IDLE; c.idleTimer = rand(0.5, 2);
-    c.health = 100;
-    c.eliminated = false;
-    c.fightCooldown = rand(0.4, 1.2);
-    c.statusText = 'Ready to fight';
+  spawn(name){
+    const c=this.characters.find(ch=>ch.name===name);
+    if(!c||c.active) return;
+    c.active=true;
+    const slots=[
+      {x:200,y:155},{x:400,y:140},{x:600,y:155},
+      {x:200,y:385},{x:400,y:395},{x:600,y:385},{x:400,y:270},
+    ];
+    const used=this.characters.filter(ch=>ch.active&&ch!==c);
+    const free=slots.find(s=>!used.some(ch=>Math.hypot(s.x-ch.x,s.y-ch.y)<80));
+    const pos=free||{x:rand(140,660),y:rand(120,420)};
+    c.x=pos.x+rand(-18,18); c.y=pos.y+rand(-18,18);
+    c._lastX=c.x; c._lastY=c.y;
+    c.state=CS.IDLE; c.idleTimer=rand(0.4,1.8);
+    c.health=100; c.eliminated=false;
+    c.fightCooldown=rand(0.4,1.2); c.statusText='Ready to fight';
+    c.damageBuff=0;c.damageMult=1; c.speedBuff=0;c.speedMult=1; c.armorBuff=0;c.armorVal=0;
     this.addEvent(`${name} entered the arena!`);
   }
 
-  despawn(name) {
-    const c = this.characters.find(ch => ch.name === name);
-    if (c) {
-      c.active = false; c.state = CS.IDLE; c.target = null;
-      c.eliminated = false;
-      c.statusText = 'Ready';
-    }
+  despawn(name){
+    const c=this.characters.find(ch=>ch.name===name);
+    if(c){ c.active=false; c.state=CS.IDLE; c.target=null; c.targetChar=null; c.eliminated=false; c.statusText='Ready'; }
   }
 
-  update(dt) {
-    if (!this.running) return;
-    const scaled = dt * this.speed;
-    this.simTime += scaled;
-
-    for (const obj of this.objects)    obj.update(scaled);
-    this._randomGlitches(scaled);
-    for (const c   of this.characters) c.update(scaled, this);
+  update(dt){
+    if(!this.running) return;
+    const scaled=dt*this.speed; this.simTime+=scaled;
+    for(const obj of this.objects) obj.update(scaled);
+    for(const c of this.characters) c.update(scaled,this);
     this.checkForWinner();
   }
 
-  _randomGlitches(dt) {
-    const rate = 0.004; // base glitch probability per second per object
-    for (const obj of this.interactive) {
-      if (obj.state === STATE.NORMAL && Math.random() < rate * dt) {
-        obj.disrupt();
-        this.addEvent(`${obj.label} started acting up on its own`);
-      }
-      // Efficient objects slowly decay
-      if (obj.state === STATE.EFFICIENT && Math.random() < rate * 0.3 * dt) {
-        obj.state = STATE.NORMAL;
-      }
-    }
-  }
-
-  addEvent(msg) {
-    const s   = Math.floor(this.simTime);
-    const min = String(Math.floor(s / 60)).padStart(2, '0');
-    const sec = String(s % 60).padStart(2, '0');
-    this.events.unshift({ time: `${min}:${sec}`, msg });
-    if (this.events.length > 60) this.events.pop();
+  addEvent(msg,type=''){
+    const s=Math.floor(this.simTime);
+    const min=String(Math.floor(s/60)).padStart(2,'0');
+    const sec=String(s%60).padStart(2,'0');
+    this.events.unshift({time:`${min}:${sec}`,msg,type});
+    if(this.events.length>60) this.events.pop();
     renderEventLog(this.events);
   }
 
-  reset() {
-    this.running = false; this.simTime = 0; this.events = [];
-    this.winner = null; this.matchOver = false;
-    for (const o of this.objects)    o.reset();
-    for (const c of this.characters) {
-      c.active = false; c.state = CS.IDLE; c.target = null;
-      c.statusText = 'Ready'; c.workProgress = 0;
-      c.andyBoost = 0; c.altinCalm = 0; c.health = 100; c.fightCooldown = rand(0.6, 1.8); c.hitFlash = 0;
-      c.eliminated = false; c.eliminations = 0;
-      c.powerBuff = 0; c.speedBuff = 0; c.armorBuff = 0; c.critBuff = 0;
-      c.healCooldown = 0; c.itemsUsed = 0;
-      c._passiveTimer = rand(5, 15);
+  reset(){
+    this.running=false; this.simTime=0; this.events=[];
+    this.winner=null; this.matchOver=false;
+    for(const o of this.objects) o.reset();
+    for(const c of this.characters){
+      c.active=false; c.state=CS.IDLE; c.target=null; c.targetChar=null;
+      c.statusText='Ready'; c.workProgress=0;
+      c.health=100; c.fightCooldown=rand(0.5,1.5); c.hitFlash=0;
+      c.eliminated=false; c.eliminations=0;
+      c.damageBuff=0;c.damageMult=1; c.speedBuff=0;c.speedMult=1; c.armorBuff=0;c.armorVal=0;
+      c._stuckAccum=0; c._moveTimer=0;
     }
-    renderEventLog([]);
-    renderCharPanel(this.characters);
-    updateSpawnButtons(this.characters);
+    renderEventLog([]); renderCharPanel(this.characters); updateSpawnButtons(this.characters);
   }
 
-  stats() {
-    const alive = this.activeChars.filter(c => c.health > 0);
-    const totalKOs    = this.characters.reduce((s, c) => s + c.eliminations, 0);
-    const avgHP       = alive.length > 0 ? Math.round(alive.reduce((s, c) => s + c.health, 0) / alive.length) : 0;
-    const totalItems  = this.characters.reduce((s, c) => s + c.itemsUsed, 0);
-    return { active: alive.length, ok: totalKOs, disrupted: avgHP, efficient: totalItems };
-  }
+  stats(){ return { active:this.activeChars.filter(c=>c.health>0).length, buffs:this.interactive.filter(o=>o.available).length }; }
 
-  checkForWinner() {
-    if (this.matchOver) return;
-    const alive = this.characters.filter(c => c.active && c.health > 0);
-    const totalInMatch = alive.length + this.characters.filter(c => c.eliminated).length;
-    if (this.running && totalInMatch >= 2 && alive.length === 1) {
-      this.winner = alive[0];
-      this.matchOver = true;
-      this.running = false;
-      this.winner.statusText = 'LAST ONE STANDING 👑';
-      this.addEvent(`🏆 ${this.winner.name} is the last one standing!`);
+  checkForWinner(){
+    if(this.matchOver) return;
+    const alive=this.characters.filter(c=>c.active&&c.health>0);
+    const inMatch=alive.length+this.characters.filter(c=>c.eliminated).length;
+    if(this.running&&inMatch>=2&&alive.length===1){
+      this.winner=alive[0]; this.matchOver=true; this.running=false;
+      this.winner.statusText='👑 CHAMPION!';
+      this.addEvent(`🏆 ${this.winner.name} is the LAST ONE STANDING!`,'elim');
     }
   }
 }
 
-// ─────────────────────────────────────────────
-// RENDERER
-// Draws the room, floor, decorations, and objects onto the canvas
-// ─────────────────────────────────────────────
-function renderRoom(ctx, sim) {
-  const { objects, characters } = sim;
-
-  // Floor — dark grid
-  ctx.fillStyle = '#0b120b';
-  ctx.fillRect(0, 0, RW, RH);
-  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-  ctx.lineWidth = 1;
-  for (let gx = 0; gx <= RW; gx += 40) {
-    ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, RH); ctx.stroke();
-  }
-  for (let gy = 0; gy <= RH; gy += 40) {
-    ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(RW, gy); ctx.stroke();
-  }
-
-  // Room walls
-  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(1, 1, RW - 2, RH - 2);
-
-  // Corner accents
-  const corners = [[0,0],[RW,0],[0,RH],[RW,RH]];
-  const len = 20;
-  ctx.strokeStyle = 'rgba(0,255,204,0.3)';
-  ctx.lineWidth = 2;
-  for (const [cx,cy] of corners) {
-    const sx = cx === 0 ? 1 : -1, sy = cy === 0 ? 1 : -1;
+// ── Renderer ───────────────────────────────
+function renderRoom(ctx,sim,preGame){
+  ctx.fillStyle='#0b120b'; ctx.fillRect(0,0,RW,RH);
+  ctx.strokeStyle='rgba(255,255,255,0.028)'; ctx.lineWidth=1;
+  for(let gx=0;gx<=RW;gx+=40){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,RH);ctx.stroke();}
+  for(let gy=0;gy<=RH;gy+=40){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(RW,gy);ctx.stroke();}
+  ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=2; ctx.strokeRect(1,1,RW-2,RH-2);
+  const corners=[[0,0],[RW,0],[0,RH],[RW,RH]];
+  ctx.strokeStyle='rgba(0,255,204,0.28)'; ctx.lineWidth=2;
+  for(const[cx,cy] of corners){
+    const sx=cx===0?1:-1, sy=cy===0?1:-1, len=20;
     ctx.beginPath();
-    ctx.moveTo(cx + sx*2, cy + sy*2 + len*sy); ctx.lineTo(cx + sx*2, cy + sy*2); ctx.lineTo(cx + sx*2 + len*sx, cy + sy*2);
+    ctx.moveTo(cx+sx*2,cy+sy*2+len*sy); ctx.lineTo(cx+sx*2,cy+sy*2); ctx.lineTo(cx+sx*2+len*sx,cy+sy*2);
     ctx.stroke();
   }
-
-  // Floor label
-  ctx.save();
-  ctx.font = '10px Share Tech Mono, monospace';
-  ctx.textAlign = 'center';
-  ctx.fillStyle = 'rgba(255,255,255,0.06)';
-  ctx.fillText('SOFTWARE SCOUTING — TEAM 1678', RW / 2, RH - 8);
-  ctx.restore();
-
-  // Draw all objects (tables first, then interactive on top)
-  for (const obj of objects.filter(o => o.type === 'table')) obj.draw(ctx);
-  for (const obj of objects.filter(o => o.type !== 'table')) obj.draw(ctx);
-
-  // Draw characters
-  for (const c of characters) c.draw(ctx);
+  ctx.save(); ctx.font='10px Share Tech Mono,monospace'; ctx.textAlign='center';
+  ctx.fillStyle='rgba(255,255,255,0.05)';
+  ctx.fillText('SCOUT BATTLE ROYALE — TEAM 1678',RW/2,RH-8); ctx.restore();
+  for(const obj of sim.objects.filter(o=>o.type==='table')) obj.draw(ctx);
+  for(const obj of sim.objects.filter(o=>o.type!=='table')) obj.draw(ctx);
+  for(const c of sim.characters) c.draw(ctx,preGame);
 }
 
-// ─────────────────────────────────────────────
-// UI HELPERS
-// ─────────────────────────────────────────────
-function renderEventLog(events) {
-  const el = document.getElementById('event-log');
-  if (events.length === 0) {
-    el.innerHTML = '<div style="padding:8px;font-family:\'Share Tech Mono\',monospace;font-size:10px;color:var(--text-muted)">Events will appear here...</div>';
+// ── UI Helpers ─────────────────────────────
+function renderEventLog(events){
+  const el=document.getElementById('event-log');
+  if(events.length===0){
+    el.innerHTML='<div style="padding:8px;font-family:\'Share Tech Mono\',monospace;font-size:10px;color:var(--text-muted)">Events will appear here...</div>';
     return;
   }
-  el.innerHTML = events.map(e =>
-    `<div class="log-entry"><div class="log-time">${e.time}</div><div class="log-msg">${e.msg}</div></div>`
-  ).join('');
+  el.innerHTML=events.map(e=>`<div class="log-entry ${e.type||''}"><div class="log-time">${e.time}</div><div class="log-msg">${e.msg}</div></div>`).join('');
+  el.scrollTop=0;
 }
 
-function renderCharPanel(characters) {
-  const el = document.getElementById('char-status-list');
-  const active = characters.filter(c => c.active || c.eliminated);
-  if (active.length === 0) {
-    el.innerHTML = '<div style="font-family:\'Share Tech Mono\',monospace;font-size:9px;color:var(--text-muted);padding:4px">No characters spawned</div>';
+function renderCharPanel(characters){
+  const el=document.getElementById('char-status-list');
+  const active=characters.filter(c=>c.active||c.eliminated);
+  if(active.length===0){
+    el.innerHTML='<div style="font-family:\'Share Tech Mono\',monospace;font-size:9px;color:var(--text-muted);padding:4px">No fighters spawned</div>';
     return;
   }
-  el.innerHTML = active.map(c =>
-    `<div class="char-status-item">
-      <div class="char-status-dot" style="background:${c.color}"></div>
-      <div>
-        <div class="char-status-name">${c.name}${c.eliminated ? ' ☠️' : ''}</div>
-        <div class="char-status-action">${c.statusText} · HP ${Math.round(c.health)} · KOs ${c.eliminations}</div>
-      </div>
-    </div>`
-  ).join('');
+  el.innerHTML=active.map(c=>`<div class="char-status-item">
+    <div class="char-status-dot" style="background:${c.color}${c.eliminated?';opacity:.35':''}"></div>
+    <div><div class="char-status-name">${c.name}${c.eliminated?' ☠':''}</div>
+    <div class="char-status-action">${c.statusText} &middot; HP ${Math.round(c.health)} &middot; KOs ${c.eliminations}</div></div>
+  </div>`).join('');
 }
 
-function updateSpawnButtons(characters) {
-  document.querySelectorAll('.spawn-btn').forEach(btn => {
-    const name = btn.dataset.char;
-    const c    = characters.find(ch => ch.name === name);
-    btn.classList.toggle('active', !!(c && c.active));
+function updateSpawnButtons(characters){
+  document.querySelectorAll('.spawn-btn').forEach(btn=>{
+    const c=characters.find(ch=>ch.name===btn.dataset.char);
+    btn.classList.toggle('active',!!(c&&c.active));
   });
 }
 
-function updateStats(sim) {
-  const s = sim.stats();
-  document.getElementById('stat-active').textContent    = s.active;
-  document.getElementById('stat-ok').textContent        = s.ok;
-  document.getElementById('stat-disrupted').textContent = s.active > 0 ? s.disrupted : '–';
-  document.getElementById('stat-efficient').textContent = s.efficient;
+function updateStats(sim){
+  const s=sim.stats();
+  document.getElementById('stat-active').textContent=s.active;
+  document.getElementById('stat-buffs').textContent=s.buffs;
 }
 
-// ─────────────────────────────────────────────
-// MAIN — Canvas setup, loop, UI wiring
-// ─────────────────────────────────────────────
-const canvas = document.getElementById('sim-canvas');
-const ctx    = canvas.getContext('2d');
-canvas.width  = RW;
-canvas.height = RH;
+function updateDragHint(sim){
+  const hint=document.getElementById('drag-hint');
+  hint.style.display=(sim.activeChars.length>0&&!sim.running&&!sim.matchOver)?'':'none';
+}
 
-let sim         = new Simulation();
-let lastTime    = null;
-let imagesReady = false;
-let imageMapCache = {};
+// ── Canvas & Images ────────────────────────
+const canvas=document.getElementById('sim-canvas');
+const ctx=canvas.getContext('2d');
+canvas.width=RW; canvas.height=RH;
 
-// Assign images to character objects once loaded
-loadCharImages().then(imageMap => {
-  imageMapCache = imageMap;
-  for (const c of sim.characters) {
-    c.image = imageMap[c.name] || createFallbackSprite(c.name, c.color);
-  }
-  imagesReady = true;
+let sim=new Simulation(), lastTime=null, imagesReady=false, imageMapCache={};
 
-  const failedSprites = Object.keys(CHAR_IMAGE_FILES).filter(name => !imageMap[name]);
-  if (failedSprites.length) {
-    console.warn(`Falling back to generated sprites: ${failedSprites.join(', ')}`);
-  }
+loadCharImages().then(imageMap=>{
+  imageMapCache=imageMap;
+  for(const c of sim.characters) c.image=imageMap[c.name]||createFallbackSprite(c.name,c.color);
+  imagesReady=true;
 });
 
-// Main loop
-function loop(ts) {
-  if (lastTime === null) lastTime = ts;
-  const rawDt = Math.min((ts - lastTime) / 1000, 0.1); // cap dt at 100ms
-  lastTime = ts;
+// ── Drag System ────────────────────────────
+let dragChar=null, dragOX=0, dragOY=0, hoverChar=null;
 
-  sim.update(rawDt);
-  ctx.clearRect(0, 0, RW, RH);
-  renderRoom(ctx, sim);
+function getCanvasPos(e){
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=RW/rect.width, scaleY=RH/rect.height;
+  const src=e.touches?e.touches[0]:e;
+  return {x:(src.clientX-rect.left)*scaleX, y:(src.clientY-rect.top)*scaleY};
+}
+function charAtPos(pos){
+  return sim.characters.filter(c=>c.active).find(c=>Math.hypot(pos.x-c.x,pos.y-c.y)<34)||null;
+}
 
-  if (sim.matchOver && sim.winner) {
-    btnPlayPause.textContent = '▶ PLAY';
-    btnPlayPause.style.background  = 'linear-gradient(135deg,var(--volt-dark),var(--volt))';
-    btnPlayPause.style.borderColor = 'var(--volt)';
-    btnPlayPause.style.color       = '#000';
-    overlay.style.display = '';
-    overlay.querySelector('.big').textContent = `${sim.winner.name} WINS`;
-    overlay.querySelector('.small').textContent = 'Press RESET to run another battle royale';
+canvas.addEventListener('mousedown',e=>{
+  if(sim.running||sim.matchOver) return;
+  const pos=getCanvasPos(e), c=charAtPos(pos);
+  if(c){ dragChar=c; dragOX=c.x-pos.x; dragOY=c.y-pos.y; canvas.classList.add('dragging'); canvas.classList.remove('can-drag'); e.preventDefault(); }
+});
+canvas.addEventListener('mousemove',e=>{
+  if(sim.running||sim.matchOver) return;
+  const pos=getCanvasPos(e);
+  if(dragChar){
+    dragChar.x=clamp(pos.x+dragOX,28,RW-28);
+    dragChar.y=clamp(pos.y+dragOY,28,RH-28);
+    dragChar._lastX=dragChar.x; dragChar._lastY=dragChar.y;
+    e.preventDefault();
+  } else {
+    const over=charAtPos(pos);
+    if(over!==hoverChar){ hoverChar=over; canvas.classList.toggle('can-drag',!!over); }
   }
+});
+canvas.addEventListener('mouseup',()=>{ dragChar=null; canvas.classList.remove('dragging'); });
+canvas.addEventListener('mouseleave',()=>{ dragChar=null; hoverChar=null; canvas.classList.remove('dragging','can-drag'); });
 
-  // Update UI panels every frame (cheap DOM ops)
-  renderCharPanel(sim.characters);
-  updateSpawnButtons(sim.characters);
-  updateStats(sim);
+canvas.addEventListener('touchstart',e=>{
+  if(sim.running||sim.matchOver) return;
+  const pos=getCanvasPos(e), c=charAtPos(pos);
+  if(c){ dragChar=c; dragOX=c.x-pos.x; dragOY=c.y-pos.y; e.preventDefault(); }
+},{passive:false});
+canvas.addEventListener('touchmove',e=>{
+  if(!dragChar) return;
+  const pos=getCanvasPos(e);
+  dragChar.x=clamp(pos.x+dragOX,28,RW-28);
+  dragChar.y=clamp(pos.y+dragOY,28,RH-28);
+  dragChar._lastX=dragChar.x; dragChar._lastY=dragChar.y;
+  e.preventDefault();
+},{passive:false});
+canvas.addEventListener('touchend',()=>{ dragChar=null; });
 
+// ── Main Loop ──────────────────────────────
+function loop(ts){
+  if(lastTime===null) lastTime=ts;
+  const rawDt=Math.min((ts-lastTime)/1000,0.1); lastTime=ts;
+  sim.update(rawDt);
+  const preGame=!sim.running&&!sim.matchOver&&sim.activeChars.length>0;
+  ctx.clearRect(0,0,RW,RH);
+  renderRoom(ctx,sim,preGame);
+  if(sim.matchOver&&sim.winner){
+    btnPlayPause.textContent='▶ PLAY';
+    btnPlayPause.style.background='linear-gradient(135deg,var(--volt-dark),var(--volt))';
+    btnPlayPause.style.borderColor='var(--volt)'; btnPlayPause.style.color='#000';
+    overlay.style.display='';
+    overlay.querySelector('.big').textContent=`${sim.winner.name} WINS!`;
+    overlay.querySelector('.small').textContent='Press RESET to run another battle';
+  }
+  renderCharPanel(sim.characters); updateSpawnButtons(sim.characters);
+  updateStats(sim); updateDragHint(sim);
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 
-// ── Play / Pause ──
-const btnPlayPause = document.getElementById('btn-playpause');
-const overlay      = document.getElementById('overlay-msg');
+// ── Controls ───────────────────────────────
+const btnPlayPause=document.getElementById('btn-playpause');
+const overlay=document.getElementById('overlay-msg');
 
-btnPlayPause.addEventListener('click', () => {
-  if (sim.matchOver) {
-    overlay.style.display = '';
-    overlay.querySelector('.big').textContent = 'MATCH COMPLETE';
-    overlay.querySelector('.small').textContent = 'Press RESET to start a new round.';
-    return;
-  }
-  if (sim.activeChars.length === 0 && !sim.running) {
-    // Helpful nudge
-    overlay.querySelector('.small').textContent = 'Spawn at least one character first!';
-    return;
-  }
-  if (sim.activeChars.length < 2 && !sim.running) {
-    overlay.querySelector('.small').textContent = 'Spawn at least two contenders for last-one-standing.';
-    return;
-  }
-  sim.running = !sim.running;
-  btnPlayPause.textContent = sim.running ? '⏸ PAUSE' : '▶ PLAY';
-  btnPlayPause.style.background = sim.running
-    ? 'linear-gradient(135deg,#cc0000,#ff3333)'
-    : 'linear-gradient(135deg,var(--volt-dark),var(--volt))';
-  btnPlayPause.style.borderColor = sim.running ? '#ff3333' : 'var(--volt)';
-  btnPlayPause.style.color       = '#000';
-  overlay.style.display = sim.running ? 'none' : '';
-  if (!sim.running) {
-    overlay.querySelector('.big').textContent   = 'PAUSED';
-    overlay.querySelector('.small').textContent = 'Press PLAY to continue';
-  }
+btnPlayPause.addEventListener('click',()=>{
+  if(sim.matchOver){ overlay.style.display=''; overlay.querySelector('.big').textContent='MATCH COMPLETE'; overlay.querySelector('.small').textContent='Press RESET to start a new round.'; return; }
+  if(sim.activeChars.length===0&&!sim.running){ overlay.querySelector('.small').textContent='Spawn at least one fighter first!'; return; }
+  if(sim.activeChars.length<2&&!sim.running){ overlay.querySelector('.small').textContent='Spawn at least 2 fighters!'; return; }
+  sim.running=!sim.running;
+  btnPlayPause.textContent=sim.running?'⏸ PAUSE':'▶ PLAY';
+  btnPlayPause.style.background=sim.running?'linear-gradient(135deg,#cc0000,#ff3333)':'linear-gradient(135deg,var(--volt-dark),var(--volt))';
+  btnPlayPause.style.borderColor=sim.running?'#ff3333':'var(--volt)'; btnPlayPause.style.color='#000';
+  overlay.style.display=sim.running?'none':'';
+  if(!sim.running){ overlay.querySelector('.big').textContent='PAUSED'; overlay.querySelector('.small').textContent='Press PLAY to continue'; }
 });
 
-// ── Reset ──
-document.getElementById('btn-reset').addEventListener('click', () => {
+document.getElementById('btn-reset').addEventListener('click',()=>{
   sim.reset();
-  btnPlayPause.textContent       = '▶ PLAY';
-  btnPlayPause.style.background  = 'linear-gradient(135deg,var(--volt-dark),var(--volt))';
-  btnPlayPause.style.borderColor = 'var(--volt)';
-  btnPlayPause.style.color       = '#000';
-  overlay.style.display = '';
-  overlay.querySelector('.big').textContent   = 'SCOUT BATTLE ROYALE';
-  overlay.querySelector('.small').textContent = 'Spawn contenders, then press PLAY';
+  btnPlayPause.textContent='▶ PLAY';
+  btnPlayPause.style.background='linear-gradient(135deg,var(--volt-dark),var(--volt))';
+  btnPlayPause.style.borderColor='var(--volt)'; btnPlayPause.style.color='#000';
+  overlay.style.display='';
+  overlay.querySelector('.big').textContent='SCOUT BATTLE ROYALE';
+  overlay.querySelector('.small').textContent='Spawn fighters • drag to position • press PLAY';
 });
 
-// ── Speed ──
-document.querySelectorAll('.btn-speed').forEach(btn => {
-  btn.addEventListener('click', () => {
-    sim.speed = parseFloat(btn.dataset.speed);
-    document.querySelectorAll('.btn-speed').forEach(b => b.classList.toggle('active', b === btn));
+document.querySelectorAll('.btn-speed').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    sim.speed=parseFloat(btn.dataset.speed);
+    document.querySelectorAll('.btn-speed').forEach(b=>b.classList.toggle('active',b===btn));
   });
 });
 
-// ── Spawn / Despawn ──
-document.querySelectorAll('.spawn-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    if (sim.running) {
-      overlay.style.display = '';
-      overlay.querySelector('.big').textContent = 'FIGHT IN PROGRESS';
-      overlay.querySelector('.small').textContent = 'Pause or reset before changing the roster.';
-      return;
-    }
-    const name = btn.dataset.char;
-    const c    = sim.characters.find(ch => ch.name === name);
-    if (!c) return;
-    if (c.active) {
-      sim.despawn(name);
-    } else {
-      if (!imagesReady) {
-        overlay.style.display = '';
-        overlay.querySelector('.big').textContent = 'SPRITES LOADING';
-        overlay.querySelector('.small').textContent = 'Please wait for character images before spawning.';
-        return;
-      }
-      c.image = imageMapCache[name] || createFallbackSprite(c.name, c.color);
+document.querySelectorAll('.spawn-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    if(sim.running){ overlay.style.display=''; overlay.querySelector('.big').textContent='FIGHT IN PROGRESS'; overlay.querySelector('.small').textContent='Pause or reset before changing the roster.'; return; }
+    const name=btn.dataset.char, c=sim.characters.find(ch=>ch.name===name);
+    if(!c) return;
+    if(c.active){ sim.despawn(name); }
+    else {
+      if(!imagesReady){ overlay.style.display=''; overlay.querySelector('.big').textContent='SPRITES LOADING'; overlay.querySelector('.small').textContent='Please wait for character images.'; return; }
+      c.image=imageMapCache[name]||createFallbackSprite(c.name,c.color);
       sim.spawn(name);
     }
   });
 });
 
-// Hide overlay once user interacts
-overlay.style.display = '';
+overlay.style.display='';
 </script>
-<script>
-  // Vercel Web Analytics - Initialization
-  window.va = window.va || function () {
-    (window.vaq = window.vaq || []).push(arguments);
-  };
-</script>
-<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
